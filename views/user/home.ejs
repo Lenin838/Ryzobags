@@ -1,0 +1,294 @@
+<%- include("partials/userHeader") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | RYZO BAGS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#007D8B',
+                            dark: '#006570',
+                            light: '#4cacb6',
+                        },
+                        secondary: '#f8f9fa',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <!-- Hero Section -->
+    <section class="relative w-full h-[85vh] overflow-hidden">
+        <img src="/images/b5788c3b3c588b14834a48fd5c0074fb.jpg" alt="Hero Image" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30 flex items-center">
+            <div class="container mx-auto px-4 md:px-8">
+                <div class="max-w-xl">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">Elevate Your Style With Premium Bags</h1>
+                    <p class="text-xl text-gray-200 mb-8 leading-relaxed">Discover our curated collection of high-quality bags designed for the modern lifestyle</p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="/user/shop" class="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-md font-semibold transition duration-300 inline-block shadow-lg">
+                            Shop Collection
+                        </a>
+                        <a href="/user/categories" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/30 px-8 py-4 rounded-md font-semibold transition duration-300 inline-block">
+                            Explore Categories
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative Element -->
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent"></div>
+    </section>
+
+    <!-- Flash Sale Section -->
+    <section class="container mx-auto my-16 px-4">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+            <div class="flex items-center">
+                <div class="w-1.5 h-12 bg-primary rounded-full mr-4"></div>
+                <h2 class="text-3xl font-bold text-gray-800">Flash Sale</h2>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <% products.forEach(product => { %>
+                <div class="group">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+                        <a href="/user/productView/<%=product._id%>" class="block relative overflow-hidden">
+                            <div class="absolute top-3 right-3 bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-full z-10">SALE</div>
+                            <img src="<%=product.mainImage%>" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105" alt="<%= product.name %>">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </a>
+                        <div class="p-5">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-2 truncate"><%= product.name %></h5>
+                            <div>
+                                <% const variant = product.variants[0]; %>
+                                <% const discountedPrice = variant.regularPrice - (variant.regularPrice * product.offer / 100); %>
+                                
+                                <% if (product.offer > 0) { %>
+                                    <span class="text-sm line-through text-gray-400">₹<%= variant.regularPrice.toFixed(2) %></span>
+                                    <span class="text-xl font-bold text-primary ml-2">₹<%= discountedPrice.toFixed(2) %></span>
+                                    <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">(<%= product.offer %>% off)</span>
+                                <% } else { %>
+                                    <span class="text-xl font-bold text-primary">₹<%= variant.regularPrice.toFixed(2) %></span>
+                                <% } %>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <div class="flex items-center text-amber-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <span class="text-xs text-gray-500 ml-1">5.0</span>
+                                </div>
+                                <button class="text-gray-400 hover:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+        <div class="text-center mt-10">
+            <a href="/user/shop?sale=true" class="inline-flex items-center text-primary hover:text-primary-dark font-medium transition-colors">
+                View All Sale Items
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+<section class="container mx-auto my-20 px-4">
+    <div class="text-center mb-12">
+        <span class="text-primary font-medium">COLLECTIONS</span>
+        <h2 class="text-3xl font-bold text-gray-800 mt-2">Shop by Category</h2>
+        <div class="w-24 h-1 bg-primary mx-auto mt-4 rounded-full"></div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        
+       <% categories.forEach(category => { %>
+    <div class="relative group overflow-hidden rounded-xl shadow-md">
+        <a href="/user/shop?category=<%= category.name %>">
+            <% 
+            // Find a product for this specific category
+            let categoryProduct = products.find(p => p.category && p.category._id && p.category._id.toString() === category._id.toString());
+            // Use the product's image or a default if none found
+            let mainImage = categoryProduct ? categoryProduct.mainImage : '/images/default-category.jpg';
+            %>
+            <img src="<%= mainImage %>"
+                 class="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-110" 
+                 alt="<%= category.name %>">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-end p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                <h5 class="text-xl font-bold text-white mb-2"><%= category.name %></h5>
+                <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">Shop Now</span>
+            </div>
+        </a>
+    </div>
+<% }); %>
+    </div>
+</section>
+
+    <!-- New Arrivals Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+                <div class="flex items-center">
+                    <div class="w-1.5 h-12 bg-primary rounded-full mr-4"></div>
+                    <h2 class="text-3xl font-bold text-gray-800">New Arrivals</h2>
+                </div>
+                <a href="/user/shop?sort=newest" class="text-primary hover:text-primary-dark font-medium flex items-center group">
+                    View All
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                <% products.forEach(product => { %>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 group">
+                        <a href="/user/productView/<%=product._id%>" class="block relative">
+                            <div class="absolute top-3 left-3 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full z-10">NEW</div>
+                            <img src="<%= product.mainImage %>" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105" alt="<%= product.name %>">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </a>
+                        <div class="p-5">
+                            <h5 class="text-lg font-semibold text-gray-800 mb-2 truncate"><%= product.name %></h5>
+                            <div class="flex items-center mb-2">
+                                <div class="flex text-amber-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                </div>
+                                <span class="text-xs text-gray-500 ml-1">(5.0)</span>
+                            </div>
+                            <div>
+                                <% const variant = product.variants[0]; %>
+                                <% const discountedPrice = variant.regularPrice - (variant.regularPrice * product.offer / 100); %>
+                                
+                                <% if (product.offer > 0) { %>
+                                    <span class="text-sm line-through text-gray-400">₹<%= variant.regularPrice.toFixed(2) %></span>
+                                    <span class="text-xl font-bold text-primary ml-2">₹<%= discountedPrice.toFixed(2) %></span>
+                                    <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">(<%= product.offer %>% off)</span>
+                                <% } else { %>
+                                    <span class="text-xl font-bold text-primary">₹<%= variant.regularPrice.toFixed(2) %></span>
+                                <% } %>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between">
+                                <a href="/user/productView/<%=product._id%>" class="text-primary hover:text-primary-dark font-medium text-sm flex items-center">
+                                    View Details
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <button class="text-gray-400 hover:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="relative py-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark -z-10"></div>
+        <div class="absolute inset-0 opacity-10 -z-10">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                    <pattern id="pattern" width="100" height="100" patternUnits="userSpaceOnUse">
+                        <circle cx="50" cy="50" r="1" fill="white"></circle>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#pattern)"></rect>
+            </svg>
+        </div>
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Join Our Community</h2>
+                <p class="text-primary-light mb-8 text-lg">Subscribe to receive updates on new arrivals, special offers and exclusive discounts</p>
+                <form class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+                    <input type="email" placeholder="Your email address" class="flex-grow px-4 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/10 backdrop-blur-sm text-white placeholder-white/70 border border-white/20">
+                    <button type="submit" class="bg-white hover:bg-gray-100 text-primary px-6 py-3 rounded-md font-semibold transition duration-300 shadow-lg">Subscribe</button>
+                </form>
+                <p class="text-primary-light text-sm mt-4">By subscribing, you agree to our Privacy Policy</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Badges Section -->
+    <section class="container mx-auto py-16 px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-lg mb-2 text-gray-800">Fast Delivery</h3>
+                <p class="text-gray-600 text-sm">Free shipping on orders over ₹999</p>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-lg mb-2 text-gray-800">Secure Payment</h3>
+                <p class="text-gray-600 text-sm">100% secure payment</p>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-lg mb-2 text-gray-800">Money-Back Guarantee</h3>
+                <p class="text-gray-600 text-sm">30-day return policy</p>
+            </div>
+            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-lg mb-2 text-gray-800">24/7 Support</h3>
+                <p class="text-gray-600 text-sm">Dedicated support</p>
+            </div>
+        </div>
+    </section>
+
+</body>
+</html>
+
+<%- include("partials/userFooter") %>

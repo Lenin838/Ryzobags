@@ -1,0 +1,38 @@
+<div class="p-8 bg-white rounded-xl shadow-md">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Add Category</h2>
+    <% if (error && error.length > 0) { %>
+      <div class="bg-red-100 text-red-700 p-2 rounded mb-4"><%= error %></div>
+    <% } %>
+    <% if (success && success.length > 0) { %>
+      <div class="bg-green-100 text-green-700 p-2 rounded mb-4"><%= success %></div>
+    <% } %>   
+  
+    <form action="/admin/categories/add" method="POST" class="space-y-6">
+      <!-- Category Name Field -->
+      <div>
+        <label for="name" class="block text-lg font-medium text-gray-700">Category Name</label>
+        <input type="text" name="name" id="name" required
+          class="mt-2 w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300" />       
+      </div>
+      
+      <!-- Description Field -->
+      <div>
+        <label for="description" class="block text-lg font-medium text-gray-700">Description</label>
+        <textarea name="description" id="description" rows="4" required
+          placeholder="Enter a brief description of the category..."
+          class="mt-2 w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300"></textarea>
+      </div>
+  
+      <!-- Buttons -->
+      <div class="flex items-center gap-6">
+        <button type="submit"
+          class="bg-indigo-600 text-white font-medium py-2 px-5 rounded-lg shadow-md hover:bg-indigo-700 hover:shadow-lg transition duration-300">
+          Save
+        </button>
+        <a href="/admin/categories"
+          class="bg-gray-200 text-gray-800 font-medium py-2 px-5 rounded-lg hover:bg-gray-300 hover:text-indigo-600 transition duration-300 shadow-sm">
+          Cancel
+        </a>
+      </div>
+    </form>
+</div>

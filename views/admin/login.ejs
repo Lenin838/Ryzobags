@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #a0d8d8 0%, #e0f6f6 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center gradient-bg p-4">
+    <div class="w-full max-w-4xl bg-white shadow-2xl rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <!-- Left Side - Image Section -->
+        <div class="hidden md:block relative">
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80')">
+                <div class="absolute inset-0 bg-blue-900 opacity-60"></div>
+                <div class="relative z-10 flex flex-col justify-center h-full p-12 text-white">
+                    <h2 class="text-4xl font-bold mb-4">Welcome Back</h2>
+                    <p class="text-xl mb-6">Manage your business with powerful admin tools</p>
+                    <div class="flex space-x-4">
+                        <div class="bg-white/20 p-4 rounded-lg text-center">
+                            <h3 class="text-2xl font-bold">120+</h3>
+                            <p class="text-sm">Active Users</p>
+                        </div>
+                        <div class="bg-white/20 p-4 rounded-lg text-center">
+                            <h3 class="text-2xl font-bold">50+</h3>
+                            <p class="text-sm">Products</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="flex items-center justify-center p-8 md:p-12 bg-white">
+            <div class="w-full max-w-md">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Login</h1>
+                    <p class="text-gray-500">Sign in to your admin account</p>
+                </div>
+
+                <form id="adminLoginForm" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                id="email" 
+                                name="email"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                placeholder="Enter your email"
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                placeholder="Enter your password"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input 
+                                 
+                                class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <button 
+                            type="submit" 
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition duration-300 ease-in-out transform hover:scale-102"
+                        >
+                            Login
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <span class="text-sm text-gray-600">
+                        Don't have an admin account? 
+                        <a href="#" class="font-medium text-teal-600 hover:text-teal-500">
+                            Contact Support
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+       document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    // Clear previous error messages
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    let hasError = false;
+
+    // Frontend validation
+    if (!email) {
+        showInputError(emailInput, "Email is required");
+        hasError = true;
+    }
+    if (!password) {
+        showInputError(passwordInput, "Password is required");
+        hasError = true;
+    }
+
+    if (hasError) return; // Stop execution if there are errors
+
+    try {
+        const response = await fetch('/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Login successful!', 'success');
+            setTimeout(() => window.location.href = '/admin/dashboard', 1500);
+        } else {
+            if (data.errors) {
+                displayValidationErrors(data.errors); // ✅ Display field errors
+            }
+            showToast(data.message || 'Login failed', 'error'); // ✅ Show general error message
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('An error occurred. Please try again.', 'error');
+    }
+});
+function showInputError(inputField, message) {
+    const errorElement = document.createElement('p');
+    errorElement.className = 'text-red-600 text-sm mt-1 error-message';
+    errorElement.textContent = message;
+    inputField.closest('div').appendChild(errorElement);
+}
+function displayValidationErrors(errors) {
+    for (const field in errors) {
+        const inputField = document.getElementById(field);
+        if (inputField) {
+            showInputError(inputField, errors[field]);
+        }
+    }
+}
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-5 right-5 px-4 py-3 rounded-lg shadow-lg text-white text-sm transition-opacity duration-500 ease-in-out ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+    toast.innerText = message;
+
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
+
+    </script>
+</body>
+</html>

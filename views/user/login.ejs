@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RYZO BAGS - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        .brand-font { font-family: 'Permanent Marker', cursive; }
+        .error-text { color: red; font-size: 0.75rem; margin-top: 0.25rem; }
+    </style>
+</head>
+<body class="bg-[#a0d8d8] h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-md flex">
+        <!-- Left side - Form -->
+        <div class="w-2/5 p-6 flex flex-col justify-center">
+            <h1 class="brand-font text-2xl mb-3">RYZO BAGS</h1>
+            <h2 class="text-lg font-semibold mb-6">LOGIN</h2> <!-- Increased bottom margin -->
+
+            <form id="login-form" class="space-y-6"> <!-- Increased spacing between fields -->
+                <div>
+                    <input type="text" name="email" placeholder="Email" class="w-full p-3 border rounded-md text-sm"> <!-- Increased padding -->
+                    <p class="error-text" id="email-error"></p>
+                </div>
+
+                <div>
+                    <input type="password" name="password" placeholder="Password" class="w-full p-3 border rounded-md text-sm"> <!-- Increased padding -->
+                    <p class="error-text" id="password-error"></p>
+                </div>
+
+                <div class="text-right text-xs">
+                    <a href="/user/forgot-password" class="text-indigo-500 hover:underline">Forgot Password?</a>
+                </div>                
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-md text-sm"> <!-- Increased padding -->
+                    Login Now
+                </button>
+
+                <button type="button" id="signup-btn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-md text-sm"> <!-- Increased padding -->
+                    Sign up
+                </button>
+            </form>
+
+            <p class="text-center text-xs mt-6">Or login with</p> <!-- Increased margin-top -->
+            <button id="google-login" class="flex items-center justify-center w-full border py-3 rounded-md mt-4 text-sm"> <!-- Increased padding and spacing -->
+                <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" class="h-5 mr-2"> 
+                Login with Google
+            </button>
+        </div>
+
+        <!-- Right side - Enlarged Image -->
+        <div class="w-3/5">
+            <img src="/images/b5788c3b3c588b14834a48fd5c0074fb.jpg" class="w-full h-full object-cover rounded-r-xl">
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('login-form');
+
+            // Function to show toast notifications
+        const showToast = (type, message) => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: type,
+                title: message,
+                showConfirmButton: false,
+                timer: 2000
+            });
+        };
+
+        // Function to clear previous validation errors
+        const clearErrors = () => {
+            document.getElementById('email-error').textContent = "";
+            document.getElementById('password-error').textContent = "";
+        };
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            clearErrors(); // Clear previous errors
+
+            const email = form.email.value.trim();
+            const password = form.password.value.trim();
+
+            try {
+                const response = await fetch('/user/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast('success', result.message);
+                    setTimeout(() => { window.location.href = result.redirecturl; }, 1500);
+                } else {
+                    if (result.errors) {
+                        // Display validation errors under input fields
+                        if (result.errors.email) {
+                            document.getElementById('email-error').textContent = result.errors.email;
+                        }
+                        if (result.errors.password) {
+                            document.getElementById('password-error').textContent = result.errors.password;
+                        }
+                    } else {
+                        // Show general error message in toast
+                        showToast('error', result.message || 'Login failed');
+                    }
+                }
+            } catch (error) {
+                showToast('error', 'Network error. Please try again.');
+            }
+        });
+
+        // Redirect buttons
+        document.getElementById('signup-btn').addEventListener('click', () => window.location.href = '/user/signup');
+        document.getElementById('google-login').addEventListener('click', () => window.location.href = '/auth/google');
+    });
+
+    </script>
+</body>
+</html>

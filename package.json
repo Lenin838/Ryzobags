@@ -1,0 +1,36 @@
+{
+  "name": "ryzo-bags",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "connect": "^3.7.0",
+    "connect-flash": "^0.1.1",
+    "cropper": "^4.1.0",
+    "cropperjs": "^2.0.0",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.18.1",
+    "flash": "^1.1.0",
+    "js": "^0.1.0",
+    "layout": "^2.2.0",
+    "mongoose": "^8.12.2",
+    "multer": "^1.4.5-lts.2",
+    "nodemailer": "^6.10.0",
+    "nodemon": "^3.1.9",
+    "otp-generator": "^4.0.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "sharp": "^0.34.1"
+  }
+}

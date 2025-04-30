@@ -1,0 +1,850 @@
+<%- include("partials/userHeader") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %> | RYZO BAGS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#007D8B',
+                dark: '#006570',
+                light: '#4cacb6',
+              },
+              secondary: '#f8f9fa',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .zoom-container {
+            position: relative;
+            overflow: hidden;
+            cursor: zoom-in;
+        }
+        .zoomed-image {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 100%;
+            height: 100%;
+            background-repeat: no-repeat;
+            background-size: 200%;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 10;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+        .zoom-container:hover .zoomed-image {
+            opacity: 1;
+            left: 0;
+        }
+        
+        /* Custom scrollbar for thumbnail gallery */
+        .thumbnail-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-thumb {
+            background: #007D8B;
+            border-radius: 10px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-thumb:hover {
+            background: #006570;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+   
+    <!-- Breadcrumbs -->
+    <div class="bg-gradient-to-r from-primary-dark to-primary py-8">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2"><%= product.name %></h1>
+            <div class="flex items-center text-primary-light">
+                <a href="/user/home" class="hover:text-white transition-colors">Home</a>
+                <span class="mx-2">/</span>
+                <a href="/user/shop" class="hover:text-white transition-colors">Shop</a>
+                <span class="mx-2">/</span>
+                <span class="text-white"><%= product.name %></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Section -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Product Image Gallery -->
+            <div class="md:w-2/5">
+                <div class="zoom-container rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+                    <img src="<%= product.mainImage %>" class="w-full h-auto object-contain aspect-square p-4" id="mainProductImage" alt="<%= product.name %>">
+                    <div class="zoomed-image" id="zoomedImage"></div>
+                </div>
+                <div class="flex mt-4 space-x-2 overflow-x-auto pb-2 thumbnail-scroll">
+                    <% if (Array.isArray(product.subImages)) { %>
+                        <% product.subImages.forEach((image, index) => { %>
+                            <div class="min-w-[80px] h-20 rounded-lg overflow-hidden border-2 <%= index === 0 ? 'border-primary' : 'border-transparent' %> hover:border-primary transition cursor-pointer" onclick="changeImage('<%= image %>', this)">
+                                <img src="<%= image %>" class="w-full h-full object-cover" alt="Product thumbnail">
+                            </div>
+                        <% }) %>
+                    <% } else if (product.mainImage) { %>
+                        <div class="min-w-[80px] h-20 rounded-lg overflow-hidden border-2 border-primary hover:border-primary transition cursor-pointer" onclick="changeImage('<%= product.mainImage %>', this)">
+                            <img src="<%= product.mainImage %>" class="w-full h-full object-cover" alt="Product thumbnail">
+                        </div>
+                    <% } %>
+                    
+                </div>
+                
+                <!-- Product Actions for Mobile -->
+                <div class="md:hidden mt-6 flex flex-col space-y-3">
+                    <div class="flex items-center justify-between bg-primary/5 p-4 rounded-lg">
+                        <div>
+                            <p class="text-sm text-gray-500">Price:</p>
+                            <div class="flex items-center">
+                                <% const variant = product.variants[0]; %>
+                                <% const discountedPrice = Math.round(variant.regularPrice - (variant.regularPrice * product.offer / 100)); %>
+                                <span class="text-2xl font-bold text-primary" id="currentPrice-mobile">₹<%= discountedPrice%></span>
+                                <span class="ml-2 text-sm text-gray-500 line-through" id="originalPrice-mobile">₹<%= variant.regularPrice %></span>
+                                <span class="ml-2 bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium"><%= product.offer %>% off</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <span class="text-green-600 font-medium flex items-center">
+                                <i class="fa-solid fa-check mr-1"></i> In Stock
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition flex items-center justify-center" onclick="addtoCart('<%= product._id %>')">
+                        <i class="fa-solid fa-cart-plus mr-2"></i> Add to Cart
+                    </button>
+                    
+                    <button class="w-full py-3 bg-primary-dark hover:bg-primary-dark/90 text-white font-medium rounded-lg transition flex items-center justify-center">
+                        <i class="fa-solid fa-bolt mr-2"></i> Buy Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="md:w-3/5">
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100">
+                    <!-- Product Title and Rating -->
+                    <div class="hidden md:block">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2"><%= product.name %></h2>
+                        
+                        <!-- Rating Section -->
+                        <div class="flex items-center mt-2 mb-6">
+                            <div class="flex text-amber-400">
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            </div>
+                            <span class="ml-2 text-gray-600">4.5 (128 ratings)</span>
+                            <span class="mx-2 text-gray-400">|</span>
+                            <span class="text-green-600">2,456 sold</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile Rating -->
+                    <div class="md:hidden flex items-center mb-4">
+                        <div class="flex text-amber-400">
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                        </div>
+                        <span class="ml-2 text-gray-600 text-sm">4.5 (128 ratings)</span>
+                    </div>
+                    
+                    <!-- Price and Stock Section - Desktop Only -->
+                    <div class="hidden md:block">
+                        <div id="priceSection" class="flex items-center p-4 bg-primary/5 rounded-lg">
+                            <% const firstVariant = product.variants[0]; %>
+                            <% const firstDiscountedPrice = Math.round(firstVariant.regularPrice - (firstVariant.regularPrice * product.offer / 100)); %>
+                            <div>
+                                <span class="text-3xl font-bold text-primary" id="currentPrice">₹<%= discountedPrice%></span>
+                                <span class="ml-2 text-xl text-gray-500 line-through" id="originalPrice">₹<%= firstVariant.regularPrice %></span>
+                                <span class="ml-2 bg-primary/10 text-primary px-2 py-1 rounded-full text-sm font-medium"><%= product.offer %>% off</span>
+                            </div>
+                            
+                            <div class="ml-auto flex items-center">
+                                <span class="text-green-600 font-medium" id="stockInfo">
+                                    <i class="fa-solid fa-check mr-1"></i> 
+                                    <span id="currentStock"><%= product.variants[0].quantity %></span> In Stock
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex items-center text-sm text-gray-600">
+                            <div class="flex items-center mr-4">
+                                <i class="fa-solid fa-truck mr-2 text-primary"></i>
+                                Free Delivery
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa-solid fa-shield-halved mr-2 text-primary"></i>
+                                Genuine Product
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Divider -->
+                    <div class="my-6 border-t border-gray-100"></div>
+                    
+                    <!-- Product Options - Size Selection -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-3">Select Size:</label>
+                        <div class="flex flex-wrap gap-3" id="variantSelector">
+                            <% product.variants.forEach((variant, index) => { %>
+                                <button 
+                                    class="px-4 py-2 border-2 <%= index === 0 ? 'border-primary text-primary bg-primary/5' : 'border-gray-200 text-gray-700' %> rounded-lg font-medium hover:border-primary hover:text-primary transition"
+                                    onclick="selectVariant('<%= index %>', '<%= variant.regularPrice %>', '<%= Math.round(variant.regularPrice * 1.2) %>', '<%= variant.quantity %>', '<%= variant.size %>')"
+                                    data-variant-index="<%= index %>"
+                                >
+                                    <%= variant.size %>
+                                </button>
+                            <% }) %>
+                        </div>
+                    </div>
+                    
+                    <!-- Quantity Selector -->
+                    <div class="mt-6">
+                        <label class="block text-gray-700 font-medium mb-3">Quantity:</label>
+                        <div class="flex items-center">
+                            <button class="w-10 h-10 bg-gray-100 rounded-l-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition" onclick="decrementQuantity()">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <input type="number" id="quantityInput" value="1" min="1" max="<%= product.variants[0].quantity %>" class="w-16 h-10 border-y border-gray-200 text-center focus:outline-none">
+                            <button class="w-10 h-10 bg-gray-100 rounded-r-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition" onclick="incrementQuantity()">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            
+                            <span class="ml-4 text-sm text-gray-500">
+                                <span id="currentStock-text"><%= product.variants[0].quantity %></span> items available
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons - Desktop Only -->
+                    <div class="hidden md:flex mt-8 gap-4">
+                        <button class="flex-1 py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition flex items-center justify-center" onclick="addtoCart('<%= product._id %>')">
+                            <i class="fa-solid fa-cart-plus mr-2"></i> Add to Cart
+                        </button>
+                        <button class="flex-1 py-3 px-6 bg-primary-dark text-white rounded-lg font-medium hover:bg-primary-dark/90 transition flex items-center justify-center">
+                            <i class="fa-solid fa-bolt mr-2"></i> Buy Now
+                        </button>
+                        <button class="p-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-primary transition">
+                            <i class="fa-regular fa-heart"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Offers Section -->
+                    <div class="mt-8 bg-gradient-to-r from-primary/5 to-primary/10 p-5 rounded-lg">
+                        <h4 class="font-medium text-gray-800 mb-3 flex items-center">
+                            <i class="fa-solid fa-gift text-primary mr-2"></i>
+                            Available Offers
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-tag text-primary mt-1 mr-2"></i>
+                                <span class="text-sm">Get 5% cashback on HDFC Bank Credit Cards</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-tag text-primary mt-1 mr-2"></i>
+                                <span class="text-sm">Buy 2 items and get extra 10% off</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-tag text-primary mt-1 mr-2"></i>
+                                <span class="text-sm">Free shipping on orders above ₹499</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Delivery & Returns -->
+                    <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1 border border-gray-200 rounded-lg p-4 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-truck-fast text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800">Fast Delivery</h5>
+                                    <p class="text-sm text-gray-500">Delivered in 2-3 days</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 border border-gray-200 rounded-lg p-4 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-rotate-left text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800">Easy Returns</h5>
+                                    <p class="text-sm text-gray-500">30-day return policy</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Description & Details -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-2/3">
+                    <div class="border-b border-gray-100 pb-4 mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+                            <span class="w-1.5 h-6 bg-primary rounded-full mr-3"></span>
+                            Product Description
+                        </h3>
+                    </div>
+                    
+                    <p class="text-gray-700 leading-relaxed mb-6">
+                        Crafted for both style and functionality, this premium bag blends contemporary design with timeless appeal. Featuring a spacious interior and thoughtfully placed compartments, it offers effortless organization for your daily essentials. The high-quality materials and sturdy craftsmanship ensure durability, while the sleek silhouette and refined details add a touch of elegance to any outfit.
+                    </p>
+
+                    <div class="mt-8">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-circle-check text-primary mr-2"></i>
+                            Benefits:
+                        </h4>
+                        <ul class="space-y-3 pl-6">
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                <span>Premium-quality materials for long-lasting durability</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                <span>Balanced blend of style, comfort, and durability</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                <span>Perfect for every occasion, from casual outings to formal events</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                <span>Elegant bags with premium packaging</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="md:w-1/3 md:border-l border-gray-100 md:pl-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-circle-info text-primary mr-2"></i>
+                        Product Details:
+                    </h4>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <p class="text-sm text-gray-500">size</p>
+                            <p class="font-medium text-gray-800">medium / small / large</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <p class="text-sm text-gray-500">Type</p>
+                            <p class="font-medium text-gray-800">Premium bags</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <p class="text-sm text-gray-500">Bag Collection</p>
+                            <p class="font-medium text-gray-800">Leather Luxe</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <p class="text-sm text-gray-500">Durability</p>
+                            <p class="font-medium text-gray-800">Long-lasting (8-10 years)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Reviews Section -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100">
+            <div class="border-b border-gray-100 pb-4 mb-6">
+                <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <span class="w-1.5 h-6 bg-primary rounded-full mr-3"></span>
+                    Customer Reviews
+                </h3>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Review Summary -->
+                <div class="md:col-span-1">
+                    <div class="flex flex-col items-center p-6 bg-primary/5 rounded-xl">
+                        <div class="text-5xl font-bold text-primary">4.5</div>
+                        <div class="flex text-amber-400 my-2">
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                        </div>
+                        <p class="text-gray-600">Based on 128 reviews</p>
+                    </div>
+                    
+                    <div class="mt-6 space-y-3">
+                        <div class="flex items-center">
+                            <span class="w-16 text-sm text-gray-600">5 stars</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-primary rounded-full" style="width: 75%"></div>
+                            </div>
+                            <span class="w-8 text-sm text-gray-600">75%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-16 text-sm text-gray-600">4 stars</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-primary rounded-full" style="width: 15%"></div>
+                            </div>
+                            <span class="w-8 text-sm text-gray-600">15%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-16 text-sm text-gray-600">3 stars</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-primary rounded-full" style="width: 7%"></div>
+                            </div>
+                            <span class="w-8 text-sm text-gray-600">7%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-16 text-sm text-gray-600">2 stars</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-primary rounded-full" style="width: 2%"></div>
+                            </div>
+                            <span class="w-8 text-sm text-gray-600">2%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-16 text-sm text-gray-600">1 star</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-primary rounded-full" style="width: 1%"></div>
+                            </div>
+                            <span class="w-8 text-sm text-gray-600">1%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button class="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition flex items-center justify-center">
+                            <i class="fa-solid fa-pen-to-square mr-2"></i>
+                            Write a Review
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Review List -->
+                <div class="md:col-span-2">
+                    <!-- Review Item 1 -->
+                    <div class="border-b border-gray-100 pb-6 mb-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center">
+                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Reviewer" class="w-10 h-10 rounded-full mr-3">
+                                    <div>
+                                        <h5 class="font-medium text-gray-800">Rahul Sharma</h5>
+                                        <p class="text-sm text-gray-500">Verified Purchase</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex text-amber-400">
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-gray-700">
+                        Absolutely love this bag! The design is elegant and timeless. I've received numerous compliments whenever I carry it. The packaging is premium, making it a perfect gift. Highly recommend!
+                        </p>
+                        <div class="mt-3 flex items-center text-sm text-gray-500">
+                            <span>2 months ago</span>
+                            <span class="mx-2">•</span>
+                            <button class="hover:text-primary transition flex items-center">
+                                <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (24)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Review Item 2 -->
+                    <div class="border-b border-gray-100 pb-6 mb-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center">
+                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Reviewer" class="w-10 h-10 rounded-full mr-3">
+                                    <div>
+                                        <h5 class="font-medium text-gray-800">Priya Patel</h5>
+                                        <p class="text-sm text-gray-500">Verified Purchase</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex text-amber-400">
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-gray-700">
+                            The bag is beautiful and elegant, perfect for evening outings. My only complaint is that the straps could be a bit more comfortable, hence the 4 stars. Still, I find myself reaching for it often and would definitely purchase again.
+                        </p>
+                        <div class="mt-3 flex items-center text-sm text-gray-500">
+                            <span>1 month ago</span>
+                            <span class="mx-2">•</span>
+                            <button class="hover:text-primary transition flex items-center">
+                                <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (16)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Review Item 3 -->
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center">
+                                    <img src="https://randomuser.me/api/portraits/men/67.jpg" alt="Reviewer" class="w-10 h-10 rounded-full mr-3">
+                                    <div>
+                                        <h5 class="font-medium text-gray-800">Arjun Mehta</h5>
+                                        <p class="text-sm text-gray-500">Verified Purchase</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex text-amber-400">
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                                <i class="fa-regular fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-gray-700">
+                            Good bag for the price point. The design is stylish, but not as unique as I was hoping. The craftsmanship is elegant, and the zipper works smoothly. Decent durability, with regular use lasting about 6 months.
+                        </p>
+                        <div class="mt-3 flex items-center text-sm text-gray-500">
+                            <span>3 weeks ago</span>
+                            <span class="mx-2">•</span>
+                            <button class="hover:text-primary transition flex items-center">
+                                <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (8)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- See More Reviews Button -->
+                    <div class="mt-6 text-center">
+                        <button class="px-6 py-3 border border-gray-200 rounded-lg text-gray-700 hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition">
+                            See All 128 Reviews
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="border-b border-gray-100 pb-4 mb-6">
+            <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+                <span class="w-1.5 h-6 bg-primary rounded-full mr-3"></span>
+                You May Also Like
+            </h3>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <% relatedProducts.forEach(related => { %>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition group border border-gray-100">
+                    <a href="/user/productView/<%= related._id %>" class="block relative">
+                        <div class="absolute top-3 right-3 bg-primary text-white text-xs px-2.5 py-1.5 rounded-full z-10">-15%</div>
+                        <img src="<%= related.mainImage %>" class="w-full h-48 object-cover group-hover:scale-105 transition duration-300" alt="Related Product">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="p-4">
+                            <h5 class="font-medium text-gray-800 truncate"><%= related.name %></h5>
+                            <div class="flex items-center mt-1">
+                                <div class="flex text-amber-400 text-xs">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </div>
+                                <span class="text-xs text-gray-500 ml-1">(42)</span>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between">
+                                <div>
+                                    <span class="font-bold text-primary">₹1,299</span>
+                                    <span class="text-sm text-gray-500 line-through ml-1">₹1,499</span>
+                                </div>
+                                <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-primary/10 hover:text-primary transition">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+    
+
+  
+    
+   
+    <%- include("partials/userFooter") %>
+    <script>
+        // Store product variant information
+        const variants = [
+  <% product.variants.forEach((variant, index) => { %>
+    {
+      index: '<%= index %>',
+      regularPrice: '<%= variant.regularPrice %>',
+      discountedPrice: '<%= Math.round(variant.regularPrice - (variant.regularPrice * product.offer / 100)) %>',
+      quantity: '<%= variant.quantity %>',
+      size: '<%= variant.size %>'
+    },
+  <% }) %>
+];
+
+// Current selected variant (default to first variant)
+let currentVariantIndex = 0;
+let currentMaxQuantity = variants[0].quantity;
+
+// Function to select a variant
+function selectVariant(index, regularPrice, originalPrice, quantity, size) {
+  // Update the current variant index
+  currentVariantIndex = index;
+  currentMaxQuantity = quantity;
+  
+  // Update price display
+  const discountedPrice = Math.round(regularPrice - (regularPrice * '<%= product.offer %>' / 100));
+  document.getElementById('currentPrice').textContent = `₹${discountedPrice}`;
+  document.getElementById('originalPrice').textContent = `₹${regularPrice}`;
+  
+  // Update mobile price if it exists
+  if (document.getElementById('currentPrice-mobile')) {
+    document.getElementById('currentPrice-mobile').textContent = `₹${discountedPrice}`;
+    document.getElementById('originalPrice-mobile').textContent = `₹${regularPrice}`;
+  }
+  
+  // Update stock information
+  document.getElementById('currentStock').textContent = quantity;
+  document.getElementById('currentStock-text').textContent = quantity;
+  
+  // Update quantity input max value
+  const quantityInput = document.getElementById('quantityInput');
+  quantityInput.max = quantity;
+  
+  // If current quantity is more than available, adjust it
+  if (parseInt(quantityInput.value) > quantity) {
+    quantityInput.value = quantity;
+  }
+  
+  // Update button styles
+  const buttons = document.querySelectorAll('#variantSelector button');
+  buttons.forEach((button, buttonIndex) => {
+    if (buttonIndex === index) {
+      button.classList.add('border-primary', 'text-primary', 'bg-primary/5');
+      button.classList.remove('border-gray-200', 'text-gray-700');
+    } else {
+      button.classList.remove('border-primary', 'text-primary', 'bg-primary/5');
+      button.classList.add('border-gray-200', 'text-gray-700');
+    }
+  });
+}
+
+// Function to increment quantity
+function incrementQuantity() {
+  const quantityInput = document.getElementById('quantityInput');
+  const currentQuantity = parseInt(quantityInput.value);
+  const maxQuantity = currentMaxQuantity;
+  
+  if (currentQuantity < maxQuantity) {
+    quantityInput.value = currentQuantity + 1;
+  }
+}
+
+// Function to decrement quantity
+function decrementQuantity() {
+  const quantityInput = document.getElementById('quantityInput');
+  const currentQuantity = parseInt(quantityInput.value);
+  
+  if (currentQuantity > 1) {
+    quantityInput.value = currentQuantity - 1;
+  }
+}
+
+// Function to handle image changes
+// Function to handle image changes
+function changeImage(src, thumbElement) {
+  const mainImage = document.getElementById("mainProductImage");
+  mainImage.src = src;
+  document.getElementById("zoomedImage").style.backgroundImage = url('${src}');
+
+  // Update thumbnail border
+  const thumbnails = document.querySelectorAll('.thumbnail-scroll > div');
+  thumbnails.forEach(thumb => {
+    thumb.classList.remove('border-primary');
+    thumb.classList.add('border-transparent');
+  });
+  
+  thumbElement.classList.remove('border-transparent');
+  thumbElement.classList.add('border-primary');
+}
+// Initialize zoom functionality for the product image
+function initializeImageZoom() {
+  const mainImage = document.getElementById('mainProductImage');
+  const zoomedImage = document.getElementById('zoomedImage');
+
+  if (!mainImage || !zoomedImage) return;
+
+  // Set up zoomed image styles
+  zoomedImage.style.position = 'absolute';
+  zoomedImage.style.width = '100%';
+  zoomedImage.style.height = '100%';
+  zoomedImage.style.backgroundRepeat = 'no-repeat';
+  zoomedImage.style.backgroundSize = '200% 200%';
+  zoomedImage.style.opacity = '0';
+  zoomedImage.style.pointerEvents = 'none';
+  zoomedImage.style.transition = 'opacity 0.3s ease';
+  zoomedImage.style.top = '0';
+  zoomedImage.style.left = '0';
+  zoomedImage.style.zIndex = '10';
+
+  let lastMove = 0;
+  
+  mainImage.addEventListener('mousemove', function(e) {
+    const now = Date.now();
+    if (now - lastMove < 16) return;
+    lastMove = now;
+    
+    const rect = mainImage.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / mainImage.clientWidth * 100;
+    const y = (e.clientY - rect.top) / mainImage.clientHeight * 100;
+
+    zoomedImage.style.backgroundPosition = `${x}% ${y}%`;
+  });
+
+  mainImage.addEventListener('mouseenter', function() {
+    zoomedImage.style.backgroundImage = `url('${this.src}')`;
+    zoomedImage.style.opacity = '1';
+  });
+
+  mainImage.addEventListener('mouseleave', function() {
+    zoomedImage.style.opacity = '0';
+  });
+
+  // Touch support for mobile devices
+  mainImage.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = mainImage.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) / mainImage.clientWidth * 100;
+    const y = (touch.clientY - rect.top) / mainImage.clientHeight * 100;
+    
+    zoomedImage.style.backgroundPosition = `${x}% ${y}%`;
+  });
+
+  mainImage.addEventListener('touchstart', function() {
+    zoomedImage.style.backgroundImage = `url('${this.src}')`;
+    zoomedImage.style.opacity = '1';
+  });
+
+  mainImage.addEventListener('touchend', function() {
+    zoomedImage.style.opacity = '0';
+  });
+}
+
+// Add input validation for quantity field
+document.getElementById('quantityInput').addEventListener('change', function() {
+  const value = parseInt(this.value) || 1;
+  const maxQuantity = currentMaxQuantity;
+  
+  if (value < 1) {
+    this.value = 1;
+  } else if (value > maxQuantity) {
+    this.value = maxQuantity;
+  }
+});
+
+// Add to cart function
+async function addtoCart(productId) {
+  try {
+    const selectedVariantButton = document.querySelector('#variantSelector button.border-primary');
+    const currentVariantIndex = selectedVariantButton.dataset.variantIndex;
+    const quantity = parseInt(document.getElementById('quantityInput').value);
+    const size = variants[currentVariantIndex].size;
+    
+    const response = await fetch(`/user/addtoCart/${productId}`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ 
+        variantIndex: currentVariantIndex,
+        size: size,
+        quantity: quantity
+      })
+    });
+    
+    const result = await response.json();
+    
+    if(result.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: result.message,
+        confirmButtonColor: '#007D8B'
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: result.message || 'Failed to add product to cart',
+        confirmButtonColor: '#007D8B'
+      });
+    }
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Something went wrong. Please try again.',
+      confirmButtonColor: '#007D8B'
+    });
+  }
+}
+
+// Initialize everything when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+  initializeImageZoom();
+  
+  // Initialize the first variant
+  if (variants.length > 0) {
+    const firstVariant = variants[0];
+    selectVariant(
+      firstVariant.index, 
+      firstVariant.regularPrice, 
+      firstVariant.regularPrice, 
+      firstVariant.quantity, 
+      firstVariant.size
+    );
+  }
+});
+    </script>
+</body>
+</html>

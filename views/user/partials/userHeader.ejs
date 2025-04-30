@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Meta Tags -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Page Title -->
+  <title>RYZO BAGS</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#007D8B',
+              dark: '#006570',
+              light: '#4cacb6',
+            },
+            secondary: '#f8f9fa',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  
+  <!-- Tailwind Utility Extension -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-balance {
+        text-wrap: balance;
+      }
+      .nav-link {
+        @apply relative px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary transition-all duration-300 overflow-hidden;
+      }
+      .nav-link::after {
+        @apply content-[''] absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 origin-bottom-right transition-transform duration-300 ease-out;
+      }
+      .nav-link:hover::after {
+        @apply scale-x-100 origin-bottom-left;
+      }
+      .nav-link-active {
+        @apply text-primary;
+      }
+      .nav-link-active::after {
+        @apply scale-x-100;
+      }
+    }
+  </style>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+
+<body class="font-sans bg-white text-gray-800">
+  <!-- Announcement Bar -->
+  <div class="bg-gradient-to-r from-primary via-primary to-primary-dark text-white py-2.5 text-sm font-medium relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="10" cy="10" r="1.5" fill="white"></circle>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dots)"></rect>
+      </svg>
+    </div>
+    <div class="container mx-auto px-4 flex items-center justify-center">
+      <div class="flex items-center space-x-1 md:space-x-3">
+        <div class="flex items-center">
+          <i class="fas fa-truck-fast mr-2 text-white/80"></i>
+          <span>Free shipping on orders over ₹750</span>
+        </div>
+        <span class="hidden md:inline-block">|</span>
+        <div class="flex items-center">
+          <i class="fas fa-tag mr-2 text-white/80"></i>
+          <span class="font-semibold">Use code <span class="bg-white/20 px-1.5 py-0.5 rounded text-white">RYZO10</span> for 10% off</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-white border-b border-gray-100">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-18 md:h-20">
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-button" class="md:hidden flex items-center text-gray-700 hover:text-primary transition-colors focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <!-- Logo -->
+        <a href="/" class="flex items-center">
+          <div class="relative">
+            <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dark">RYZO BAGS</span>
+            <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary-dark"></span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex space-x-2">
+          <a href="/user/home" class="nav-link nav-link-active">Home</a>
+          <a href="/user/shop" class="nav-link">Shop</a>
+          <a href="/user/categories" class="nav-link">Categories</a>
+          <a href="/user/contact" class="nav-link">Contact</a>
+        </nav>
+
+        <!-- Search, Cart, Account -->
+        <div class="flex items-center space-x-4">
+          <!-- Search Button -->
+          <button class="text-gray-700 hover:text-primary transition-colors">
+            <div class="p-2 rounded-full hover:bg-gray-50 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </button>
+          
+          <!-- Cart -->
+          <a href="/cart" class="text-gray-700 hover:text-primary transition-colors relative group">
+            <div class="p-2 rounded-full group-hover:bg-gray-50 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <span class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
+          </a>
+          
+          <!-- Account -->
+          <a href="/user/profile" class="text-gray-700 hover:text-primary transition-colors">
+            <div class="p-2 rounded-full hover:bg-gray-50 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          </a>
+          
+          <!-- Logout Button -->
+          <a href="/user/logout">
+            <button class="bg-white border border-primary text-primary hover:bg-primary hover:text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-300">
+              Log Out
+            </button>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-100">
+      <div class="container mx-auto px-4 py-2">
+        <div class="relative mb-4 mt-2">
+          <input type="text" placeholder="Search products..." class="w-full py-2 pl-10 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <div class="absolute inset-y-0 left-0 flex items-center pl-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+        <div class="space-y-0 divide-y divide-gray-100">
+          <a href="/" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Home</a>
+          <a href="/shop" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Shop</a>
+          <a href="/categories" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Categories</a>
+          <a href="/contact" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Contact</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Add this script at the end of your body tag -->
+  <script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  </script>
+</body>
+</html>

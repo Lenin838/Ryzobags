@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RYZO BAGS - OTP Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+    <style>
+        .brand-font { font-family: 'Permanent Marker', cursive; color: black; }
+        .otp-input:focus { outline: none; border-color: #3b82f6; }
+        .error { color: red; font-size: 0.875rem; }
+        #toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1000; }
+        .toast { background: #333; color: white; padding: 10px 20px; border-radius: 5px; margin-bottom: 10px; opacity: 0.9; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-[#a0d8d8] p-4">
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden max-w-3xl w-full p-8">
+        <div class="text-center">
+            <h1 class="brand-font text-3xl">RYZO BAGS</h1>
+            <h2 class="text-xl font-semibold mt-4">OTP Verification</h2>
+            <p class="text-gray-600 mt-2">Enter the OTP sent to <strong>ryzobags@gmail.com</strong></p>
+        </div>
+        
+        <div id="toast-container"></div>
+        <form id="otpForm" class="mt-6">
+            <div class="flex justify-center gap-3" id="otpContainer">
+                <!-- OTP inputs with error spans -->
+                <div class="text-center">
+                    <input type="text" class="otp-input w-12 h-12 text-center border border-gray-300 rounded-md text-lg" maxlength="1" data-index="0">
+                    <p class="error hidden">Required</p>
+                </div>
+                <div class="text-center">
+                    <input type="text" class="otp-input w-12 h-12 text-center border border-gray-300 rounded-md text-lg" maxlength="1" data-index="1">
+                    <p class="error hidden">Required</p>
+                </div>
+                <div class="text-center">
+                    <input type="text" class="otp-input w-12 h-12 text-center border border-gray-300 rounded-md text-lg" maxlength="1" data-index="2">
+                    <p class="error hidden">Required</p>
+                </div>
+                <div class="text-center">
+                    <input type="text" class="otp-input w-12 h-12 text-center border border-gray-300 rounded-md text-lg" maxlength="1" data-index="3">
+                    <p class="error hidden">Required</p>
+                </div>
+                <div class="text-center">
+                    <input type="text" class="otp-input w-12 h-12 text-center border border-gray-300 rounded-md text-lg" maxlength="1" data-index="4">
+                    <p class="error hidden">Required</p>
+                </div>
+                <div class="text-center">
+                    <input type="text" class="otp-input w-12 h-12 text-center border border-gray-300 rounded-md text-lg" maxlength="1" data-index="5">
+                    <p class="error hidden">Required</p>
+                </div>
+            </div>
+            
+            <p id="timer" class="text-center text-gray-600 mt-4">OTP expires in: <span id="countdown">01:00</span></p>
+            <input type="hidden" id="otpHidden" name="otp">
+            
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-md mt-6 text-lg font-semibold">
+                Verify OTP
+            </button>
+            <button type="button" id="resendOtp" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-md mt-4 text-lg font-semibold" disabled>
+                Resend OTP
+            </button>
+        </form>
+    </div>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputs = document.querySelectorAll(".otp-input");
+        const form = document.getElementById("otpForm");
+        const countdownElement = document.getElementById("countdown");
+        const submitBtn = form.querySelector("button[type=submit]");
+        const resendBtn = document.getElementById("resendOtp");
+        const toastContainer = document.getElementById("toast-container");
+        let timer = 60;
+        let countdownInterval;
+
+        // Enhanced OTP input handling
+        inputs.forEach((input, index) => {
+            // Handle input event (when typing)
+            input.addEventListener('input', function(e) {
+                const value = this.value;
+                if (value.length === 1) {
+                    // Move to next input if available
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        // Last input - blur to show keyboard hides
+                        this.blur();
+                    }
+                }
+                
+                // Hide error if present
+                this.nextElementSibling.classList.add("hidden");
+            });
+            
+            // Handle keydown for backspace
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value === '') {
+                    // Move to previous input if available
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+            
+            // Handle paste event
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pasteData = e.clipboardData.getData('text/plain');
+                const pasteDigits = pasteData.replace(/\D/g, '').split('');
+                
+                // Fill inputs with pasted data
+                pasteDigits.forEach((digit, i) => {
+                    if (index + i < inputs.length) {
+                        inputs[index + i].value = digit;
+                        inputs[index + i].nextElementSibling.classList.add("hidden");
+                    }
+                });
+                
+                // Focus last filled input
+                const lastFilledIndex = Math.min(index + pasteDigits.length - 1, inputs.length - 1);
+                inputs[lastFilledIndex].focus();
+            });
+        });
+
+        function showToast(message, type) {
+            const toast = document.createElement("div");
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function startTimer() {
+            countdownElement.innerText = "01:00";
+            timer = 60;
+            resendBtn.disabled = true;
+            countdownInterval = setInterval(() => {
+                timer--;
+                let minutes = Math.floor(timer / 60);
+                let seconds = timer % 60;
+                countdownElement.innerText = `0${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+                if (timer <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.innerText = "Expired";
+                    submitBtn.disabled = true;
+                    resendBtn.disabled = false;
+                }
+            }, 1000);
+        }
+        startTimer();
+
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+            let isValid = true;
+            let otpValue = "";
+            inputs.forEach((input, index) => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.nextElementSibling.classList.remove("hidden");
+                } else {
+                    input.nextElementSibling.classList.add("hidden");
+                    otpValue += input.value;
+                }
+            });
+            if (!isValid) return;
+            fetch("/user/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ otp: otpValue })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.message, "success");
+                setTimeout(() => window.location.href = "/user/login", 500);
+            })
+            .catch(error => showToast("Something went wrong!", "error"));
+        });
+
+        resendBtn.addEventListener("click", function() {
+            fetch("/user/resend-otp", { method: "POST" })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.message, "success");
+                startTimer();
+                // Clear all inputs and focus first one
+                inputs.forEach(input => {
+                    input.value = '';
+                    input.nextElementSibling.classList.add("hidden");
+                });
+                inputs[0].focus();
+            })
+            .catch(error => showToast("Something went wrong!", "error"));
+        });
+        
+        // Focus first input on load
+        inputs[0].focus();
+    });
+    </script>
+</body>
+</html>

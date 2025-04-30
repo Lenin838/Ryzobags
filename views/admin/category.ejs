@@ -1,0 +1,75 @@
+<div class="p-6 bg-gray-50 rounded shadow-lg">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Category Management</h1>
+
+    <form method="GET" action="/admin/categories" class="flex gap-3 mb-6">
+        <input type="text" name="search" value="<%= searchQuery %>" 
+               placeholder="Search category..." 
+               class="border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+            Search
+        </button>
+        <% if (searchQuery) { %>
+        <a href="/admin/categories" 
+           class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+            Clear
+        </a>
+        <% } %>
+    </form>
+
+    <a href="/admin/categories/add" 
+       class="bg-green-500 text-white px-5 py-3 rounded-lg inline-block mb-6 hover:bg-green-600 transition shadow-md">
+       + Add Category
+    </a>
+
+    <table class="w-full border border-gray-200 bg-white rounded-lg shadow-md">
+        <thead>
+            <tr class="bg-gray-200">
+                <th class="p-4 border-b">Index</th>
+                <th class="p-4 border-b">Name</th>
+                <th class="p-4 border-b">Status</th>
+                <th class="p-4 border-b">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% categories.forEach((category, index) => { %>
+            <tr class="text-center border-b hover:bg-gray-100 transition">
+                <td class="p-4"><%= index + 1 %></td>
+                <td class="p-4"><%= category.name %></td>
+                <td class="p-4">
+                    <% if (category.isActive) { %>
+                    <span class="text-green-600 font-semibold">Listed</span>
+                    <% } else { %>
+                    <span class="text-red-600 font-semibold">Unlisted</span>
+                    <% } %>
+                </td>
+                <td class="p-4 flex justify-center space-x-3">
+                    <a href="/admin/categories/edit/<%= category._id %>" 
+                       class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition">
+                       Edit
+                    </a>
+                    <% if (category.isActive) { %>
+                    <a href="/admin/categories/unlist/<%= category._id %>" 
+                       class="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition">
+                       Unlist
+                    </a>
+                    <% } else { %>
+                    <a href="/admin/categories/list/<%= category._id %>" 
+                       class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition">
+                       List
+                    </a>
+                    <% } %>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <div class="mt-6 flex justify-center gap-2">
+        <% for (let i = 1; i <= totalPages; i++) { %>
+        <a href="/admin/categories?page=<%= i %>&search=<%= searchQuery %>" 
+           class="px-4 py-2 border border-gray-300 rounded-lg <%= currentPage === i ? 'bg-blue-500 text-white' : 'bg-white text-gray-800 hover:bg-blue-100' %> transition">
+            <%= i %>
+        </a>
+        <% } %>
+    </div>
+</div>
