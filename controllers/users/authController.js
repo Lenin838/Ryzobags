@@ -13,18 +13,21 @@ const {upload, saveUserImage} = require('../../middlewares/uploads');
 const generateOtpCode=()=>Math.floor(100000 +Math.random() * 900000).toString()
 
 const userController = {
-    loadRegister: async (req, res) => {
+     loadRegister: async (req, res) => {
         try {
             res.render('user/signup');
         } catch (error) {
-            console.error(error.message);
+            console.error('Load register error:', error.message);
+            res.status(500).send('Server Error');
         }
     },
 
-    verifyRegister: async (req, res) => {
+     verifyRegister: async (req, res) => {
         try {
             const { fullname, email, phone, password, confirmPassword } = req.body;
             let errors = {};
+
+            // Validation
             if (!fullname || fullname.trim() === "") {
                 errors.fullname = "Full Name is required.";
             } else if (!/^[A-Za-z\s]+$/.test(fullname)) {
@@ -61,25 +64,53 @@ const userController = {
                 return res.status(400).json({ errors });
             }
 
-            const existingUser = await User.findOne({ email });
-            if (existingUser) {
-                return res.status(400).json({ message: "User already exists. Please log in." });
+            // Check for existing user with better error handling
+            try {
+                const existingUser = await User.findOne({ email });
+                if (existingUser) {
+                    return res.status(400).json({ 
+                        message: "User already exists. Please log in." 
+                    });
+                }
+            } catch (dbError) {
+                console.error('Database error checking existing user:', dbError);
+                return res.status(500).json({ 
+                    message: "Database error. Please try again." 
+                });
             }
 
+            // Hash password
             const hashedPassword = await bcrypt.hash(password, 10);
+            
+            // Store in session
             req.session.fullname = fullname;
             req.session.email = email;
             req.session.phone = phone;
             req.session.password = hashedPassword;
 
+            // Generate and store OTP
             const otpCode = generateOtpCode();
             req.session.otp = otpCode;
-            req.session.otpExpire = Date.now() + 5 * 60 * 1000;
+            req.session.otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
 
             console.log("Generated OTP:", otpCode);
-            console.log("Session Data:", req.session);
+            console.log("Session Data:", {
+                fullname: req.session.fullname,
+                email: req.session.email,
+                phone: req.session.phone,
+                otpExpire: new Date(req.session.otpExpire)
+            });
 
-            await sendOtpEmail(email, otpCode);
+            // Send OTP email
+            try {
+                await sendOtpEmail(email, otpCode);
+                console.log("OTP email sent successfully");
+            } catch (emailError) {
+                console.error('Email sending error:', emailError);
+                return res.status(500).json({ 
+                    message: "Failed to send OTP email. Please try again." 
+                });
+            }
 
             return res.status(200).json({ 
                 message: "Signup successful! OTP sent to your email.", 
@@ -87,8 +118,168 @@ const userController = {
             });
 
         } catch (error) {
-            console.error(error.message);
-            res.status(500).json({ message: "Server error" });
+            console.error('Verify register error:', error.message);
+            res.status(500).json({ message: "Server error: " + error.message });
+        }
+    },
+
+
+    loadOtpPage: async (req, res) => {
+        try {
+            // Check if session data exists
+            if (!req.session.email) {
+                return res.redirect('/user/signup');
+            }
+            res.render("user/otp");
+        } catch (error) {
+            console.log('Load OTP page error:', error.message);
+            res.status(500).send('Server Error');
+        }
+    },
+
+    verifyOtp: async (req, res) => {
+        try {
+            console.log("=== OTP VERIFICATION DEBUG ===");
+            console.log("Stored OTP:", req.session.otp);
+            console.log("Stored Email:", req.session.email);
+            console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
+            console.log("Session fullname:", req.session.fullname);
+            console.log("Session phone:", req.session.phone);
+
+            const { otp } = req.body;
+
+            // Check if session data exists
+            if (!req.session.otp || !req.session.email || !req.session.fullname || !req.session.password) {
+                console.log("Missing session data");
+                return res.status(400).json({ 
+                    message: "Session expired. Please restart the signup process.",
+                    success: false 
+                });
+            }
+
+            // Check OTP expiry
+            if (Date.now() > req.session.otpExpire) {
+                console.log("OTP expired");
+                return res.status(400).json({ 
+                    message: "OTP has expired. Please request a new one.",
+                    success: false 
+                });
+            }
+
+            // Verify OTP
+            if (otp !== req.session.otp) {
+                console.log("Invalid OTP provided");
+                return res.status(400).json({ 
+                    message: "Invalid OTP. Please try again.",
+                    success: false 
+                });
+            }
+
+            // Create new user with explicit field mapping
+            const userData = {
+                fullname: req.session.fullname,
+                email: req.session.email,
+                phoneNumber: req.session.phone, // Make sure this matches your schema
+                password: req.session.password,
+                isVerified: true // Set as verified since OTP is confirmed
+            };
+
+            console.log("Creating user with data:", userData);
+
+            try {
+                const user = new User(userData);
+                const savedUser = await user.save();
+                console.log("User saved successfully:", savedUser._id);
+
+                // Clear session data
+                req.session.otp = null;
+                req.session.email = null;
+                req.session.fullname = null;
+                req.session.phone = null;
+                req.session.password = null;
+                req.session.otpExpire = null;
+
+                res.status(200).json({ 
+                    message: "Email verified. Signup successful!",
+                    success: true 
+                });
+
+            } catch (saveError) {
+                console.error("Database save error:", saveError);
+                
+                // Handle specific MongoDB errors
+                if (saveError.code === 11000) {
+                    // Duplicate key error
+                    const field = Object.keys(saveError.keyPattern)[0];
+                    return res.status(400).json({
+                        message: `${field} already exists. Please use a different ${field}.`,
+                        success: false
+                    });
+                }
+                
+                // Handle validation errors
+                if (saveError.name === 'ValidationError') {
+                    const validationErrors = Object.values(saveError.errors).map(err => err.message);
+                    return res.status(400).json({
+                        message: "Validation error: " + validationErrors.join(', '),
+                        success: false
+                    });
+                }
+
+                return res.status(500).json({ 
+                    message: "Failed to create user account. Please try again.",
+                    success: false 
+                });
+            }
+
+        } catch (error) {
+            console.error('Verify OTP error:', error.message);
+            res.status(500).json({ 
+                message: "Server error: " + error.message,
+                success: false 
+            });
+        }
+    },
+
+    resendOtp: async (req, res) => {
+        try {
+            console.log("Resend OTP requested. Session email:", req.session.email);
+
+            if (!req.session.email) {
+                return res.status(400).json({ 
+                    message: "Session expired. Please restart the signup process.",
+                    success: false 
+                });
+            }
+
+            const newOtp = generateOtpCode(); 
+            req.session.otp = newOtp;
+            req.session.otpExpire = Date.now() + 5 * 60 * 1000; 
+
+            console.log("New OTP generated:", newOtp);
+
+            try {
+                await sendOtpEmail(req.session.email, newOtp);
+                console.log("New OTP sent to:", req.session.email);
+
+                return res.status(200).json({ 
+                    message: "A new OTP has been sent to your email.",
+                    success: true 
+                });
+            } catch (emailError) {
+                console.error("Error sending new OTP:", emailError);
+                return res.status(500).json({ 
+                    message: "Failed to send new OTP. Please try again.",
+                    success: false 
+                });
+            }
+
+        } catch (error) {
+            console.error("Error resending OTP:", error.message);
+            res.status(500).json({ 
+                message: "Server error. Please try again later.",
+                success: false 
+            });
         }
     },
 
@@ -111,6 +302,7 @@ const userController = {
                 return res.status(400).json({ errors });
             }
 
+            // Find user and check if they exist
             const user = await User.findOne({ email });
             if (!user) {
                 return res.status(400).json({ 
@@ -118,6 +310,28 @@ const userController = {
                 });
             }
 
+            // Check if user is active
+            if (!user.isActive) {
+                return res.status(400).json({ 
+                    message: "Your account has been deactivated. Please contact support." 
+                });
+            }
+
+            // Check if user is verified
+            if (!user.isVerified) {
+                return res.status(400).json({ 
+                    message: "Please verify your email before logging in." 
+                });
+            }
+
+            // Check if user has a password (in case they registered with Google)
+            if (!user.password) {
+                return res.status(400).json({ 
+                    message: "Please login using Google or reset your password." 
+                });
+            }
+
+            // Verify password
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
                 return res.status(400).json({ 
@@ -125,146 +339,54 @@ const userController = {
                 });
             }
 
+            // Create session
             req.session.user = {
                 _id: user._id,
                 email: user.email,
-                fullname: user.fullname
+                fullname: user.fullname,
+                phoneNumber: user.phoneNumber,
+                profileImage: user.profileImage
             };
+
             return res.status(200).json({ 
                 message: "Login successful!", 
                 redirecturl: "/user/home" 
             });
 
         } catch (error) {
-            console.error(error.message);
-            res.status(500).json({ message: "Server error" });
-        }
-    },
-    
-    loadOtpPage:async (req,res) => {
-        try {
-            res.render("user/otp")
-        } catch (error) {
-            console.log(error.message)
+            console.error('Login error:', error.message);
+            res.status(500).json({ message: "Server error: " + error.message });
         }
     },
 
-    verifyOtp: async (req, res) => {
-        try {
-            console.log("Stored OTP:", req.session.otp);
-            console.log("Stored Email:", req.session.email);
-            console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
-    
-            const { otp } = req.body;
-    
-            if (!req.session.otp || !req.session.email) {
-                return res.status(400).json({ 
-                    message: "OTP session expired. Please request a new one.",
-                    success: false 
-                });
-            }
-    
-            if (Date.now() > req.session.otpExpire) {
-                return res.status(400).json({ 
-                    message: "OTP has expired. Please request a new one.",
-                    success: false 
-                });
-            }
-    
-            if (otp !== req.session.otp) {
-                return res.status(400).json({ 
-                    message: "Invalid OTP. Please try again.",
-                    success: false 
-                });
-            }
-    
-            const user = new User({
-                fullname: req.session.fullname, 
-                email: req.session.email,
-                phoneNumber: req.session.phone,  
-                password: req.session.password,  
-            });
-    
-            await user.save();
-    
-            req.session.otp = null;
-            req.session.email = null;
-            req.session.otpExpire = null;
-    
-            res.status(200).json({ 
-                message: "Email verified. Signup successful!",
-                success: true 
-            });
-    
-        } catch (error) {
-            console.error(error.message);
-            res.status(500).json({ 
-                message: "Server error",
-                success: false 
-            });
-        }
-    },
-    resendOtp: async (req, res) => {
-        try {
-            console.log("Resend OTP requested. Session email:", req.session.email);
-    
-            if (!req.session.email) {
-                return res.status(400).json({ 
-                    message: "Session expired. Please restart the signup process.",
-                    success: false 
-                });
-            }
-    
-            const newOtp = generateOtpCode(); 
-            req.session.otp = newOtp;
-            req.session.otpExpire = Date.now() + 5 * 60 * 1000; 
-    
-            console.log("New OTP generated:", newOtp);
-    
-            await sendOtpEmail(req.session.email, newOtp);
-            console.log("New OTP sent to:", req.session.email);
-    
-            return res.status(200).json({ 
-                message: "A new OTP has been sent to your email.",
-                success: true 
-            });
-    
-        } catch (error) {
-            console.error("Error resending OTP:", error.message);
-            res.status(500).json({ 
-                message: "Server error. Please try again later.",
-                success: false 
-            });
-        }
-    },
-    loadLogin:async (req,res) => {
-        try {
-            res.render('user/login')
-        } catch (error) {
-            console.log(error.message);
-        }
-    },
 
+    loadLogin: async (req, res) => {
+        try {
+            res.render('user/login');
+        } catch (error) {
+            console.log('Load login error:', error.message);
+            res.status(500).send('Server Error');
+        }
+    },
 
     loadHomepage: async (req, res) => {
         try {
             const products = await Product.find().limit(4);
-            const categories = await Catogory.find(); 
+            const categories = await Catogory.find(); // Fixed typo
             const brands = await Brand.find();
-            console.log("ppp",products)
+            
+            console.log("Products loaded:", products.length);
+            
             res.render('user/home', { 
                 products, 
                 categories, 
-                brands, 
-             
-                
+                brands
             });
         } catch (error) {
             console.error("Error loading homepage:", error.message);
             res.status(500).send("Internal Server Error");
         }
     },
-
     loadForgotPassword: async (req,res) => {
         try {
             res.render("user/forgotPassword");
@@ -280,20 +402,28 @@ const userController = {
             if (!email) {
                 return res.status(400).json({ message: "Email is required" });
             }
-    
+
             const user = await User.findOne({ email });
             if (!user) {
                 return res.status(400).json({ message: "User not found" });
             }
-    
+
+            // Generate a secure token
             const resetToken = crypto.randomBytes(32).toString("hex");
-    
+
+            // Save token to database with proper field names
             user.resetToken = resetToken;
-            user.resetTokenExpire = Date.now() + 3600000; 
+            user.resetTokenExpire = Date.now() + 3600000; // 1 hour from now
             await user.save();
-    
-            const resetLink = `http://localhost:4000/user/reset-password/${resetToken}`;
-    
+
+            console.log("Generated reset token for", email, ":", resetToken);
+            console.log("Token expiry:", new Date(user.resetTokenExpire));
+
+            // Create reset link - FIXED: Make sure the route matches your router
+            const resetLink = `${req.protocol}://${req.get('host')}/user/reset-password/${resetToken}`;
+            console.log("Reset link:", resetLink);
+
+            // Create transporter - FIXED: Changed from createTransporter to createTransport
             const transporter = nodemailer.createTransport({
                 service: "gmail",
                 auth: {
@@ -301,106 +431,296 @@ const userController = {
                     pass: process.env.ADMIN_EMAIL_APP_PASS
                 }
             });
-    
+
+            // Send email
             await transporter.sendMail({
                 from: process.env.ADMIN_EMAIL,
                 to: user.email,
-                subject: "Password Reset Request",
-                html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 1 hour.</p>`
+                subject: "Password Reset Request - RYZO Bags",
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h1 style="color: #4F46E5;">RYZO Bags</h1>
+                        </div>
+                        
+                        <h2 style="color: #333;">Password Reset Request</h2>
+                        <p>Hello,</p>
+                        <p>You requested a password reset for your RYZO Bags account associated with <strong>${email}</strong>.</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetLink}" 
+                               style="background-color: #4F46E5; 
+                                      color: white; 
+                                      padding: 15px 30px; 
+                                      text-decoration: none; 
+                                      border-radius: 8px; 
+                                      display: inline-block; 
+                                      font-weight: bold;">
+                                Reset Your Password
+                            </a>
+                        </div>
+                        
+                        <p>Or copy and paste this link in your browser:</p>
+                        <p style="word-break: break-all; 
+                                  background-color: #f5f5f5; 
+                                  padding: 10px; 
+                                  border-radius: 4px; 
+                                  font-family: monospace;">
+                            ${resetLink}
+                        </p>
+                        
+                        <div style="margin-top: 30px; 
+                                   padding: 15px; 
+                                   background-color: #fff3cd; 
+                                   border: 1px solid #ffeaa7; 
+                                   border-radius: 6px;">
+                            <p style="margin: 0; color: #856404;">
+                                <strong>⚠️ Important:</strong> This link will expire in 1 hour for security reasons.
+                            </p>
+                        </div>
+                        
+                        <p style="margin-top: 30px; color: #666;">
+                            If you didn't request this password reset, please ignore this email. 
+                            Your password will remain unchanged.
+                        </p>
+                        
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                        <p style="color: #999; font-size: 14px; text-align: center;">
+                            © 2025 RYZO Bags. All rights reserved.
+                        </p>
+                    </div>
+                `
             });
-    
-            res.status(200).json({ message: "Password reset link is sent to your email" });
+
+            console.log("Password reset email sent successfully to:", email);
+
+            res.status(200).json({ 
+                message: "Password reset link has been sent to your email",
+                success: true 
+            });
+
         } catch (error) {
-            console.log(error.message);
-            res.status(500).json({ message: "Server error" });
+            console.error("Forgot password error:", error);
+            
+            // If there was an error sending email, clean up the token
+            try {
+                if (req.body.email) {
+                    await User.findOneAndUpdate(
+                        { email: req.body.email },
+                        { 
+                            $unset: { 
+                                resetToken: 1, 
+                                resetTokenExpire: 1 
+                            } 
+                        }
+                    );
+                }
+            } catch (cleanupError) {
+                console.error("Error cleaning up token:", cleanupError);
+            }
+            
+            res.status(500).json({ 
+                message: "Failed to send reset email. Please try again.",
+                success: false 
+            });
         }
     },
     
-
     loadResetPassword: async (req, res) => {
         try {
             const token = req.params.token;
+            console.log("Loading reset password page for token:", token);
             
-            if (!req.session.resetToken || req.session.resetToken !== token || 
-                Date.now() > req.session.resetTokenExpire) {
+            // Find user with valid reset token
+            const user = await User.findOne({
+                resetToken: token,
+                resetTokenExpire: { $gt: Date.now() }
+            });
+            
+            console.log("User found with token:", user ? "Yes" : "No");
+            console.log("Current time:", Date.now());
+            if (user) {
+                console.log("Token expiry:", user.resetTokenExpire);
+            }
+            
+            if (!user) {
+                console.log("Token is invalid or expired");
                 return res.render('user/resetPassword', {
-                    errors: { token: 'Invalid or expired token' },
-                    email: "",
+                    errors: { token: 'Invalid or expired token. Please request a new password reset.' },
                     token: "", 
-                    success: null
+                    success: null,
+                    tokenValid: false
                 });
             }
             
-           
+            // Token is valid, render the form
+            console.log("Token is valid, rendering form");
             res.render('user/resetPassword', {
                 errors: {},
                 token: token, 
-                success: null
+                success: null,
+                tokenValid: true
             });
         } catch (error) {
-            console.log(error.message);
+            console.error("Load reset password error:", error.message);
             res.status(500).render('user/resetPassword', {
-                errors: { server: 'Server error' },
-                email: "",
+                errors: { server: 'Server error occurred. Please try again.' },
                 token: "",
-                success: null
+                success: null,
+                tokenValid: false
             });
         }
     },
+   
    
     resetPassword: async (req, res) => {
         try {
             const { token } = req.params;
             const { password, confirmPassword } = req.body;
-    
+
+            console.log("Reset password attempt for token:", token);
+            console.log("Current time:", Date.now());
+
+            // Find user with valid reset token
             const user = await User.findOne({
                 resetToken: token,
                 resetTokenExpire: { $gt: Date.now() }
             });
-    
+
+            console.log("User found:", user ? "Yes" : "No");
+            if (user) {
+                console.log("Token expiry:", user.resetTokenExpire);
+                console.log("Time remaining:", user.resetTokenExpire - Date.now(), "ms");
+            }
+
             if (!user) {
+                console.log("No user found with valid token");
                 return res.status(400).json({
                     success: false,
-                    message: "Invalid or expired token"
+                    message: "Invalid or expired token. Please request a new password reset."
                 });
             }
-    
+
+            // Validation
+            let errors = {};
+            
             if (!password || password.length < 8) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Password must be at least 8 characters"
-                });
+                errors.password = "Password must be at least 8 characters";
             }
-    
+            
+            if (!password.match(/[0-9]/)) {
+                errors.password = "Password must contain at least one number";
+            }
+            
+            if (!password.match(/[^a-zA-Z0-9]/)) {
+                errors.password = "Password must contain at least one special character";
+            }
+
             if (password !== confirmPassword) {
+                errors.confirmPassword = "Passwords do not match";
+            }
+
+            if (Object.keys(errors).length > 0) {
                 return res.status(400).json({
                     success: false,
-                    message: "Passwords do not match"
+                    errors: errors
                 });
             }
-    
+
+            // Update password and clear reset token
             user.password = await bcrypt.hash(password, 10);
             user.resetToken = undefined;
             user.resetTokenExpire = undefined;
             await user.save();
-    
+
+            console.log("Password reset successful for user:", user.email);
+
             return res.status(200).json({
                 success: true,
-                message: "Password reset successful!"
+                message: "Password reset successful! You can now login with your new password."
             });
-    
+
         } catch (error) {
-            console.error("🔥 Controller error:", error);
+            console.error("Reset password error:", error);
             return res.status(500).json({
                 success: false,
                 message: "Server error: " + error.message
             });
         }
-    },
-};
+    },googleCallback: async (req, res) => {
+    try {
+      // Extract user data from Google profile
+      const { id, emails, displayName, photos } = req.user;
+      const email = emails[0].value;
+      const fullname = displayName;
+      const profileImage = photos && photos[0] ? photos[0].value : null;
 
-    
-  
-    
+      // Check if user already exists
+      let user = await User.findOne({ 
+        $or: [
+          { email: email },
+          { googleId: id }
+        ]
+      });
+
+      if (user) {
+        // User exists, update Google ID if not set
+        if (!user.googleId) {
+          user.googleId = id;
+          user.isVerified = true; // Google users are automatically verified
+          if (profileImage && !user.profileImage) {
+            user.profileImage = profileImage;
+          }
+          await user.save();
+        }
+        
+        // Update last login or any other fields if needed
+        user.isActive = true;
+        await user.save();
+      } else {
+        // Create new user
+        user = new User({
+          email: email,
+          fullname: fullname,
+          googleId: id,
+          profileImage: profileImage,
+          isVerified: true, // Google users are automatically verified
+          isActive: true
+        });
+        await user.save();
+      }
+
+      // Store user data in session
+      req.session.user = {
+        _id: user._id,
+        email: user.email,
+        fullname: user.fullname,
+        profileImage: user.profileImage,
+        isVerified: user.isVerified,
+        googleId: user.googleId
+      };
+
+      console.log('Google user saved/updated successfully:', user.email);
+      res.redirect("/user/home");
+      
+    } catch (error) {
+      console.error('Error saving Google user:', error);
+      res.redirect("/user/login?error=auth_failed");
+    }
+  },
+
+  // Handle Google authentication failure
+  googleAuthFailure: (req, res) => {
+    console.log('Google authentication failed');
+    res.redirect("/user/login?error=google_auth_failed");
+  },
+
+  // Initialize Google authentication
+  initiateGoogleAuth: (req, res, next) => {
+    // This will be handled by passport middleware
+    // but we can add any pre-auth logic here if needed
+    next();
+  }
+};
 
 module.exports = userController;

@@ -16,7 +16,7 @@ app.use(express.urlencoded({extended:true}));
 app.use(session({
     secret: process.env.SESSION_SECRET || "fallback-secret", 
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: { secure: false }  
 }));
 
@@ -47,6 +47,10 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use((req, res, next) => {
+    console.log(`Requested: ${req.method} ${req.originalUrl}`);
+    next();
+  });
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
     next();

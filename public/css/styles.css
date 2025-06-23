@@ -1,0 +1,39 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.tab-pane {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.tab-pane.hidden {
+  display: none;
+}
+
+.fixed {
+  z-index: 1000;
+}
+
+.max-w-4xl {
+  max-width: 896px;
+}
+
+@media (max-width: 640px) {
+  .ml-0 {
+    margin-left: 0;
+  }
+  #sidebar {
+    display: none;
+  }
+  #sidebar:not(.hidden) {
+    display: block;
+    z-index: 50;
+  }
+}
+
+@media (min-width: 640px) {
+  .ml-64 {
+    margin-left: 16rem; /* 256px */
+  }
+}

@@ -119,7 +119,7 @@
           <a href="/user/contact" class="nav-link">Contact</a>
         </nav>
 
-        <!-- Search, Cart, Account -->
+        <!-- Search, Wishlist, Cart, Account -->
         <div class="flex items-center space-x-4">
           <!-- Search Button -->
           <button class="text-gray-700 hover:text-primary transition-colors">
@@ -130,14 +130,22 @@
             </div>
           </button>
           
+          <!-- Wishlist -->
+          <a href="/user/wishlist" class="text-gray-700 hover:text-primary transition-colors relative group">
+            <div class="p-2 rounded-full group-hover:bg-gray-50 transition-all">
+              <i class="fa-regular fa-heart h-5 w-5"></i>
+            </div>
+            <span id="wishlist-count" class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
+          </a>
+
           <!-- Cart -->
-          <a href="/cart" class="text-gray-700 hover:text-primary transition-colors relative group">
+          <a href="/user/cart" class="text-gray-700 hover:text-primary transition-colors relative group">
             <div class="p-2 rounded-full group-hover:bg-gray-50 transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
-            <span class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
+            <span id="cart-count" class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
           </a>
           
           <!-- Account -->
@@ -171,15 +179,17 @@
           </div>
         </div>
         <div class="space-y-0 divide-y divide-gray-100">
-          <a href="/" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Home</a>
-          <a href="/shop" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Shop</a>
-          <a href="/categories" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Categories</a>
-          <a href="/contact" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Contact</a>
+          <a href="/user/home" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Home</a>
+          <a href="/user/shop" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Shop</a>
+          <a href="/user/categories" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Categories</a>
+          <a href="/user/contact" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Contact</a>
+          <a href="/user/cart" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Cart (<span id="mobile-cart-count">0</span>)</a>
+          <a href="/user/wishlist" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Wishlist (<span id="mobile-wishlist-count">0</span>)</a>
         </div>
       </div>
     </div>
-  </header>
 
+  <!-- Add this script at the end of your body tag -->
   <!-- Add this script at the end of your body tag -->
   <script>
     // Mobile menu toggle
@@ -189,6 +199,107 @@
     mobileMenuButton.addEventListener('click', () => {
       mobileMenu.classList.toggle('hidden');
     });
+
+    // Function to fetch and update wishlist count
+    async function fetchWishlistCount() {
+      try {
+        const response = await fetch('/user/wishlist/count', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include' // Important for session cookies
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const count = result.count || 0;
+          // Update desktop wishlist count
+          const wishlistCountElement = document.getElementById('wishlist-count');
+          if (wishlistCountElement) {
+            wishlistCountElement.textContent = count;
+            // Show/hide count badge based on count
+            wishlistCountElement.style.display = count > 0 ? 'flex' : 'none';
+          }
+          // Update mobile wishlist count
+          const mobileWishlistCountElement = document.getElementById('mobile-wishlist-count');
+          if (mobileWishlistCountElement) {
+            mobileWishlistCountElement.textContent = count;
+          }
+        } else {
+          console.error('Wishlist count error:', result.message);
+        }
+      } catch (error) {
+        console.error('Error fetching wishlist count:', error);
+      }
+    }
+
+    // Function to fetch and update cart count
+    async function fetchCartCount() {
+      try {
+        const response = await fetch('/user/cart/count', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include' // Important for session cookies
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const count = result.count || 0;
+          // Update desktop cart count
+          const cartCountElement = document.getElementById('cart-count');
+          if (cartCountElement) {
+            cartCountElement.textContent = count;
+            // Show/hide count badge based on count
+            cartCountElement.style.display = count > 0 ? 'flex' : 'none';
+          }
+          // Update mobile cart count if you have one
+          const mobileCartCountElement = document.getElementById('mobile-cart-count');
+          if (mobileCartCountElement) {
+            mobileCartCountElement.textContent = count;
+          }
+        } else {
+          console.error('Cart count error:', result.message);
+        }
+      } catch (error) {
+        console.error('Error fetching cart count:', error);
+      }
+    }
+
+    // Function to update both counts
+    async function updateCounts() {
+      await Promise.all([
+        fetchWishlistCount(),
+        fetchCartCount()
+      ]);
+    }
+
+    // Fetch counts when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      updateCounts();
+    });
+
+    // Optional: Periodically refresh counts (every 30 seconds)
+    // Uncomment if you want auto-refresh
+    // setInterval(updateCounts, 30000);
+
+    // Function to call after adding/removing items (for other pages)
+    window.refreshCounts = updateCounts;
+
+    // Listen for storage events (if you want to sync across tabs)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'cartUpdated' || e.key === 'wishlistUpdated') {
+        updateCounts();
+      }
+    });
+
+    // Custom event listeners for cart/wishlist updates
+    document.addEventListener('cartUpdated', updateCounts);
+    document.addEventListener('wishlistUpdated', updateCounts);
   </script>
 </body>
 </html>

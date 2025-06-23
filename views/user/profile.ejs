@@ -1,308 +1,420 @@
+<%- include("partials/uHeader") %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Profile Dashboard</title>
+  <title>User Profile</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#487379',
-            secondary: '#ADD8E6',
-            accent: '#577194',
-            hover: '#506955',
-            lightbg: '#cce3e6',
-            breadcrumb: '#eee2e9'
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    .nav-link {
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(123, 131, 112, 0.3), 0 4px 20px rgba(0, 191, 255, 0.2);
-    }
-    
-    .nav-link:hover {
-      box-shadow: 0 4px 15px rgba(173, 255, 47, 0.5), 0 6px 25px rgba(0, 191, 255, 0.4);
-    }
-  </style>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Cropper.js CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 </head>
 <body class="bg-gray-50">
-  <!-- Breadcrumb -->
-  <div class="bg-breadcrumb py-4">
-    <div class="container mx-auto px-4">
-      <div class="flex items-center text-base text-gray-800">
-        <a href="#" class="text-blue-600 hover:text-blue-800 relative">Home</a>
-        <span class="mx-2 text-gray-400">/</span>
-        <span>Profile</span>
-        <span class="mx-2 text-gray-400">/</span>
-        <span>Account</span>
+  <div class="flex min-h-screen">
+    <%- include("partials/userSidebar", { activeTab: activeTab }) %>
+    <div class="flex-1 ml-0 sm:ml-64 pt-16">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <% if (success && success.length) { %>
+          <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+            <p><%= success %></p>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: '<%= success %>',
+                confirmButtonColor: '#059669'
+              });
+            });
+          </script>
+        <% } %>
+        <% if (error && error.length) { %>
+          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+            <p><%= error %></p>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<%= error %>',
+                confirmButtonColor: '#dc2626'
+              });
+            });
+          </script>
+        <% } %>
+
+        <!-- Profile Tab -->
+        <% if (activeTab === 'profile') { %>
+          <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h5 class="text-lg font-semibold mb-4">Profile Details</h5>
+            <div class="flex items-center mb-6">
+              <div class="relative">
+                <img src="<%= user.profileImage || '/images/default-profile.png' %>" alt="Profile" class="w-24 h-24 rounded-full mr-4 object-cover" id="profileImage">
+                <button onclick="document.getElementById('imageInput').click()" class="absolute bottom-0 right-0 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full hover:bg-indigo-700">Change</button>
+                <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="openCropperModal(event)">
+              </div>
+              <div>
+                <p><strong>Name:</strong> <%= user.fullname %></p>
+                <p><strong>Email:</strong> <%= user.email %></p>
+                <p><strong>Phone:</strong> <%= user.phoneNumber || 'Not set' %></p>
+              </div>
+            </div>
+
+            <!-- Addresses Section -->
+            <h6 class="text-md font-semibold mb-3">Your Addresses</h6>
+            <% if (addresses.length > 0) { %>
+              <div class="space-y-4">
+                <% addresses.forEach((address, index) => { %>
+                  <div class="border rounded-lg p-4 <%= address.isDefault ? 'border-green-500 bg-green-50' : 'border-gray-200' %>">
+                    <div>
+                      <p class="font-medium"><%= address.name %> <%= address.isDefault ? '<span class="text-green-600 text-sm">(Default)</span>' : '' %></p>
+                      <p class="text-sm text-gray-600">
+                        <%= address.landMark ? address.landMark + ', ' : '' %>
+                        <%= address.city %>, <%= address.state %>, <%= address.pincode %>
+                      </p>
+                      <p class="text-sm text-gray-600">Phone: <%= address.phone %></p>
+                      <p class="text-sm text-gray-600">Type: <%= address.addressType %></p>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <p class="text-gray-500 mb-4">No addresses found.</p>
+            <% } %>
+          </div>
+
+          <!-- Cropper Modal -->
+          <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+              <h3 class="text-lg font-semibold mb-4">Crop Image</h3>
+              <div class="mb-4">
+                <img id="imageToCrop" class="max-w-full h-auto">
+              </div>
+              <div class="flex justify-end space-x-2">
+                <button onclick="closeCropperModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+                <button onclick="cropAndUpload()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Save</button>
+              </div>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Addresses Tab -->
+        <% if (activeTab === 'addresses') { %>
+          <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <div class="flex justify-between items-center mb-4">
+              <h5 class="text-lg font-semibold">Your Addresses</h5>
+              <a href="/user/profile/address/add" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Add New Address</a>
+            </div>
+            <% if (addresses.length > 0) { %>
+              <div class="space-y-4">
+                <% addresses.forEach((address, index) => { %>
+                  <div class="border rounded-lg p-4 flex justify-between items-center <%= address.isDefault ? 'border-green-500 bg-green-50' : 'border-gray-200' %>">
+                    <div>
+                      <p class="font-medium"><%= address.name %> <%= address.isDefault ? '<span class="text-green-600 text-sm">(Default)</span>' : '' %></p>
+                      <p class="text-sm text-gray-600">
+                        <%= address.landMark ? address.landMark + ', ' : '' %>
+                        <%= address.city %>, <%= address.state %>, <%= address.pincode %>
+                      </p>
+                      <p class="text-sm text-gray-600">Phone: <%= address.phone %></p>
+                      <p class="text-sm text-gray-600">Type: <%= address.addressType %></p>
+                    </div>
+                    <div class="flex space-x-2">
+                      <% if (!address.isDefault) { %>
+                        <button onclick="setDefaultAddress('<%= index %>')" class="text-green-600 hover:text-green-800 text-sm">Set as Default</button>
+                      <% } %>
+                      <a href="/user/profile/address/edit/<%= index %>" class="text-indigo-600 hover:text-indigo-800 text-sm">Edit</a>
+                      <form action="/user/profile/address/delete/<%= index %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <p class="text-gray-500">No addresses found. Add one now!</p>
+            <% } %>
+          </div>
+        <% } %>
+
+        <!-- Orders Tab -->
+        <% if (activeTab === 'orders') { %>
+          <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h5 class="text-lg font-semibold mb-4">Your Orders</h5>
+            <form action="/user/profile" method="GET" class="mb-4">
+              <input type="hidden" name="tab" value="orders">
+              <input type="text" name="search" value="<%= searchQuery %>" placeholder="Search by Order ID" class="border rounded px-4 py-2">
+              <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Search</button>
+            </form>
+            <% if (orders.length > 0) { %>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200">
+                    <% orders.forEach(order => { %>
+                      <tr>
+                        <td class="py-3 px-4 text-sm text-gray-500"><%= order.orderId %></td>
+                        <td class="py-3 px-4 text-sm text-gray-500"><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                        <td class="py-3 px-4 text-sm text-gray-500">$<%= (order.totalAmount - (order.discount || 0)).toFixed(2) %></td>
+                        <td class="py-3 px-4 text-sm text-gray-500">
+                          <span class="px-2 py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
+                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                          </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-500">
+                          <a href="/user/ordersDetails/<%= order._id %>" class="text-indigo-600 hover:text-indigo-800">View</a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+              <!-- Pagination -->
+              <% if (totalPages > 1) { %>
+                <div class="mt-4 flex justify-center">
+                  <% for (let i = 1; i <= totalPages; i++) { %>
+                    <a href="/user/profile?tab=orders&page=<%= i %>&search=<%= searchQuery %>" class="<%- currentPage === i ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700' %> px-4 py-2 mx-1 rounded"><%= i %></a>
+                  <% } %>
+                </div>
+              <% } %>
+            <% } else { %>
+              <p class="text-gray-500">No orders found.</p>
+            <% } %>
+          </div>
+        <% } %>
+
+        <!-- Wallet Status Tab -->
+        <% if (activeTab === 'wallet-status') { %>
+          <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h5 class="text-lg font-semibold mb-4">Wallet Status</h5>
+            <p><strong>Balance:</strong> $<%= walletBalance.toFixed(2) %></p>
+          </div>
+        <% } %>
+
+        <!-- Wallet History Tab -->
+        <% if (activeTab === 'wallet-history') { %>
+          <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h5 class="text-lg font-semibold mb-4">Wallet History</h5>
+            <% if (history.length > 0) { %>
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-100">
+                    <tr>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                      <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200">
+                    <% history.forEach(tx => { %>
+                      <tr>
+                        <td class="py-3 px-4 text-sm text-gray-500"><%= new Date(tx.createdAt).toLocaleDateString() %></td>
+                        <td class="py-3 px-4 text-sm text-gray-500"><%= tx.type %></td>
+                        <td class="py-3 px-4 text-sm text-gray-500">$<%= tx.amount.toFixed(2) %></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% } else { %>
+              <p class="text-gray-500">No wallet transactions found.</p>
+            <% } %>
+          </div>
+        <% } %>
+
+        <!-- Referrals Tab -->
+        <% if (activeTab === 'referrals') { %>
+          <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+            <h5 class="text-lg font-semibold mb-4">Referrals</h5>
+            <p class="text-gray-500">No referrals available.</p>
+          </div>
+        <% } %>
       </div>
     </div>
   </div>
 
-  <main class="py-10">
-    <section class="py-10">
-      <div class="container mx-auto px-4">
-        <div class="max-w-6xl mx-auto">
-          <div class="flex flex-col md:flex-row gap-6">
-            <!-- Sidebar Navigation -->
-            <div class="w-full md:w-1/3">
-              <div class="bg-lightbg rounded-lg p-4 shadow-md">
-                <ul class="flex flex-col space-y-2" id="tab-nav">
-                  <li>
-                    <a href="#dashboard" class="nav-link block py-3 px-4 rounded-md font-bold text-[#30683c] hover:text-[#00bfff] bg-white active" data-tab="dashboard">
-                      <i class="mr-2">⚙️</i>Dashboard
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#address" class="nav-link block py-3 px-4 rounded-md font-bold text-[#30683c] hover:text-[#00bfff] bg-white" data-tab="address">
-                      <i class="mr-2">📍</i>My Address
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#orders" class="nav-link block py-3 px-4 rounded-md font-bold text-[#30683c] hover:text-[#00bfff] bg-white" data-tab="orders">
-                      <i class="mr-2">🛍️</i>Orders
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#wallet-status" class="nav-link block py-3 px-4 rounded-md font-bold text-[#30683c] hover:text-[#00bfff] bg-white" data-tab="wallet-status">
-                      <i class="mr-2">💰</i>Wallet Status
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#wallet-history" class="nav-link block py-3 px-4 rounded-md font-bold text-[#30683c] hover:text-[#00bfff] bg-white" data-tab="wallet-history">
-                      <i class="mr-2">📊</i>Wallet History
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#referrals" class="nav-link block py-3 px-4 rounded-md font-bold text-[#30683c] hover:text-[#00bfff] bg-white" data-tab="referrals">
-                      <i class="mr-2">👥</i>Referrals
-                    </a>
-                  </li>
-                  <li>
-                    <a href="/logout" class="nav-link block py-3 px-4 rounded-md font-bold text-[#30683c] hover:text-[#00bfff] bg-white">
-                      <i class="mr-2">🚪</i>Logout
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            
-            <!-- Content Area -->
-            <div class="w-full md:w-2/3">
-              <div class="tab-content">
-                <!-- Dashboard Tab -->
-                <div id="dashboard" class="tab-pane active">
-                  <div class="bg-secondary rounded-lg shadow-lg overflow-hidden mb-6">
-                    <div class="bg-primary text-white py-3 px-4 rounded-t-lg">
-                      <h5 class="text-lg font-semibold text-center mb-0">User Profile</h5>
-                    </div>
-                    <div class="p-6 text-center">
-                      <h5 class="text-xl font-semibold mb-4">John Doe</h5>
-                      <p class="mb-2">
-                        <strong>Phone:</strong> +1 234 567 8900
-                      </p>
-                      <p class="mb-4">
-                        <strong>Email:</strong> john.doe@example.com
-                      </p>
-                      <div class="flex flex-wrap justify-center gap-2">
-                        <a href="#" class="bg-accent hover:bg-hover text-white py-2 px-4 rounded-md text-sm transition-colors">Change Email</a>
-                        <a href="#" class="bg-accent hover:bg-hover text-white py-2 px-4 rounded-md text-sm transition-colors">Change Password</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Address Tab -->
-                <div id="address" class="tab-pane hidden">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                      <div class="bg-primary text-white py-3 px-4 rounded-t-lg">
-                        <h5 class="text-lg font-semibold mb-0">Home Address</h5>
-                      </div>
-                      <div class="p-6">
-                        <address class="not-italic mb-4">
-                          123 Main Street<br>
-                          Apt 4B<br>
-                          New York, NY 10001<br>
-                          United States
-                        </address>
-                        <p class="mb-4">Default shipping address</p>
-                        <div class="flex justify-between">
-                          <a href="#" class="text-blue-600 hover:text-blue-800">Edit</a>
-                          <a href="#" class="text-red-600 hover:text-red-800">Delete</a>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                      <div class="bg-primary text-white py-3 px-4 rounded-t-lg">
-                        <h5 class="text-lg font-semibold mb-0">Work Address</h5>
-                      </div>
-                      <div class="p-6">
-                        <address class="not-italic">No address</address>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="mt-6">
-                    <a href="#">
-                      <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors">
-                        Add address
-                      </button>
-                    </a>
-                  </div>
-                </div>
-                
-                <!-- Orders Tab -->
-                <div id="orders" class="tab-pane hidden">
-                  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div class="bg-primary text-white py-3 px-4 rounded-t-lg">
-                      <h5 class="text-lg font-semibold mb-0">Your Orders</h5>
-                    </div>
-                    <div class="p-6">
-                      <div class="overflow-x-auto">
-                        <table class="w-full">
-                          <thead class="bg-gray-100">
-                            <tr>
-                              <th class="py-2 px-4 text-left">Order</th>
-                              <th class="py-2 px-4 text-left">Status</th>
-                              <th class="py-2 px-4 text-left">Total</th>
-                              <th class="py-2 px-4 text-left">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr class="border-b">
-                              <td class="py-3 px-4">#ORD-2023-001</td>
-                              <td class="py-3 px-4"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Delivered</span></td>
-                              <td class="py-3 px-4">$129.99</td>
-                              <td class="py-3 px-4">
-                                <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-3 rounded-md transition-colors">View</a>
-                              </td>
-                            </tr>
-                            <tr class="border-b">
-                              <td class="py-3 px-4">#ORD-2023-002</td>
-                              <td class="py-3 px-4"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Processing</span></td>
-                              <td class="py-3 px-4">$79.50</td>
-                              <td class="py-3 px-4">
-                                <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-3 rounded-md transition-colors">View</a>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Wallet Status Tab -->
-                <div id="wallet-status" class="tab-pane hidden">
-                  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div class="bg-primary text-white py-3 px-4 rounded-t-lg">
-                      <h5 class="text-lg font-semibold mb-0">Wallet</h5>
-                    </div>
-                    <div class="p-6">
-                      <div class="max-w-md mx-auto text-center py-8">
-                        <form>
-                          <div class="mb-6">
-                            <label for="walletAmount" class="block text-xl font-semibold mb-2">Amount</label>
-                            <div class="text-3xl font-bold">$250.00</div>
-                          </div>
-                          <button type="button" class="bg-accent hover:bg-hover text-white py-2 px-6 rounded-md transition-colors">Add Money</button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Wallet History Tab -->
-                <div id="wallet-history" class="tab-pane hidden">
-                  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div class="bg-primary text-white py-3 px-4 rounded-t-lg">
-                      <h5 class="text-lg font-semibold mb-0">Wallet History</h5>
-                    </div>
-                    <div class="p-6">
-                      <div class="overflow-x-auto">
-                        <table class="w-full">
-                          <thead class="bg-gray-100">
-                            <tr>
-                              <th class="py-2 px-4 text-left">Date</th>
-                              <th class="py-2 px-4 text-left">Status</th>
-                              <th class="py-2 px-4 text-left">Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr class="border-b">
-                              <td class="py-3 px-4">2023-10-15</td>
-                              <td class="py-3 px-4"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Added</span></td>
-                              <td class="py-3 px-4">+$100.00</td>
-                            </tr>
-                            <tr class="border-b">
-                              <td class="py-3 px-4">2023-10-10</td>
-                              <td class="py-3 px-4"><span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Used</span></td>
-                              <td class="py-3 px-4">-$50.00</td>
-                            </tr>
-                            <tr class="border-b">
-                              <td class="py-3 px-4">2023-09-28</td>
-                              <td class="py-3 px-4"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Added</span></td>
-                              <td class="py-3 px-4">+$200.00</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Referrals Tab -->
-                <div id="referrals" class="tab-pane hidden">
-                  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div class="bg-primary text-white py-3 px-4 rounded-t-lg">
-                      <h5 class="text-lg font-semibold mb-0">Referrals</h5>
-                    </div>
-                    <div class="p-6">
-                      <h6 class="text-lg font-medium mb-4">Refer your friends and earn money!</h6>
-                      <p class="mb-2">Share this link: <strong>https://example.com/ref/user123</strong></p>
-                      <p>Earned: ₹500</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
   <script>
-    // Tab switching functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      const tabLinks = document.querySelectorAll('#tab-nav a');
-      const tabPanes = document.querySelectorAll('.tab-pane');
-      
-      tabLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          
-          // Remove active class from all tabs
-          tabLinks.forEach(l => l.classList.remove('active'));
-          tabPanes.forEach(p => p.classList.add('hidden'));
-          
-          // Add active class to current tab
-          this.classList.add('active');
-          
-          // Show the corresponding tab content
-          const tabId = this.getAttribute('data-tab');
-          document.getElementById(tabId).classList.remove('hidden');
+    // Profile Image Cropping and Uploading
+    let cropper;
+
+    function openCropperModal(event) {
+      const file = event.target.files[0];
+      console.log('Selected file:', file);
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const image = document.getElementById('imageToCrop');
+        image.src = e.target.result;
+        document.getElementById('cropperModal').classList.remove('hidden');
+
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(image, {
+          aspectRatio: 1,
+          viewMode: 1,
+          autoCropArea: 0.8,
+          responsive: true,
         });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function closeCropperModal() {
+      document.getElementById('cropperModal').classList.add('hidden');
+      if (cropper) cropper.destroy();
+      document.getElementById('imageInput').value = ''; // Reset file input
+    }
+
+    function cropAndUpload() {
+      if (!cropper) return;
+
+      cropper.getCroppedCanvas({ width: 200, height: 200 }).toBlob((blob) => {
+        console.log('Cropped blob:', blob);
+        const formData = new FormData();
+        formData.append('profileImage', blob, 'profile.jpg');
+
+        fetch('/user/profile/upload-image', {
+          method: 'POST',
+          body: formData,
+        })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! Status: ${res.status}`);
+            }
+            return res.json();
+          })
+          .then((data) => {
+            if (data.success) {
+              document.getElementById('profileImage').src = data.imageUrl;
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Profile image updated successfully!',
+                confirmButtonColor: '#059669'
+              });
+              closeCropperModal();
+            } else {
+              console.error('Upload failed:', data);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to upload image',
+                confirmButtonColor: '#dc2626'
+              });
+            }
+          })
+          .catch((err) => {
+            console.error('Error uploading image:', err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Error uploading image: ' + err.message,
+              confirmButtonColor: '#dc2626'
+            });
+          });
+      }, 'image/jpeg', 0.8);
+
+      document.getElementById('imageInput').value = ''; // Reset file input
+    }
+
+    async function setDefaultAddress(index) {
+      const result = await Swal.fire({
+        title: 'Set as Default Address?',
+        text: 'This will make this address your default for future orders.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#059669',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, set as default',
+        cancelButtonText: 'Cancel'
       });
+
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(`/user/profile/address/set-default/${index}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            await Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: data.message,
+              confirmButtonColor: '#059669'
+            });
+            window.location.reload();
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: data.message || 'Failed to set default address',
+              confirmButtonColor: '#dc2626'
+            });
+          }
+        } catch (err) {
+          console.error('Error setting default address:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to set default address. Please try again.',
+            confirmButtonColor: '#dc2626'
+          });
+        }
+      }
+    }
+
+    // Mobile menu functionality
+    document.addEventListener("DOMContentLoaded", function () {
+      const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
+      const mobileMenu = document.getElementById("mobile-menu");
+      const closeMobileMenu = document.getElementById("close-mobile-menu");
+      const toggleSidebar = document.getElementById("toggle-sidebar");
+      const sidebar = document.getElementById("sidebar");
+
+      if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener("click", () => {
+          mobileMenu.classList.toggle("hidden");
+        });
+      }
+
+      if (closeMobileMenu) {
+        closeMobileMenu.addEventListener("click", () => {
+          mobileMenu.classList.add("hidden");
+        });
+      }
+
+      if (toggleSidebar) {
+        toggleSidebar.addEventListener("click", () => {
+          sidebar.classList.toggle("hidden");
+          mobileMenu.classList.add("hidden");
+        });
+      }
+
+      if (mobileMenu) {
+        window.addEventListener("click", (e) => {
+          if (e.target === mobileMenu) {
+            mobileMenu.classList.add("hidden");
+          }
+        });
+      }
     });
   </script>
 </body>

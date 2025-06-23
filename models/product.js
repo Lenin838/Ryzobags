@@ -7,21 +7,21 @@ const productSchema = new Schema({
     required: true,
     trim: true
   },
- 
   description: {
     type: String,
     required: true,
     trim: true
   },
   category: {
-    type: mongoose.Schema.Types.ObjectId, ref: 'Category',
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Category',
     required: true,
   },
   brand: {
-    type: mongoose.Schema.Types.ObjectId, ref: 'Brand',
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Brand',
     required: true,
   },
- 
   mainImage: {
     type: String,
     required: true
@@ -48,15 +48,12 @@ const productSchema = new Schema({
         type: Number,
         min: [0, "Regular price cannot be negative"],
       },
-      
-    
       quantity: {
         type: Number,
         min: [0, "Quantity cannot be negative"],
       },
     },
   ],
-
 });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.models.Product || mongoose.model('Product', productSchema);

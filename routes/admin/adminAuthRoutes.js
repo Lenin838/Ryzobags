@@ -5,8 +5,12 @@ const categoryRouter = require('./adminCategoryRoutes');
 const brandRouter = require('../../routes/admin/adminBrandRoutes');
 const productRouter = require('../../routes/admin/adminProductRoutes');
 const { isAdminLoggedIn, isAdminLoggedOut } = require('../../middlewares/adminAuth');
+const adminOrderRouter = require('../../routes/admin/adminOrderRoutes');
+const adminInventoryRouter = require('../../routes/admin/adminInventory');
 
 
+adminRouter.use('/',adminInventoryRouter);
+adminRouter.use('/',adminOrderRouter);
 adminRouter.use('/',productRouter);
 adminRouter.use('/',brandRouter);
 adminRouter.use('/',categoryRouter); 

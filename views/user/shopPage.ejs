@@ -254,14 +254,19 @@
                 </div>
                 
                 <div class="flex space-x-2">
-                  <button type="button" 
+                  <!-- <button type="button" 
                           class="flex-grow bg-primary hover:bg-primary-dark text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center" 
                           onclick="addtoCart('<%= product._id %>')">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                     Add to Cart
-                  </button>
+                  </button> -->
+                  <button type="button" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 ease-in-out" 
+                        onclick="addtoCart('<%= product._id %>')">
+                  Add to Cart
+                </button>
                   <a href="/user/productView/<%= product._id %>" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -352,50 +357,57 @@
     }
 
     async function addtoCart(productId) {
-      // Get the selected volume for this product
-      const sizeSelector = document.querySelector(`.product-volume[data-product-id="${productId}"]`);
-      
-      if (!sizeSelector || sizeSelector.selectedIndex === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Oops...',
-          text: 'Please select a size first',
-          confirmButtonColor: '#007D8B'
-        });
-        return;
-      }
-      
-      const selectedOption = sizeSelector.options[sizeSelector.selectedIndex];
-      const selectedSize = selectedOption.value;
-      const variantIndex = selectedOption.getAttribute('data-variant-index');
-      
-      const response = await fetch(`/user/addtoCart/${productId}`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ 
-          size: selectedSize,
-          variantIndex: variantIndex
-        })
+  // Get the selected volume for this product - FIX: Corrected the selector syntax
+  const volumeSelector = document.querySelector(`.product-volume[data-product-id="${productId}"]`);
+  
+  if (!volumeSelector || volumeSelector.selectedIndex === 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Oops...',
+      text: 'Please select a size first'
+    });
+    return;
+  }
+  
+  const selectedOption = volumeSelector.options[volumeSelector.selectedIndex];
+  const selectedSize = selectedOption.value;
+  const variantIndex = selectedOption.getAttribute('data-variant-index');
+  
+  try {
+    const response = await fetch(`/user/addtoCart/${productId}`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ 
+        size: selectedSize,
+        variantIndex: variantIndex
+      })
+    });
+    
+    const result = await response.json();
+    
+    if(result.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: result.message
       });
-      
-      const result = await response.json();
-      
-      if(result.success) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: result.message,
-          confirmButtonColor: '#007D8B'
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: result.message,
-          confirmButtonColor: '#007D8B'
-        });
-      }
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: result.message
+      });
     }
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'An unexpected error occurred. Please try again.'
+    });
+  }
+}
+
 
    // Modify the addToWishlist function to prevent event propagation
 async function addToWishlist(productId, event) {

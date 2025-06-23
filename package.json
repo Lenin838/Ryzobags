@@ -11,11 +11,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
+    "canvas": "^3.1.0",
     "connect": "^3.7.0",
     "connect-flash": "^0.1.1",
     "cropper": "^4.1.0",
     "cropperjs": "^2.0.0",
+    "dommatrix": "^0.1.1",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
@@ -31,6 +34,7 @@
     "otp-generator": "^4.0.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pdfkit": "^0.17.0",
     "sharp": "^0.34.1"
   }
 }

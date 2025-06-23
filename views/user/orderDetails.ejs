@@ -1,0 +1,565 @@
+<%- include("partials/uHeader") %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-gray-50">
+  <div class="flex min-h-screen">
+    <%- include("partials/userSidebar", { activeTab: 'orders' }) %>
+    <div class="flex-1 ml-0 sm:ml-64 pt-16">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <% if (success && success.length) { %>
+          <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+            <p><%= success %></p>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              showSuccessToast('<%= success %>');
+            });
+          </script>
+        <% } %>
+        <% if (error && error.length) { %>
+          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+            <p><%= error %></p>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              showErrorToast('<%= error %>');
+            });
+          </script>
+        <% } %>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h5 class="text-lg font-semibold mb-4">Order Details - <%= order.orderId %></h5>
+          <p class="text-sm text-gray-500">Date: <%= new Date(order.orderDate).toLocaleDateString() %></p>
+          <p class="text-sm text-gray-500">Status: 
+            <span class="px-2 py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
+              <%= order.status %>
+            </span>
+          </p>
+          
+          <!-- Order Summary -->
+          <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <% 
+              const activeItems = order.items.filter(item => item.status !== 'cancelled');
+              const cancelledItems = order.items.filter(item => item.status === 'cancelled');
+              const activeItemsTotal = activeItems.reduce((sum, item) => sum + (typeof item.itemSalePrice === 'number' ? item.itemSalePrice * item.quantity : 0), 0);
+              const cancelledItemsTotal = cancelledItems.reduce((sum, item) => sum + (typeof item.itemSalePrice === 'number' ? item.itemSalePrice * item.quantity : 0), 0);
+            %>
+            
+            <% if (activeItems.length > 0) { %>
+              <p class="text-sm text-gray-700">Active Items Subtotal: $<%= activeItemsTotal.toFixed(2) %></p>
+            <% } %>
+            
+            <% if (cancelledItems.length > 0) { %>
+              <p class="text-sm text-red-600">Cancelled Items Total: $<%= cancelledItemsTotal.toFixed(2) %></p>
+            <% } %>
+            
+            <% if (order.discount && order.discount > 0) { %>
+              <p class="text-sm text-gray-700">Discount: -$<%= order.discount.toFixed(2) %></p>
+            <% } %>
+            
+            <p class="text-lg font-semibold text-gray-900 border-t pt-2 mt-2">
+              Current Total: $<%= (activeItemsTotal - (order.discount || 0)).toFixed(2) %>
+            </p>
+            
+            <% if (order.status === 'cancelled') { %>
+              <p class="text-sm text-red-600 mt-2">
+                <strong>Order Status:</strong> Cancelled
+                <% if (order.cancelReason) { %>
+                  <br><strong>Reason:</strong> <%= order.cancelReason %>
+                <% } %>
+              </p>
+            <% } %>
+          </div>
+
+          <!-- Order Actions -->
+          <div class="mt-4 flex flex-wrap gap-2">
+            <% if (order.status.toLowerCase() === 'pending' || order.status.toLowerCase() === 'processing') { %>
+              <% if (activeItems.length > 0) { %>
+                <button onclick="cancelEntireOrder('<%= order.orderId %>')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                  Cancel Entire Order
+                </button>
+              <% } %>
+            <% } %>
+            
+            <% if (['delivered', 'shipped', 'processing'].includes(order.status.toLowerCase()) && activeItems.length > 0) { %>
+              <button onclick="returnEntireOrder('<%= order._id %>')" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm">
+                Return Entire Order
+              </button>
+            <% } %>
+            
+            <% if (order.status.toLowerCase() === 'delivered') { %>
+              <a href="/user/ordersDetails/<%= order._id %>/invoice" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm">
+                Download Invoice
+              </a>
+            <% } %>
+          </div>
+
+          <!-- Items Table -->
+          <h6 class="text-md font-semibold mt-6 mb-2">Order Items</h6>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Original Price</th>
+                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offer Price</th>
+                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <% order.items.forEach(item => { %>
+                  <tr class="<%= item.status === 'cancelled' ? 'bg-red-50 opacity-75' : '' %>">
+                    <td class="py-3 px-4 text-sm text-gray-500">
+                      <%= item.productId ? item.productId.name : 'Unknown Product' %>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-500"><%= item.quantity %></td>
+                    <td class="py-3 px-4 text-sm text-gray-500">
+                      $<%= typeof item.productId?.originalPrice === 'number' ? item.productId.originalPrice.toFixed(2) : 'N/A' %>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-500">
+                      $<%= typeof item.itemSalePrice === 'number' ? item.itemSalePrice.toFixed(2) : 'N/A' %>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-gray-500">
+                      <% if (item.status === 'cancelled') { %>
+                        <span class="line-through text-red-500">
+                          $<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
+                        </span>
+                      <% } else { %>
+                        $<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
+                      <% } %>
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <% if (item.status === 'cancelled') { %>
+                        <span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                          Cancelled
+                        </span>
+                        <% if (item.cancelReason) { %>
+                          <p class="text-xs text-red-600 mt-1">Reason: <%= item.cancelReason %></p>
+                        <% } %>
+                      <% } else if (item.itemStatus === 'return request' || item.status === 'return request') { %>
+                        <span class="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
+                          Return Requested
+                        </span>
+                        <% if (item.reason) { %>
+                          <p class="text-xs text-orange-600 mt-1">Reason: <%= item.reason %></p>
+                        <% } %>
+                      <% } else { %>
+                        <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                          <%= item.itemStatus || item.status || 'Active' %>
+                        </span>
+                      <% } %>
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                      <div class="flex flex-col gap-1">
+                        <% if ((order.status.toLowerCase() === 'pending' || order.status.toLowerCase() === 'processing') && item.status !== 'cancelled') { %>
+                          <button 
+                            onclick="cancelItem('<%= order.orderId %>', '<%= item._id %>', '<%= item.productId ? item.productId.name : 'Unknown Product' %>')" 
+                            class="text-red-600 hover:text-red-800 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded"
+                          >
+                            Cancel Item
+                          </button>
+                        <% } %>
+                        
+                        <% 
+                            const canReturnItem = item.status !== 'cancelled' && 
+                                                item.itemStatus !== 'return request' && 
+                                                item.status !== 'return request' &&
+                                                ['delivered', 'shipped', 'processing'].includes(order.status.toLowerCase());
+                        %>
+                        <% if (canReturnItem) { %>
+                          <button 
+                            onclick="returnItem('<%= order._id %>', '<%= item.productId ? (item.productId._id || item.productId).toString() : '' %>', '<%= item.productId ? item.productId.name : 'Unknown Product' %>')" 
+                            class="text-orange-600 hover:text-orange-800 text-xs bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded"
+                            data-order-id="<%= order._id %>"
+                            data-product-id="<%= item.productId ? (item.productId._id || item.productId).toString() : '' %>"
+                            data-product-name="<%= item.productId ? item.productId.name : 'Unknown Product' %>"
+                          >
+                            Return Item
+                          </button>
+                        <% } %>
+                        
+                        <% if (item.status === 'cancelled') { %>
+                          <span class="text-xs text-gray-400">Cancelled</span>
+                        <% } else if (item.itemStatus === 'return request' || item.status === 'return request') { %>
+                          <span class="text-xs text-orange-600">Return Pending</span>
+                        <% } else if (!canReturnItem && !(order.status.toLowerCase() === 'pending' || order.status.toLowerCase() === 'processing')) { %>
+                          <span class="text-xs text-gray-400">
+                            <%= order.status.toLowerCase() === 'cancelled' ? 'Order Cancelled' : 'No actions available' %>
+                          </span>
+                        <% } %>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="returnModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Return Item</h3>
+        <p class="text-sm text-gray-600 mb-4">Why do you want to return this item?</p>
+        <select id="returnReason" class="w-full p-2 border border-gray-300 rounded-md mb-4">
+          <option value="">Select a reason</option>
+          <option value="damaged">Item was damaged</option>
+          <option value="wrong_item">Wrong item received</option>
+          <option value="not_as_described">Not as described</option>
+          <option value="defective">Defective product</option>
+          <option value="size_issue">Size issue</option>
+          <option value="quality_issue">Quality issue</option>
+          <option value="changed_mind">Changed my mind</option>
+          <option value="other">Other reason</option>
+        </select>
+        <textarea id="returnComment" placeholder="Additional comments (optional)" class="w-full p-2 border border-gray-300 rounded-md mb-4 h-20"></textarea>
+        <div class="flex justify-end gap-2">
+          <button onclick="closeReturnModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+            Cancel
+          </button>
+          <button onclick="submitReturn()" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+            Submit Return Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentReturnData = {};
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+      }
+    });
+
+    function showSuccessToast(message) {
+      Toast.fire({
+        icon: 'success',
+        title: message
+      });
+    }
+
+    function showErrorToast(message) {
+      Toast.fire({
+        icon: 'error',
+        title: message
+      });
+    }
+
+    function closeReturnModal() {
+      document.getElementById('returnModal').classList.add('hidden');
+      document.getElementById('returnReason').value = '';
+      document.getElementById('returnComment').value = '';
+      currentReturnData = {};
+    }
+
+    async function cancelEntireOrder(orderId) {
+      const result = await Swal.fire({
+        title: 'Cancel Entire Order?',
+        text: 'This action cannot be undone. Are you sure you want to cancel this order?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, cancel order',
+        cancelButtonText: 'Keep order'
+      });
+
+      if (result.isConfirmed) {
+        const reasonResult = await Swal.fire({
+          title: 'Cancellation Reason',
+          input: 'textarea',
+          inputLabel: 'Please provide a reason for cancellation (optional)',
+          inputPlaceholder: 'Enter your reason here...',
+          showCancelButton: true,
+          confirmButtonText: 'Submit Cancellation',
+          cancelButtonText: 'Go Back'
+        });
+
+        if (reasonResult.isConfirmed) {
+          try {
+            const response = await fetch("/user/orders/cancel", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId, reason: reasonResult.value }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              await Swal.fire({
+                title: 'Success!',
+                text: data.success,
+                icon: 'success',
+                confirmButtonColor: '#059669'
+              });
+              window.location.reload();
+            } else {
+              Swal.fire({
+                title: 'Error!',
+                text: data.error || "Failed to cancel order",
+                icon: 'error',
+                confirmButtonColor: '#dc2626'
+              });
+            }
+          } catch (err) {
+            console.error(err);
+            Swal.fire({
+              title: 'Error!',
+              text: "Failed to cancel order. Please try again.",
+              icon: 'error',
+              confirmButtonColor: '#dc2626'
+            });
+          }
+        }
+      }
+    }
+
+    async function cancelItem(orderId, itemId, productName) {
+      const result = await Swal.fire({
+        title: 'Cancel Item?',
+        text: `Are you sure you want to cancel "${productName}" from this order?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, cancel item',
+        cancelButtonText: 'Keep item'
+      });
+
+      if (result.isConfirmed) {
+        const reasonResult = await Swal.fire({
+          title: 'Cancellation Reason',
+          input: 'textarea',
+          inputLabel: 'Please provide a reason for cancelling this item (optional)',
+          inputPlaceholder: 'Enter your reason here...',
+          showCancelButton: true,
+          confirmButtonText: 'Submit Cancellation',
+          cancelButtonText: 'Go Back'
+        });
+
+        if (reasonResult.isConfirmed) {
+          try {
+            const response = await fetch("/user/orders/cancel-item", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId, itemId, reason: reasonResult.value }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              await Swal.fire({
+                title: 'Success!',
+                text: data.success,
+                icon: 'success',
+                confirmButtonColor: '#059669'
+              });
+              window.location.reload();
+            } else {
+              Swal.fire({
+                title: 'Error!',
+                text: data.error || "Failed to cancel item",
+                icon: 'error',
+                confirmButtonColor: '#dc2626'
+              });
+            }
+          } catch (err) {
+            console.error(err);
+            Swal.fire({
+              title: 'Error!',
+              text: "Failed to cancel item. Please try again.",
+              icon: 'error',
+              confirmButtonColor: '#dc2626'
+            });
+          }
+        }
+      }
+    }
+
+    function returnItem(orderId, productId, productName) {
+      if (!productId) {
+        console.error('Invalid productId:', productId);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Invalid product information. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#dc2626'
+        });
+        return;
+      }
+      currentReturnData = { orderId, productId, productName, type: 'single_item' };
+      document.getElementById('returnModal').classList.remove('hidden');
+    }
+
+    async function returnEntireOrder(orderId) {
+      const result = await Swal.fire({
+        title: 'Return Entire Order?',
+        text: 'Do you want to return all items in this order?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#ea580c',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, return order',
+        cancelButtonText: 'Cancel'
+      });
+
+      if (result.isConfirmed) {
+        currentReturnData = { orderId, type: 'entire_order' };
+        document.getElementById('returnModal').classList.remove('hidden');
+      }
+    }
+
+    async function submitReturn() {
+      const reason = document.getElementById('returnReason').value;
+      const comment = document.getElementById('returnComment').value;
+      
+      if (!reason) {
+        Swal.fire({
+          title: 'Missing Information',
+          text: 'Please select a reason for return',
+          icon: 'warning',
+          confirmButtonColor: '#ea580c'
+        });
+        return;
+      }
+
+      const fullReason = comment ? `${reason}: ${comment}` : reason;
+      let endpoint, payload;
+
+      if (currentReturnData.type === 'entire_order') {
+        endpoint = "/user/orders/return-entire-order";
+        payload = { 
+          orderId: currentReturnData.orderId, 
+          reason: fullReason 
+        };
+      } else {
+        endpoint = "/user/orders/return-item";
+        payload = { 
+          orderId: currentReturnData.orderId, 
+          productId: currentReturnData.productId, 
+          reason: fullReason 
+        };
+      }
+
+      try {
+        Swal.fire({
+          title: 'Processing Return Request...',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(payload),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          await Swal.fire({
+            title: 'Success!',
+            text: data.message || "Your return request has been submitted successfully.",
+            icon: 'success',
+            confirmButtonColor: '#059669'
+          });
+          closeReturnModal();
+          window.location.reload();
+        } else {
+          let errorMessage = data.message || data.error || "Failed to submit return request.";
+          
+          if (response.status === 401) {
+            errorMessage = "Please log in again to continue.";
+          } else if (response.status === 404) {
+            errorMessage = "Order or item not found.";
+          } else if (response.status === 400) {
+            errorMessage = data.message || "Invalid request. Please check your order status.";
+          }
+          
+          Swal.fire({
+            title: 'Error!',
+            text: errorMessage,
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+          });
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        Swal.fire({
+          title: 'Error!',
+          text: "Failed to submit return request. Please try again.",
+          icon: 'error',
+          confirmButtonColor: '#dc2626'
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const closeMobileMenu = document.getElementById('close-mobile-menu');
+      const toggleSidebar = document.getElementById('toggle-sidebar');
+      const sidebar = document.getElementById('sidebar');
+
+      if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+        });
+      }
+
+      if (closeMobileMenu) {
+        closeMobileMenu.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+        });
+      }
+
+      if (toggleSidebar) {
+        toggleSidebar.addEventListener('click', () => {
+          sidebar.classList.toggle('hidden');
+          mobileMenu.classList.add('hidden');
+        });
+      }
+
+      window.addEventListener('click', (e) => {
+        if (e.target === mobileMenu) {
+          mobileMenu.classList.add('hidden');
+        }
+      });
+
+      document.getElementById('returnModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeReturnModal();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

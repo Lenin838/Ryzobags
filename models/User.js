@@ -1,15 +1,5 @@
 const mongoose = require("mongoose");
 
-const addressSchema = new mongoose.Schema({
-  fullName: String,
-  phone: String,
-  street: String,
-  city: String,
-  state: String,
-  postalCode: String,
-  country: String,
-}, { _id: false });
-
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -25,7 +15,7 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
   phoneNumber: {
-    type: Number,
+    type: String,
     required: false,
   },
   googleId: {
@@ -37,14 +27,25 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  profileImage: { type: String },
-  addresses: [addressSchema],
-  otp: String,
-  expiresAt: Date,
+  profileImage: { 
+    type: String 
+  },
+  resetToken: String,
+  resetTokenExpire: Date,
+  otp: {
+    type: String,
+    required: false,
+  },
+  otpExpire: {
+    type: Date,
+    required: false,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
 });
 
 module.exports = mongoose.model("User", userSchema);

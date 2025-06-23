@@ -1,216 +1,1192 @@
 const User = require("../../models/User");
 const Order = require("../../models/order");
+const Address = require("../../models/address");
+const WalletTransaction = require("../../models/wallet");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-const sharp = require("sharp");
+const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const util = require("util");
+const sharp = require("sharp");
 
-const sendEmail = async (email, subject, html) => {
-  const transporter = nodemailer.createTransport({/* SMTP config */});
-  await transporter.sendMail({ from: '"Your App" <noreply@yourapp.com>', to: email, subject, html });
+const mkdir = util.promisify(fs.mkdir);
+
+// Multer configuration
+const storage = multer.memoryStorage();
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
 };
 
-const userProductController = {
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
+// Consolidated saveUserImage function
+const saveUserImage = async (req, file) => {
+  if (!file || !file.buffer) {
+    console.error("Invalid file input:", file);
+    return null;
+  }
+
+  try {
+    const userId = req.user ? req.user._id : "unknown";
+    const uploadPath = path.join(process.cwd(), "public/uploads/ProfileImages");
+    await mkdir(uploadPath, { recursive: true });
+
+    const filename = `${userId}-${crypto.randomBytes(6).toString("hex")}-${Date.now()}.webp`;
+    const outputPath = path.join(uploadPath, filename);
+
+    await sharp(file.buffer)
+      .resize(300, 300)
+      .webp({ quality: 80 })
+      .toFile(outputPath);
+
+    return `/uploads/ProfileImages/${filename}`;
+  } catch (err) {
+    console.error("Error saving user image:", err);
+    return null;
+  }
+};
+
+// Nodemailer configuration
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.ADMIN_EMAIL,
+    pass: process.env.ADMIN_EMAIL_APP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+  logger: true,
+  debug: true,
+});
+
+// Middleware to clean expired OTPs
+const cleanExpiredOtps = async (req, res, next) => {
+  try {
+    if (req.user && req.path !== '/profile/verify-email') {
+      const user = await User.findById(req.user._id);
+      if (user?.otpExpiresAt && user.otpExpiresAt < new Date()) {
+        console.log(`🧹 Cleaning expired OTP for user ${req.user._id}`);
+        user.otp = null;
+        user.otpExpiresAt = null;
+        user.newEmail = null;
+        await user.save();
+        req.session.pendingEmail = null;
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error cleaning expired OTPs:', err);
+  }
+  next();
+};
+
+const userProfileController = {
+  // GET /user/profile
   getProfile: async (req, res) => {
-    const user = await User.findById(req.session.user._id).populate("addresses");
-    const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 });
-    res.render("user/profile", { user, orders });
-  },
+    try {
+      const { tab = "profile", search, page = 1 } = req.query;
+      const user = await User.findById(req.user._id).select("-password").lean();
+      const limit = 10;
+      const skip = (page - 1) * limit;
 
-  getEditProfile: async (req, res) => {
-    const user = await User.findById(req.session.user._id);
-    res.render("user/editProfile", { user });
-  },
+      let ordersQuery = { userId: req.user._id };
+      if (search) {
+        ordersQuery.orderId = { $regex: search, $options: "i" };
+      }
 
-  postEditProfile: async (req, res) => {
-    const user = await User.findById(req.session.user._id);
-    const { name, email } = req.body;
+      const orders = await Order.find(ordersQuery)
+        .populate("items.productId")
+        .sort({ orderDate: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-    if (email !== user.email) {
-      const token = crypto.randomBytes(20).toString("hex");
-      user.emailToken = token;
-      user.emailTokenExpires = Date.now() + 3600000;
-      user.tempEmail = email;
+      const totalOrders = await Order.countDocuments(ordersQuery);
+      const totalPages = Math.ceil(totalOrders / limit);
 
-      const html = `<p>Click to verify new email: <a href="http://localhost:4000/email/verify?token=${token}">Verify</a></p>`;
-      await sendEmail(email, "Verify your new email", html);
+      const addressDoc = await Address.findOne({ userId: req.user._id }).lean();
+      const addresses = addressDoc ? addressDoc.address : [];
+
+      const lastTx = await WalletTransaction.findOne({ userId: req.user._id })
+        .sort({ createdAt: -1 })
+        .lean();
+      const walletBalance = lastTx ? lastTx.wallet.balance : 0;
+
+      const history = await WalletTransaction.find({ userId: req.user._id })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      const referrals = [];
+
+      res.render("user/profile", {
+        user,
+        addresses,
+        orders,
+        walletBalance,
+        history,
+        referrals,
+        activeTab: tab,
+        searchQuery: search || "",
+        currentPage: parseInt(page),
+        totalPages,
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Server Error");
+      res.status(500).redirect("/user/profile");
     }
+  },
 
-    if (req.file) {
-      const filename = `user-${user._id}-${Date.now()}.jpeg`;
-      const filePath = path.join(__dirname, "../public/images/users", filename);
+  // GET /user/wallet-status
+  getWalletStatus: async (req, res) => {
+    try {
+      const user = await User.findById(req.user._id).select("-password").lean();
+      const lastTx = await WalletTransaction.findOne({ userId: req.user._id })
+        .sort({ createdAt: -1 })
+        .lean();
+      const walletBalance = lastTx ? lastTx.wallet.balance : 0;
 
-      await sharp(req.file.buffer)
-        .resize(300, 300)
-        .jpeg({ quality: 90 })
-        .toFile(filePath);
-
-      user.profileImage = `/images/users/${filename}`;
+      res.render("user/profile", {
+        user,
+        walletBalance,
+        activeTab: "wallet-status",
+        addresses: [],
+        orders: [],
+        history: [],
+        referrals: [],
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Unable to load wallet status");
+      res.redirect("/user/profile");
     }
-
-    user.name = name;
-    await user.save();
-    res.redirect("/user/profile");
   },
 
-  requestEmailVerification: async (req, res) => {
-    const user = await User.findById(req.session.user._id);
-    const token = crypto.randomBytes(20).toString("hex");
-    user.emailToken = token;
-    user.emailTokenExpires = Date.now() + 3600000;
-    await user.save();
-
-    const html = `<p>Click to verify: <a href="http://localhost:3000/email/verify?token=${token}">Verify</a></p>`;
-    await sendEmail(user.tempEmail, "Verify email", html);
-    res.redirect("/profile/edit");
+  // GET /user/profile/address/add
+  getAddAddress: (req, res) => {
+    res.render("user/addressForm", {
+      action: "/user/profile/address/add",
+      address: {},
+      success: req.flash("success"),
+      error: req.flash("error"),
+    });
   },
 
-  verifyEmailUpdate: async (req, res) => {
-    const { token } = req.query;
-    const user = await User.findOne({ emailToken: token, emailTokenExpires: { $gt: Date.now() } });
-    if (!user) return res.status(400).send("Token invalid or expired");
+  // POST /user/profile/address/add
+  postAddAddress: async (req, res) => {
+    try {
+      const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
 
-    user.email = user.tempEmail;
-    user.emailToken = undefined;
-    user.emailTokenExpires = undefined;
-    user.tempEmail = undefined;
-    await user.save();
-    res.redirect("/user/profile");
-  },
+      if (!name || !city || !state || !pincode || !phone) {
+        req.flash("error", "All required fields must be filled");
+        return res.redirect("/user/profile/address/add");
+      }
 
-  getChangePassword: async (req, res) => {
-    res.render("user/changePassword");
-  },
+      const addressData = {
+        name,
+        landMark: landMark || "",
+        city,
+        state,
+        pincode,
+        phone,
+        addressType: addressType || "Home",
+        isDefault: isDefault === "on",
+      };
 
-  postChangePassword: async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.session.user._id);
-    const match = await bcrypt.compare(currentPassword, user.password);
-    if (!match) return res.render("user/changePassword", { error: "Current password is incorrect." });
-
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
-    res.redirect("/user/profile");
-  },
-
-  getUserOrders: async (req, res) => {
-    const orders = await Order.find({ user: req.session.user._id });
-    res.render("user/orders", { orders });
-  },
-
-  cancelOrder: async (req, res) => {
-    const { id } = req.params;
-    const order = await Order.findOne({ _id: id, user: req.session.user._id });
-    if (!order || order.status === "Cancelled") return res.redirect("/orders");
-
-    order.status = "Cancelled";
-    await order.save();
-    res.redirect("/user/orders");
-  },
-
-  getForgotPassword: (req, res) => {
-    res.render("user/forgotPassword");
-  },
-
-  postForgotPassword: async (req, res) => {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.render("user/forgotPassword", { error: "No account with this email." });
-
-    const token = crypto.randomBytes(20).toString("hex");
-    user.resetToken = token;
-    user.resetExpires = Date.now() + 3600000;
-    await user.save();
-
-    const html = `<a href="http://localhost:4000/reset-password/${token}">Reset Password</a>`;
-    await sendEmail(email, "Reset Password", html);
-    res.render("user/forgotPassword", { success: "Email sent!" });
-  },
-
-  getResetPassword: async (req, res) => {
-    const user = await User.findOne({ resetToken: req.params.token, resetExpires: { $gt: Date.now() } });
-    if (!user) return res.send("Token expired.");
-    res.render("user/resetPassword", { token: req.params.token });
-  },
-
-  postResetPassword: async (req, res) => {
-    const user = await User.findOne({ resetToken: req.params.token, resetExpires: { $gt: Date.now() } });
-    if (!user) return res.send("Invalid or expired token.");
-
-    user.password = await bcrypt.hash(req.body.newPassword, 10);
-    user.resetToken = undefined;
-    user.resetExpires = undefined;
-    await user.save();
-    res.redirect("/user/login");
-  },
-
-    uploadProfileImage : async (req, res) => {
-        try {
-        const userId = req.session.user._id;
-        const file = req.file;
-    
-        if (!file) {
-            return res.status(400).json({ success: false, message: 'No file uploaded' });
+      let addressDoc = await Address.findOne({ userId: req.user._id });
+      if (addressDoc) {
+        if (addressData.isDefault) {
+          addressDoc.address.forEach((addr) => (addr.isDefault = false));
         }
-    
-        const imagePath = await saveUserImage(req, file);
-    
-        if (!imagePath) {
-            return res.status(500).json({ success: false, message: 'Failed to save image' });
+        addressDoc.address.push(addressData);
+        addressDoc.markModified('address');
+        await addressDoc.save();
+      } else {
+        addressDoc = await Address.create({
+          userId: req.user._id,
+          address: [addressData],
+        });
+      }
+
+      req.flash("success", "Address added successfully");
+      res.redirect("/user/profile?tab=addresses");
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Error adding address");
+      res.redirect("/user/profile/address/add");
+    }
+  },
+
+  // GET /user/profile/address/edit/:index
+  getEditAddress: async (req, res) => {
+    try {
+      const { index } = req.params;
+      const addressDoc = await Address.findOne({ userId: req.user._id }).lean();
+
+      if (!addressDoc || !addressDoc.address[index]) {
+        req.flash("error", "Address not found");
+        return res.redirect("/user/profile?tab=addresses");
+      }
+
+      res.render("user/addressForm", {
+        action: `/user/profile/address/edit/${index}`,
+        address: addressDoc.address[index],
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Error loading address");
+      res.redirect("/user/profile?tab=addresses");
+    }
+  },
+
+  // POST /user/profile/address/edit/:index
+  postEditAddress: async (req, res) => {
+    try {
+      const { index } = req.params;
+      const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
+
+      if (!name || !city || !state || !pincode || !phone) {
+        req.flash("error", "All required fields must be filled");
+        return res.redirect(`/user/profile/address/edit/${index}`);
+      }
+
+      const addressDoc = await Address.findOne({ userId: req.user._id });
+      if (!addressDoc || !addressDoc.address[index]) {
+        req.flash("error", "Address not found");
+        return res.redirect("/user/profile?tab=addresses");
+      }
+
+      if (isDefault === "on") {
+        addressDoc.address.forEach((addr) => (addr.isDefault = false));
+      }
+
+      addressDoc.address[index] = {
+        name,
+        landMark: landMark || "",
+        city,
+        state,
+        pincode,
+        phone,
+        addressType: addressType || "Home",
+        isDefault: isDefault === "on",
+        status: addressDoc.address[index].status || "active",
+        createdAt: addressDoc.address[index].createdAt || new Date(),
+      };
+
+      addressDoc.markModified('address');
+      await addressDoc.save();
+      req.flash("success", "Address updated successfully");
+      res.redirect("/user/profile?tab=addresses");
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Error updating address");
+      res.redirect(`/user/profile/address/edit/${index}`);
+    }
+  },
+
+  // POST /user/profile/address/delete/:index
+  deleteAddress: async (req, res) => {
+    try {
+      const { index } = req.params;
+      const addressDoc = await Address.findOne({ userId: req.user._id });
+
+      if (!addressDoc || !addressDoc.address[index]) {
+        req.flash("error", "Address not found");
+        return res.redirect("/user/profile?tab=addresses");
+      }
+
+      const wasDefault = addressDoc.address[index].isDefault;
+      addressDoc.address.splice(index, 1);
+
+      if (wasDefault && addressDoc.address.length > 0) {
+        addressDoc.address[0].isDefault = true;
+      }
+
+      addressDoc.markModified('address');
+      await addressDoc.save();
+      req.flash("success", "Address deleted successfully");
+      res.redirect("/user/profile?tab=addresses");
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Error deleting address");
+      res.redirect("/user/profile?tab=addresses");
+    }
+  },
+
+  // POST /user/profile/address/set-default/:index
+  setDefaultAddress: async (req, res) => {
+    try {
+      const { index } = req.params;
+      const parsedIndex = parseInt(index);
+
+      console.log(`🔄 Attempting to set default address for user ${req.user._id}, index: ${parsedIndex}`);
+
+      if (isNaN(parsedIndex) || parsedIndex < 0) {
+        console.log("❌ Invalid index provided:", index);
+        return res.status(400).json({ success: false, message: "Invalid address index" });
+      }
+
+      const addressDoc = await Address.findOne({ userId: req.user._id });
+      if (!addressDoc || !addressDoc.address || addressDoc.address.length === 0) {
+        console.log("❌ No addresses found for user:", req.user._id);
+        return res.status(404).json({ success: false, message: "No addresses found" });
+      }
+
+      if (parsedIndex >= addressDoc.address.length) {
+        console.log("❌ Index out of bounds:", parsedIndex, "Total addresses:", addressDoc.address.length);
+        return res.status(404).json({ success: false, message: "Address not found" });
+      }
+
+      if (addressDoc.address[parsedIndex].isDefault) {
+        console.log("ℹ️ Address already default at index:", parsedIndex);
+        return res.status(200).json({ success: true, message: "Address is already set as default" });
+      }
+
+      addressDoc.address.forEach((addr) => {
+        addr.isDefault = false;
+      });
+
+      addressDoc.address[parsedIndex].isDefault = true;
+      addressDoc.markModified('address');
+
+      const savedDoc = await addressDoc.save();
+      console.log("💾 Default address set successfully for index:", parsedIndex);
+
+      const verifyDoc = await Address.findOne({ userId: req.user._id });
+      const defaultAddress = verifyDoc.address.find((addr) => addr.isDefault);
+      console.log("🔍 Verification - Default address:", defaultAddress ? defaultAddress.name : "None found");
+
+      return res.status(200).json({ success: true, message: "Default address updated successfully" });
+    } catch (err) {
+      console.error("❌ Error setting default address:", err);
+      return res.status(500).json({ success: false, message: "Error setting default address: " + err.message });
+    }
+  },
+
+  // ... (other controller methods remain unchanged)
+  getEditProfile: [cleanExpiredOtps, async (req, res) => {
+    try {
+      const user = await User.findById(req.user._id).select("-password").lean();
+      const pendingEmail = req.session.pendingEmail || user.newEmail || '';
+
+      console.log('📋 Rendering editProfile with:', {
+        userEmail: user.email,
+        pendingEmail: pendingEmail,
+        hasOTP: !!user.otp
+      });
+
+      res.render("user/editProfile", {
+        user,
+        newEmail: pendingEmail,
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (err) {
+      console.error('❌ Error in getEditProfile:', err);
+      req.flash("error", "Server error");
+      res.status(500).redirect("/user/profile");
+    }
+  }],
+
+  updateProfile: [
+    upload.single("profileImage"),
+    async (req, res) => {
+      try {
+        const { fullname, phoneNumber } = req.body;
+        const updates = { fullname, phoneNumber };
+
+        if (req.file) {
+          const imagePath = await saveUserImage(req, req.file);
+          if (imagePath) {
+            updates.profileImage = imagePath;
+          }
         }
-    
-        // Update user in DB
-        await User.findByIdAndUpdate(userId, { image: imagePath });
-    
-        // Optionally update session user data
-        req.session.user.image = imagePath;
-    
-        // You can redirect or send a JSON response
-        return res.status(200).json({ success: true, image: imagePath });
-    
-        } catch (error) {
-        console.error('Error uploading profile image:', error);
-        return res.status(500).json({ success: false, message: 'Server error' });
-        }
+
+        await User.findByIdAndUpdate(req.user._id, updates);
+        req.flash("success", "Profile updated successfully");
+        res.redirect("/user/profile");
+      } catch (err) {
+        console.error(err);
+        req.flash("error", "Error updating profile");
+        res.redirect("/user/profile/edit");
+      }
     },
+  ],
 
-    uploadCroppedImage : async (req, res) => {
-        try {
-            const base64 = req.body.croppedImage;
-
-            if (!base64) {
-            return res.status(400).send('No image data provided.');
-            }
-
-            // Decode base64 and convert to buffer
-            const matches = base64.match(/^data:image\/\w+;base64,(.+)$/);
-            const buffer = Buffer.from(matches[1], 'base64');
-
-            // Generate filename and path
-            const filename = `profile_${Date.now()}.jpg`;
-            const uploadPath = path.join(__dirname, '/public/images/users', filename);
-
-            // Resize and save using sharp
-            await sharp(buffer)
-            .resize(300, 300)
-            .jpeg({ quality: 90 })
-            .toFile(uploadPath);
-
-            const imagePath = `/images/users/${filename}`;
-
-            // Save to DB
-            const userId = req.session.user._id;
-            await User.findByIdAndUpdate(userId, { profileImage: imagePath });
-
-            req.session.user.profileImage = imagePath;
-            res.redirect('/user/profile');
-        } catch (err) {
-            console.error('Error uploading cropped image:', err);
-            res.status(500).send('Server error');
+  uploadProfileImage: [
+    upload.single("profileImage"),
+    async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ success: false, message: "No image provided" });
         }
+
+        const imagePath = await saveUserImage(req, req.file);
+        if (!imagePath) {
+          return res.status(500).json({ success: false, message: "Failed to save image" });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (user.profileImage && user.profileImage !== "/images/default-profile.png") {
+          const oldImagePath = path.join(process.cwd(), "public", user.profileImage);
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+          }
+        }
+
+        user.profileImage = imagePath;
+        await user.save();
+
+        res.json({ success: true, imageUrl: imagePath });
+      } catch (err) {
+        console.error("Error in uploadProfileImage:", err);
+        res.status(500).json({ success: false, message: "Server error" });
+      }
+    },
+  ],
+
+  initiateEmailChange: async (req, res) => {
+    try {
+      const { newEmail } = req.body;
+      console.log('📥 Received newEmail:', newEmail);
+
+      if (!newEmail || !newEmail.trim()) {
+        console.log('❌ Validation failed: No email provided');
+        return res.status(400).json({ success: false, message: "Please provide a valid email address" });
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newEmail.trim())) {
+        console.log('❌ Validation failed: Invalid email format');
+        return res.status(400).json({ success: false, message: "Invalid email format" });
+      }
+
+      const existingUser = await User.findOne({ email: newEmail.trim() });
+      if (existingUser) {
+        console.log('❌ Validation failed: Email already in use');
+        return res.status(400).json({ success: false, message: "Email already in use" });
+      }
+
+      const user = await User.findById(req.user._id);
+      if (!user) {
+        console.log('❌ User not found:', req.user._id);
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      if (user.email === newEmail.trim()) {
+        console.log('❌ Validation failed: Same as current email');
+        return res.status(400).json({ success: false, message: "New email cannot be the same as current email" });
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      console.log(`🔐 Generated OTP for user ${user._id}: ${otp}`);
+      console.log(`⏰ OTP expires at: ${otpExpiresAt}`);
+
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          otp: otp,
+          otpExpiresAt: otpExpiresAt,
+          newEmail: newEmail.trim()
+        },
+        { 
+          new: true,
+          runValidators: true
+        }
+      );
+
+      if (!updatedUser) {
+        console.error('❌ Failed to update user document');
+        return res.status(500).json({ success: false, message: "Failed to save user data. Please try again." });
+      }
+
+      console.log('✅ User updated with OTP and newEmail:', {
+        userId: updatedUser._id,
+        otp: updatedUser.otp,
+        otpExpiresAt: updatedUser.otpExpiresAt,
+        newEmail: updatedUser.newEmail,
+      });
+
+      const verifyUser = await User.findById(req.user._id).select('otp otpExpiresAt newEmail');
+      console.log('🔍 Verification check after save:', {
+        otp: verifyUser.otp,
+        otpExpiresAt: verifyUser.otpExpiresAt,
+        newEmail: verifyUser.newEmail,
+      });
+
+      req.session.pendingEmail = newEmail.trim();
+      req.session.pendingOtp = otp;
+      req.session.otpExpiresAt = otpExpiresAt.getTime();
+      console.log('📋 Session data stored:', {
+        pendingEmail: req.session.pendingEmail,
+        pendingOtp: req.session.pendingOtp,
+        otpExpiresAt: req.session.otpExpiresAt
+      });
+
+      const mailOptions = {
+        from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+        to: newEmail.trim(),
+        subject: "Email Change Verification - RyzoBags",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #4f46e5; margin: 0;">RyzoBags</h1>
+                <p style="color: #6b7280; margin: 5px 0 0 0;">Email Verification</p>
+              </div>
+              
+              <h2 style="color: #111827; margin-bottom: 20px;">Verify Your New Email Address</h2>
+              
+              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+                You have requested to change your email address. To complete this process, please use the verification code below:
+              </p>
+              
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0;">
+                <p style="color: white; margin: 0 0 10px 0; font-size: 14px; font-weight: 500;">Your Verification Code</p>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; display: inline-block;">
+                  <span style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                    ${otp}
+                  </span>
+                </div>
+              </div>
+              
+              <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                <p style="color: #92400e; margin: 0; font-size: 14px;">
+                  <strong>⏰ Important:</strong> This verification code will expire in 10 minutes for security reasons.
+                </p>
+              </div>
+              
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin-top: 30px;">
+                If you did not request this email change, please ignore this message and your account will remain secure.
+              </p>
+              
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              
+              <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+                This is an automated message from RyzoBags. Please do not reply to this email.
+              </p>
+            </div>
+          </div>
+        `,
+        text: `
+          RyzoBags - Email Verification
+          
+          You have requested to change your email address.
+          
+          Verification Code: ${otp}
+          
+          This code is valid for 10 minutes.
+          
+          If you did not request this change, please ignore this email.
+        `,
+      };
+
+      console.log(`📧 Attempting to send email to: ${newEmail.trim()}`);
+
+      try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ OTP email sent successfully:', info.messageId);
+        console.log('📧 Email accepted:', info.accepted);
+        console.log('📧 Email rejected:', info.rejected);
+        
+        return res.json({ success: true, message: `Verification email sent to ${newEmail.trim()}. Please check your inbox.` });
+      } catch (emailError) {
+        console.error('❌ Email sending failed:', emailError);
+        
+        await User.findByIdAndUpdate(req.user._id, {
+          otp: null,
+          otpExpiresAt: null,
+          newEmail: null
+        });
+        req.session.pendingEmail = null;
+        req.session.pendingOtp = null;
+        req.session.otpExpiresAt = null;
+        
+        return res.status(500).json({ success: false, message: "Failed to send verification email. Please check the email address and try again." });
+      }
+    } catch (err) {
+      console.error('❌ Error in initiateEmailChange:', err);
+      return res.status(500).json({ success: false, message: "Server error occurred. Please try again." });
     }
+  },
+
+  verifyEmailChange: async (req, res) => {
+    try {
+      const { otp } = req.body;
+      console.log('📥 Received OTP for verification:', otp);
+
+      if (!req.user?._id) {
+        console.log('❌ No authenticated user found');
+        return res.status(401).json({ success: false, message: "Unauthorized. Please log in again." });
+      }
+
+      if (!otp || !otp.trim()) {
+        console.log('❌ Validation failed: No OTP provided');
+        return res.status(400).json({ success: false, message: "Please enter the OTP" });
+      }
+
+      console.log('🔍 Current user ID:', req.user._id);
+
+      const userCheck = await User.findById(req.user._id).select('otp otpExpiresAt newEmail email');
+      console.log('🔍 User document state before verification:', {
+        userId: req.user._id,
+        storedOtp: userCheck?.otp,
+        otpExpiresAt: userCheck?.otpExpiresAt,
+        newEmail: userCheck?.newEmail,
+        email: userCheck?.email,
+        currentTime: new Date(),
+      });
+
+      console.log('🔍 Session data:', {
+        pendingEmail: req.session.pendingEmail,
+        pendingOtp: req.session.pendingOtp,
+        otpExpiresAt: req.session.otpExpiresAt
+      });
+
+      let validOtp, validExpiresAt, validNewEmail;
+      
+      if (userCheck?.otp && userCheck?.otpExpiresAt && userCheck?.newEmail) {
+        validOtp = userCheck.otp;
+        validExpiresAt = userCheck.otpExpiresAt;
+        validNewEmail = userCheck.newEmail;
+        console.log('✅ Using database data for verification');
+      } else if (req.session.pendingOtp && req.session.otpExpiresAt && req.session.pendingEmail) {
+        validOtp = req.session.pendingOtp;
+        validExpiresAt = new Date(req.session.otpExpiresAt);
+        validNewEmail = req.session.pendingEmail;
+        console.log('✅ Using session data for verification');
+      } else {
+        console.log('❌ No valid OTP data found in database or session');
+        return res.status(400).json({ success: false, message: "No pending email verification found. Please request a new verification email." });
+      }
+
+      if (validExpiresAt < new Date()) {
+        console.log('❌ OTP expired');
+        await User.findByIdAndUpdate(req.user._id, {
+          otp: null,
+          otpExpiresAt: null,
+          newEmail: null
+        });
+        req.session.pendingEmail = null;
+        req.session.pendingOtp = null;
+        req.session.otpExpiresAt = null;
+        return res.status(400).json({ success: false, message: "OTP has expired. Please request a new verification email." });
+      }
+
+      if (validOtp !== otp.trim().toString()) {
+        console.log(`❌ Invalid OTP. Received: ${otp.trim().toString()}, Expected: ${validOtp}`);
+        return res.status(400).json({ success: false, message: "Invalid OTP. Please check and try again." });
+      }
+
+      const emailExists = await User.findOne({ 
+        email: validNewEmail,
+        _id: { $ne: req.user._id }
+      });
+      
+      if (emailExists) {
+        console.log('❌ Email already taken:', validNewEmail);
+        await User.findByIdAndUpdate(req.user._id, {
+          otp: null,
+          otpExpiresAt: null,
+          newEmail: null
+        });
+        req.session.pendingEmail = null;
+        req.session.pendingOtp = null;
+        req.session.otpExpiresAt = null;
+        return res.status(400).json({ success: false, message: "This email is already in use by another account." });
+      }
+
+      const oldEmail = userCheck.email;
+      console.log(`🔄 Attempting to change email for user ${req.user._id} from ${oldEmail} to ${validNewEmail}`);
+
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          email: validNewEmail,
+          newEmail: null,
+          otp: null,
+          otpExpiresAt: null
+        },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        console.error('❌ Failed to update user email');
+        return res.status(500).json({ success: false, message: "Failed to save email update." });
+      }
+
+      console.log(`✅ Successfully updated email to ${validNewEmail} for user ${updatedUser._id}`);
+
+      req.session.pendingEmail = null;
+      req.session.pendingOtp = null;
+      req.session.otpExpiresAt = null;
+      console.log('📋 Cleared session data');
+
+      try {
+        await Promise.all([
+          transporter.sendMail({
+            from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+            to: oldEmail,
+            subject: "Email Address Changed - RyzoBags",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #dc2626;">Email Address Changed</h2>
+                <p>Your RyzoBags account email has been changed from <strong>${oldEmail}</strong> to <strong>${validNewEmail}</strong>.</p>
+                <p>If you did not make this change, please contact our support team immediately.</p>
+                <p style="margin-top: 30px; color: #6b7280;">
+                  Best regards,<br>
+                  RyzoBags Team
+                </p>
+              </div>
+            `,
+          }),
+          transporter.sendMail({
+            from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+            to: validNewEmail,
+            subject: "Welcome to Your New Email - RyzoBags",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #059669;">Email Successfully Updated!</h2>
+                <p>Your RyzoBags account email has been successfully changed to <strong>${validNewEmail}</strong>.</p>
+                <p>You can now use this email address to log in to your account.</p>
+                <p style="margin-top: 30px; color: #6b7280;">
+                  Best regards,<br>
+                  RyzoBags Team
+                </p>
+              </div>
+            `,
+          }),
+        ]);
+        console.log(`✅ Confirmation emails sent to ${oldEmail} and ${validNewEmail}`);
+      } catch (emailError) {
+        console.error('⚠️ Failed to send confirmation emails:', emailError);
+      }
+
+      return res.json({ success: true, message: "Email address updated successfully! You can now use your new email to log in." });
+    } catch (err) {
+      console.error('❌ Error in verifyEmailChange:', err);
+      return res.status(500).json({ success: false, message: "Failed to verify email. Please try again." });
+    }
+  },
+
+  checkEmailChangeStatus: async (req, res) => {
+    try {
+      const user = await User.findById(req.user._id).select('email newEmail otp').lean();
+      if (!user.newEmail && !user.otp) {
+        return res.json({ success: true, message: 'Email updated successfully!', email: user.email });
+      }
+      return res.json({ success: false, message: 'Email change pending.', email: user.email });
+    } catch (err) {
+      console.error('❌ Error in checkEmailChangeStatus:', err.message);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  },
+
+  getChangePassword: (req, res) => {
+    res.render("user/changePassword", {
+      activeTab: "change-password",
+      success: req.flash("success"),
+      error: req.flash("error"),
+    });
+  },
+
+  changePassword: async (req, res) => {
+    req.flash("error", "Please use the new secure password change process");
+    res.redirect("/user/change-password");
+  },
+
+  requestPasswordChangeOtp: async (req, res) => {
+    try {
+      const { currentPassword } = req.body;
+
+      if (!currentPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Current password is required" 
+        });
+      }
+
+      const user = await User.findById(req.user._id);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "User not found" 
+        });
+      }
+
+      if (!user.googleId) {
+        if (!user.password) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "No password set. Use forgot password to set one" 
+          });
+        }
+        
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Current password is incorrect" 
+          });
+        }
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      console.log(`🔐 Generated password change OTP for user ${user._id}: ${otp}`);
+
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          passwordChangeOtp: otp,
+          passwordChangeOtpExpiresAt: otpExpiresAt
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedUser) {
+        return res.status(500).json({ 
+          success: false, 
+          message: "Failed to save verification data" 
+        });
+      }
+
+      req.session.passwordChangeOtp = otp;
+      req.session.passwordChangeOtpExpiresAt = otpExpiresAt.getTime();
+
+      const mailOptions = {
+        from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+        to: user.email,
+        subject: "Password Change Verification - RyzoBags",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #4f46e5; margin: 0;">RyzoBags</h1>
+                <p style="color: #6b7280; margin: 5px 0 0 0;">Password Change Verification</p>
+              </div>
+              
+              <h2 style="color: #111827; margin-bottom: 20px;">Verify Password Change Request</h2>
+              
+              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+                You have requested to change your account password. To complete this process, please use the verification code below:
+              </p>
+              
+              <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0;">
+                <p style="color: white; margin: 0 0 10px 0; font-size: 14px; font-weight: 500;">Your Verification Code</p>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; display: inline-block;">
+                  <span style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                    ${otp}
+                  </span>
+                </div>
+              </div>
+              
+              <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                <p style="color: #92400e; margin: 0; font-size: 14px;">
+                  <strong>⏰ Important:</strong> This verification code will expire in 10 minutes for security reasons.
+                </p>
+              </div>
+              
+              <div style="background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                <p style="color: #dc2626; margin: 0; font-size: 14px;">
+                  <strong>🔒 Security Alert:</strong> If you did not request this password change, please contact our support team immediately and change your password.
+                </p>
+              </div>
+              
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              
+              <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+                This is an automated message from RyzoBags. Please do not reply to this email.
+              </p>
+            </div>
+          </div>
+        `,
+        text: `
+          RyzoBags - Password Change Verification
+          
+          You have requested to change your account password.
+          
+          Verification Code: ${otp}
+          
+          This code is valid for 10 minutes.
+          
+          If you did not request this change, please contact support immediately.
+        `,
+      };
+
+      console.log(`📧 Sending password change OTP to: ${user.email}`);
+
+      try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Password change OTP email sent successfully:', info.messageId);
+        
+        return res.json({ 
+          success: true, 
+          message: `Verification code sent to your email address. Please check your inbox.` 
+        });
+      } catch (emailError) {
+        console.error('❌ Password change OTP email sending failed:', emailError);
+        
+        await User.findByIdAndUpdate(req.user._id, {
+          passwordChangeOtp: null,
+          passwordChangeOtpExpiresAt: null
+        });
+        req.session.passwordChangeOtp = null;
+        req.session.passwordChangeOtpExpiresAt = null;
+        
+        return res.status(500).json({ 
+          success: false, 
+          message: "Failed to send verification email. Please try again." 
+        });
+      }
+    } catch (err) {
+      console.error('❌ Error in requestPasswordChangeOtp:', err);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Server error occurred. Please try again." 
+      });
+    }
+  },
+
+  verifyOtpAndChangePassword: async (req, res) => {
+    try {
+      const { otp, newPassword, confirmPassword } = req.body;
+
+      if (!otp || !newPassword || !confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "All fields are required"
+        });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "New passwords do not match"
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters long"
+        });
+      }
+
+      const user = await User.findById(req.user._id).select('passwordChangeOtp passwordChangeOtpExpiresAt email');
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+
+      console.log('🔍 Password change verification attempt:', {
+        userId: user._id,
+        providedOtp: otp,
+        storedOtp: user.passwordChangeOtp,
+        expiresAt: user.passwordChangeOtpExpiresAt,
+        currentTime: new Date()
+      });
+
+      let validOtp, validExpiresAt;
+      
+      if (user.passwordChangeOtp && user.passwordChangeOtpExpiresAt) {
+        validOtp = user.passwordChangeOtp;
+        validExpiresAt = user.passwordChangeOtpExpiresAt;
+        console.log('✅ Using database OTP data');
+      } else if (req.session.passwordChangeOtp && req.session.passwordChangeOtpExpiresAt) {
+        validOtp = req.session.passwordChangeOtp;
+        validExpiresAt = new Date(req.session.passwordChangeOtpExpiresAt);
+        console.log('✅ Using session OTP data');
+      } else {
+        console.log('❌ No valid OTP data found');
+        return res.status(400).json({
+          success: false,
+          message: "No pending password change request found. Please start over."
+        });
+      }
+
+      if (validExpiresAt < new Date()) {
+        console.log('❌ Password change OTP expired');
+        await User.findByIdAndUpdate(req.user._id, {
+          passwordChangeOtp: null,
+          passwordChangeOtpExpiresAt: null
+        });
+        req.session.passwordChangeOtp = null;
+        req.session.passwordChangeOtpExpiresAt = null;
+        
+        return res.status(400).json({
+          success: false,
+          message: "Verification code has expired. Please request a new one."
+        });
+      }
+
+      if (validOtp !== otp.trim()) {
+        console.log(`❌ Invalid password change OTP. Provided: ${otp.trim()}, Expected: ${validOtp}`);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid verification code. Please check and try again."
+        });
+      }
+
+      console.log('✅ OTP verified successfully, proceeding to change password');
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          password: hashedPassword,
+          passwordChangeOtp: null,
+          passwordChangeOtpExpiresAt: null
+        },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update password"
+        });
+      }
+
+      req.session.passwordChangeOtp = null;
+      req.session.passwordChangeOtpExpiresAt = null;
+
+      console.log(`✅ Password changed successfully for user ${updatedUser._id}`);
+
+      try {
+        await transporter.sendMail({
+          from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+          to: user.email,
+          subject: "Password Changed Successfully - RyzoBags",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #4f46e5; margin: 0;">RyzoBags</h1>
+                  <p style="color: #6b7280; margin: 5px 0 0 0;">Security Update</p>
+                </div>
+                
+                <h2 style="color: #059669; margin-bottom: 20px;">Password Changed Successfully!</h2>
+                
+                <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
+                  Your RyzoBags account password has been successfully changed on ${new Date().toLocaleString()}.
+                </p>
+                
+                <div style="background-color: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                  <p style="color: #047857; margin: 0; font-size: 14px;">
+                    <strong>✅ Security Confirmed:</strong> Your account is now secured with your new password.
+                  </p>
+                </div>
+                
+                <p style="color: #374151; line-height: 1.6;">
+                  If you did not make this change, please contact our support team immediately.
+                </p>
+                
+                <p style="margin-top: 30px; color: #6b7280;">
+                  Best regards,<br>
+                  RyzoBags Security Team
+                </p>
+              </div>
+            </div>
+          `,
+        });
+        console.log('✅ Password change confirmation email sent');
+      } catch (emailError) {
+        console.error('⚠️ Failed to send password change confirmation email:', emailError);
+      }
+
+      return res.json({
+        success: true,
+        message: "Password changed successfully! Please use your new password for future logins."
+      });
+
+    } catch (err) {
+      console.error('❌ Error in verifyOtpAndChangePassword:', err);
+      return res.status(500).json({
+        success: false,
+        message: "Server error occurred. Please try again."
+      });
+    }
+  },
+
+  getWalletHistory: async (req, res) => {
+    try {
+      const history = await WalletTransaction.find({ userId: req.user._id })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      const user = await User.findById(req.user._id).select("-password").lean();
+      res.render("user/profile", {
+        user,
+        history,
+        activeTab: "wallet-history",
+        addresses: [],
+        orders: [],
+        walletBalance: 0,
+        referrals: [],
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Unable to load wallet history");
+      res.redirect("/user/profile");
+    }
+  },
+
+  getReferrals: async (req, res) => {
+    try {
+      const referrals = [];
+      const user = await User.findById(req.user._id).select("-password").lean();
+      res.render("user/profile", {
+        user,
+        referrals,
+        activeTab: "referrals",
+        addresses: [],
+        orders: [],
+        walletBalance: 0,
+        history: [],
+        success: req.flash("success"),
+        error: req.flash("error"),
+      });
+    } catch (err) {
+      console.error(err);
+      req.flash("error", "Unable to load referrals");
+      res.redirect("/user/profile");
+    }
+  },
+
+  logout: (req, res) => {
+    req.logout((err) => {
+      if (err) console.error(err);
+      res.redirect("/user/login");
+    });
+  },
 };
 
-module.exports = userProductController;
+module.exports = userProfileController;

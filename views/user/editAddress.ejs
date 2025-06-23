@@ -1,0 +1,90 @@
+<%- include("partials/userHeader") %>
+<!-- Add Tailwind CSS CDN if not already included in your header -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="container mx-auto px-4 py-10">
+  <h3 class="text-2xl font-bold text-teal-700 mb-8">Edit User Address</h3>
+  
+  <div class="bg-white rounded-lg shadow-md p-6 max-w-5xl mx-auto">
+    <form id="addressForm" method="POST" action="/user/editAddress?id=<%= address._id.toLocaleString() %>" class="space-y-6">
+        <input type="hidden" name="addressId" value="<%= address._id %>">      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label for="addressType" class="block text-sm font-medium text-gray-700 mb-1">Address Type:</label>
+          <input type="text" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="addressType" name="addressType" value="<%= address.addressType %>" >
+        </div>
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name:</label>
+          <input type="text" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="name" name="name" value="<%= address.name %>" >
+        </div>
+        <div>
+          <label for="city" class="block text-sm font-medium text-gray-700 mb-1">City:</label>
+          <input type="text" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="city" name="city" value="<%= address.city %>" >
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label for="landMark" class="block text-sm font-medium text-gray-700 mb-1">Landmark:</label>
+          <input type="text" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="landMark" name="landMark" value="<%= address.landMark %>" >
+        </div>
+        <div>
+          <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State:</label>
+          <input type="text" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="state" name="state" value="<%= address.state %>" >
+        </div>
+        <div>
+          <label for="pincode" class="block text-sm font-medium text-gray-700 mb-1">Pincode:</label>
+          <input type="number" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="pincode" name="pincode" value="<%= address.pincode %>" >
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone:</label>
+          <input type="number" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="phone" name="phone" value="<%= address.phone %>" >
+        </div>
+        <div>
+          <label for="altPhone" class="block text-sm font-medium text-gray-700 mb-1">Alternate Phone:</label>
+          <input type="number" class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" id="altPhone" name="altPhone" value="<%= address.altPhone %>" >
+        </div>
+      </div>
+      
+      <div class="flex justify-between items-center pt-4">
+        <a href="/user/address" class="px-6 py-2 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200">
+          Cancel
+        </a>
+        <button type="submit" id="submitButton" class="px-6 py-2 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-200">
+          Update Address
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.getElementById('submitButton').addEventListener('click', function (event) {
+    if (!validateForm()) {
+      event.preventDefault();
+    }
+  });
+
+  function validateForm() {
+    let isValid = true;
+    const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"];
+    requiredFields.forEach(function (field) {
+      const input = document.getElementById(field);
+      if (input.value.trim() === "") {
+        Swal.fire({
+          title: 'Error',
+          text: `Please fill all the field.`,
+          icon: 'error'
+        });
+        isValid = false;
+      }
+    });
+
+    return isValid;
+  }
+</script>
+<%- include("partials/userFooter") %>

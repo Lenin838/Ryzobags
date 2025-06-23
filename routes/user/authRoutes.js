@@ -7,22 +7,27 @@ const userProductRouter = require('../../routes/user/productRoutes');
 const { isAuthenticated, isNotAuthenticated } = require('../../middlewares/auth');
 const {upload} = require('../../middlewares/uploads');
 const profileRouter = require('../../routes/user/userProfileRoutes');
+const orderRouter = require('../../routes/user/orderRoutes');
 
+userRouter.use('/',orderRouter);
 userRouter.use('/',profileRouter);
 userRouter.use('/', userProductRouter);
 
 // Google Auth Routes
-userRouter.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+userRouter.get("/google", 
+  userController.initiateGoogleAuth,
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
 userRouter.get("/google/callback",
-    passport.authenticate("google", {
-        failureRedirect: "/auth/login"
-    }),
-    (req, res) => {
-        req.session.user = req.user;
-        res.redirect("/user/home");
-    }
+  passport.authenticate("google", {
+    failureRedirect: "/user/google/failure"
+  }),
+  userController.googleCallback
 );
+
+// Google auth failure route
+userRouter.get("/google/failure",userController.googleAuthFailure);
 
 // Auth and Registration Routes
 userRouter.get('/signup', isNotAuthenticated, userController.loadRegister);
@@ -40,13 +45,13 @@ userRouter.post('/forgot-password', isNotAuthenticated, userController.forgotPas
 userRouter.get('/reset-password/:token', isNotAuthenticated, userController.loadResetPassword);
 userRouter.post('/reset-password/:token', isNotAuthenticated, userController.resetPassword);
 
-userRouter.get('/home', isAuthenticated, userController.loadHomepage);
+userRouter.get('/home', userController.loadHomepage);
 userRouter.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             console.log(err);
         }
-        res.redirect('/user/login');
+        return res.redirect('/user/login');
     });
 });
 

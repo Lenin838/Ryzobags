@@ -1,35 +1,39 @@
-// routes/userRoutes.js
+const express = require('express');
+const userProfileRouter = express.Router();
+const userProfileController = require('../../controllers/users/userProfileController');
+const { isAuthenticated } = require('../../middlewares/auth');
 
-const express = require("express");
-const profileRouter = express.Router();
-const userProfileController = require("../../controllers/users/userProfileController");
-const { isAuthenticated, isNotAuthenticated } = require('../../middlewares/auth');
-const {upload,saveUserImage} = require('../../middlewares/uploads');
+// Profile routes
+userProfileRouter.get('/profile', isAuthenticated, userProfileController.getProfile);
+userProfileRouter.get('/profile/edit', isAuthenticated, userProfileController.getEditProfile);
+userProfileRouter.post('/profile/edit', isAuthenticated, userProfileController.updateProfile);
+userProfileRouter.post('/profile/upload-image', isAuthenticated, userProfileController.uploadProfileImage);
 
-// Profile & Edit
-profileRouter.get("/profile", isAuthenticated, userProfileController.getProfile);
-profileRouter.get("/profile/edit", isAuthenticated, userProfileController.getEditProfile);
-profileRouter.post("/profile/edit", isAuthenticated, userProfileController.postEditProfile);
+// Email change routes
+userProfileRouter.post('/profile/change-email', isAuthenticated, userProfileController.initiateEmailChange);
+userProfileRouter.post('/profile/verify-email', isAuthenticated, userProfileController.verifyEmailChange);
+userProfileRouter.get('/profile/check-email-change-status', isAuthenticated, userProfileController.checkEmailChangeStatus);
 
-// Email verification
-profileRouter.post("/email/request-verification", isAuthenticated, userProfileController.requestEmailVerification);
-profileRouter.post("/email/verify", isAuthenticated, userProfileController.verifyEmailUpdate);
+// Password change routes
+userProfileRouter.get('/change-password', isAuthenticated, userProfileController.getChangePassword);
+userProfileRouter.post('/change-password', isAuthenticated, userProfileController.changePassword);
+userProfileRouter.post('/request-password-change-otp', isAuthenticated, userProfileController.requestPasswordChangeOtp);
+userProfileRouter.post('/verify-otp-and-change-password', isAuthenticated, userProfileController.verifyOtpAndChangePassword);
 
-// Password change
-profileRouter.get("/profile/change-password", isAuthenticated, userProfileController.getChangePassword);
-profileRouter.post("/profile/change-password", isAuthenticated, userProfileController.postChangePassword);
+// Address routes
+userProfileRouter.get('/profile/address/add', isAuthenticated, userProfileController.getAddAddress);
+userProfileRouter.post('/profile/address/add', isAuthenticated, userProfileController.postAddAddress);
+userProfileRouter.get('/profile/address/edit/:index', isAuthenticated, userProfileController.getEditAddress);
+userProfileRouter.post('/profile/address/edit/:index', isAuthenticated, userProfileController.postEditAddress);
+userProfileRouter.post('/profile/address/delete/:index', isAuthenticated, userProfileController.deleteAddress);
+userProfileRouter.post('/profile/address/set-default/:index', isAuthenticated, userProfileController.setDefaultAddress);
 
-// Orders
-profileRouter.get("/orders", isAuthenticated, userProfileController.getUserOrders);
-profileRouter.post("/orders/:id/cancel", isAuthenticated, userProfileController.cancelOrder);
+// Wallet and referral routes
+userProfileRouter.get('/wallet-status', isAuthenticated, userProfileController.getWalletStatus);
+userProfileRouter.get('/wallet-history', isAuthenticated, userProfileController.getWalletHistory);
+userProfileRouter.get('/referrals', isAuthenticated, userProfileController.getReferrals);
 
-// Forgot Password
-profileRouter.get("/forgot-password", userProfileController.getForgotPassword);
-profileRouter.post("/forgot-password", userProfileController.postForgotPassword);
-profileRouter.get("/reset-password/:token", userProfileController.getResetPassword);
-profileRouter.post("/reset-password/:token", userProfileController.postResetPassword);
-profileRouter.post('/profile/upload-image', isAuthenticated, upload.single('profileImage'), userProfileController.uploadProfileImage);
-profileRouter.post('/profile/image',isAuthenticated, userProfileController.uploadCroppedImage);
+// Logout route
+userProfileRouter.get('/logout', userProfileController.logout);
 
-
-module.exports = profileRouter;
+module.exports = userProfileRouter;
