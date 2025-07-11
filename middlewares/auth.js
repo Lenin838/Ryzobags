@@ -1,7 +1,18 @@
-const isAuthenticated = (req, res, next) => {
+const user=require("../models/User")
+
+
+const isAuthenticated = async(req, res, next) => {
+    
     if (req.session.user) {
-        req.user = req.session.user; // ✅ Attach session user to request
-        next();
+        const userId = req.session.user._id;
+        console.log("isauthenticates",userId) // ✅ Attach session user to request
+        const userdetails= await user.findById(userId)
+        console.log("isauthenticates",userdetails)
+        if(userdetails.isActive===false){
+            res.redirect("/user/login")
+        }
+        req.user = userdetails;
+        next()
     } else {
         res.redirect('/user/login');
     }

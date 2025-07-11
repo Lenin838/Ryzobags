@@ -114,43 +114,69 @@ const adminController = {
             messages: {} 
         });
 
-    } catch (error) {
-        console.error('Error in getUsers:', error.message);
-        res.redirect('/admin/dashboard');
-    }
-},
+      } catch (error) {
+          console.error('Error in getUsers:', error.message);
+          res.redirect('/admin/dashboard');
+      }
+  },
 
-blockUser: async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const user = await User.findByIdAndUpdate(
-            userId,
-            { isActive: false },
-            { new: true }
-        );
+  blockUser: async (req, res) => {
+      try {
+          const userId = req.params.id;
+          const user = await User.findByIdAndUpdate(
+              userId,
+              { isActive: false },
+              { new: true }
+          );
 
-        return res.redirect('/admin/users-management');
-    } catch (error) {
-        console.error('Block user error:', error.message);
-        res.redirect('/admin/users-management');
-    }
-},
+          if (user) {
+              return res.json({ 
+                  success: true, 
+                  message: 'User blocked successfully' 
+              });
+          } else {
+              return res.json({ 
+                  success: false, 
+                  message: 'User not found' 
+              });
+          }
+      } catch (error) {
+          console.error('Block user error:', error.message);
+          return res.json({ 
+              success: false, 
+              message: 'Failed to block user' 
+          });
+      }
+  },
 
-unblockUser: async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const user = await User.findByIdAndUpdate(
-            userId,
-            { isActive: true },
-            { new: true }
-        );
+  unblockUser: async (req, res) => {
+      try {
+          const userId = req.params.id;
+          const user = await User.findByIdAndUpdate(
+              userId,
+              { isActive: true },
+              { new: true }
+          );
 
-        return res.redirect('/admin/users-management');
-    } catch (error) {
-        console.error('Unblock user error:', error.message);
-        res.redirect('/admin/users-management');
-    }
-}
+          if (user) {
+              return res.json({ 
+                  success: true, 
+                  message: 'User unblocked successfully' 
+              });
+          } else {
+              return res.json({ 
+                  success: false, 
+                  message: 'User not found' 
+              });
+          }
+      } catch (error) {
+          console.error('Unblock user error:', error.message);
+          return res.json({ 
+              success: false, 
+              message: 'Failed to unblock user' 
+          });
+      }
+  }
 };
 
 module.exports = adminController;

@@ -91,16 +91,31 @@
 
     <!-- Pagination -->
     <% if (totalOrders > 0) { %>
-      <div class="mt-6 flex justify-between items-center">
-        <p class="text-sm text-gray-700">
+      <div class="mt-6 flex flex-col sm:flex-row justify-between items-center">
+        <p class="text-sm text-gray-700 mb-4 sm:mb-0">
           Showing <%= (currentPage - 1) * 10 + 1 %> to <%= Math.min(currentPage * 10, totalOrders) %> of <%= totalOrders %> orders
         </p>
-        <div class="flex gap-2">
+        <div class="flex gap-1">
           <% if (currentPage > 1) { %>
-            <a href="/admin/orders?page=<%= currentPage - 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Previous</a>
+            <a href="/admin/orders?page=1&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-3 py-1 border rounded hover:bg-gray-100">First</a>
+            <a href="/admin/orders?page=<%= currentPage - 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-3 py-1 border rounded hover:bg-gray-100">Prev</a>
           <% } %>
+
+          <% const maxVisiblePages = 5;
+             let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+             let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+             
+             if (endPage - startPage + 1 < maxVisiblePages) {
+               startPage = Math.max(1, endPage - maxVisiblePages + 1);
+             }
+             
+             for (let i = startPage; i <= endPage; i++) { %>
+            <a href="/admin/orders?page=<%= i %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-3 py-1 border rounded <%= i === currentPage ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100' %>"><%= i %></a>
+          <% } %>
+
           <% if (currentPage < totalPages) { %>
-            <a href="/admin/orders?page=<%= currentPage + 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Next</a>
+            <a href="/admin/orders?page=<%= currentPage + 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-3 py-1 border rounded hover:bg-gray-100">Next</a>
+            <a href="/admin/orders?page=<%= totalPages %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-3 py-1 border rounded hover:bg-gray-100">Last</a>
           <% } %>
         </div>
       </div>

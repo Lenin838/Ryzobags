@@ -82,6 +82,7 @@
                 <th class="p-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">Image</th>
                 <th class="p-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">Name</th>
                 <th class="p-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">Price</th>
+                <th class="p-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">offer</th>
                 <th class="p-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -97,7 +98,12 @@
                   <td class="p-4 font-medium text-gray-800"><%= product.name %></td>
                   <td class="p-4">
                     <span class="bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-sm font-medium">
-                      ₹ <%= product.price %>
+                      ₹ <%= product.variants[0].regularPrice %>
+                    </span>
+                  </td>
+                  <td class="p-4">
+                    <span class="bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-sm font-medium">
+                      <%= product.offer.discountPercentage %>%
                     </span>
                   </td>
                   <td class="p-4">
@@ -144,16 +150,46 @@
         </div>
 
         <!-- Pagination -->
-        <div class="mt-6 flex justify-center">
-          <nav class="inline-flex rounded-lg shadow-sm overflow-hidden" aria-label="Pagination">
-            <% for (let i = 1; i <= totalPages; i++) { %>
-              <a href="?page=<%= i %>&search=<%= search %>"
-                class="relative inline-flex items-center px-4 py-2 border <%= i === currentPage ? 'z-10 bg-gradient-to-r from-indigo-500 to-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50' %> text-sm font-medium transition-colors">
-                <%= i %>
-              </a>
-            <% } %>
-          </nav>
-        </div>
+        <% if (totalPages > 1) { %>
+          <div class="mt-6 flex flex-col sm:flex-row justify-between items-center">
+            <p class="text-sm text-gray-700 mb-4 sm:mb-0">
+              Showing <%= (currentPage - 1) * 5 + 1 %> to <%= Math.min(currentPage * 5, totalCount) %> of <%= totalCount %> products
+            </p>
+            <div class="flex gap-1">
+              <% if (currentPage > 1) { %>
+                <a href="?page=1&search=<%= search %>" class="px-3 py-1 border rounded hover:bg-gray-100">
+                  First
+                </a>
+                <a href="?page=<%= currentPage - 1 %>&search=<%= search %>" class="px-3 py-1 border rounded hover:bg-gray-100">
+                  Prev
+                </a>
+              <% } %>
+
+              <% const maxVisiblePages = 5;
+                 let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                 let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                 
+                 if (endPage - startPage + 1 < maxVisiblePages) {
+                   startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                 }
+                 
+                 for (let i = startPage; i <= endPage; i++) { %>
+                <a href="?page=<%= i %>&search=<%= search %>" class="px-3 py-1 border rounded <%= i === currentPage ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100' %>">
+                  <%= i %>
+                </a>
+              <% } %>
+
+              <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %>&search=<%= search %>" class="px-3 py-1 border rounded hover:bg-gray-100">
+                  Next
+                </a>
+                <a href="?page=<%= totalPages %>&search=<%= search %>" class="px-3 py-1 border rounded hover:bg-gray-100">
+                  Last
+                </a>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
         
         <!-- Footer -->
         <div class="mt-8 pt-5 border-t border-gray-100 text-center text-gray-500 text-sm">

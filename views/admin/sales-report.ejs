@@ -1,0 +1,116 @@
+<%
+// Ensure safe default values
+const safeRange = range || '';
+const safeStartDate = startDate || '';
+const safeEndDate = endDate || '';
+const queryParams = new URLSearchParams({
+  range: safeRange,
+  startDate: safeStartDate,
+  endDate: safeEndDate
+}).toString();
+%>
+
+<div class="min-h-screen bg-gray-50 p-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header and Filter Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">Sales Report</h1>
+      
+      <form method="GET" action="/admin/sales-report" class="flex flex-col md:flex-row gap-4 items-end">
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+          <div>
+            <label for="range" class="block text-sm font-medium text-gray-700 mb-1">Report Range</label>
+            <select name="range" id="range" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border">
+              <option value="daily" <%= safeRange === 'daily' ? 'selected' : '' %>>Daily</option>
+              <option value="weekly" <%= safeRange === 'weekly' ? 'selected' : '' %>>Weekly</option>
+              <option value="monthly" <%= safeRange === 'monthly' ? 'selected' : '' %>>Monthly</option>
+              <option value="yearly" <%= safeRange === 'yearly' ? 'selected' : '' %>>Yearly</option>
+              <option value="custom" <%= safeRange === 'custom' ? 'selected' : '' %>>Custom</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input type="date" name="startDate" id="startDate" value="<%= safeStartDate %>" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border">
+          </div>
+          
+          <div>
+            <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input type="date" name="endDate" id="endDate" value="<%= safeEndDate %>" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border">
+          </div>
+          
+          <div class="flex items-end">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">
+              Filter
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-medium text-gray-500 mb-2">Report Period</h3>
+        <p class="text-2xl font-semibold text-gray-800"><%= reportData.startDate %> to <%= reportData.endDate %></p>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-medium text-gray-500 mb-2">Total Orders</h3>
+        <p class="text-2xl font-semibold text-blue-600"><%= reportData.totalOrders %></p>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-medium text-gray-500 mb-2">Total Sales</h3>
+        <p class="text-2xl font-semibold text-green-600">₹<%= reportData.totalSales.toFixed() %></p>
+      </div>
+    </div>
+    
+    <!-- Discount Card and Export Buttons -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-medium text-gray-500 mb-2">Total Discount</h3>
+        <p class="text-2xl font-semibold text-purple-600">₹<%= reportData.totalDiscount.toFixed()%></p>
+      </div>
+      
+      <div class="md:col-span-2 flex flex-col md:flex-row gap-4 items-center justify-end">
+        <a href="/admin/sales-report/download-pdf?<%= queryParams %>" 
+           class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center gap-2">
+          📄 Download PDF
+        </a>
+        <a href="/admin/sales-report/download-excel?<%= queryParams %>" 
+           class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center gap-2">
+          📊 Download Excel
+        </a>
+      </div>
+    </div>
+    
+    <!-- Orders Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupon</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% reportData.order.forEach(ord => { %>
+              <tr class="hover:bg-gray-50 transition duration-150 ease-in-out">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><%= ord.orderId %></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= ord.orderDate.toLocaleDateString() %></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹<%= ord.totalAmount %></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹<%= ord.discount || 0 %></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= ord.couponId?.code || "N/A" %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

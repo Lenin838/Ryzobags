@@ -27,6 +27,11 @@
           },
         },
       },
+      variants: {
+        extend: {
+          textColor: ['hover'] // Enable hover variant for textColor to fix Tailwind error
+        }
+      }
     };
   </script>
   
@@ -113,23 +118,12 @@
 
         <!-- Desktop Navigation -->
         <nav class="hidden md:flex space-x-2">
-          <a href="/user/home" class="nav-link nav-link-active">Home</a>
+          <a href="/user/home" class="nav-link">Home</a>
           <a href="/user/shop" class="nav-link">Shop</a>
-          <a href="/user/categories" class="nav-link">Categories</a>
-          <a href="/user/contact" class="nav-link">Contact</a>
         </nav>
 
         <!-- Search, Wishlist, Cart, Account -->
         <div class="flex items-center space-x-4">
-          <!-- Search Button -->
-          <button class="text-gray-700 hover:text-primary transition-colors">
-            <div class="p-2 rounded-full hover:bg-gray-50 transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-          </button>
-          
           <!-- Wishlist -->
           <a href="/user/wishlist" class="text-gray-700 hover:text-primary transition-colors relative group">
             <div class="p-2 rounded-full group-hover:bg-gray-50 transition-all">
@@ -152,7 +146,7 @@
           <a href="/user/profile" class="text-gray-700 hover:text-primary transition-colors">
             <div class="p-2 rounded-full hover:bg-gray-50 transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-}-7z" />
               </svg>
             </div>
           </a>
@@ -168,7 +162,7 @@
     </div>
 
     <!-- Mobile Menu -->
-    <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-100">
+    <div id="mobile-menu" Juno    <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-100">
       <div class="container mx-auto px-4 py-2">
         <div class="relative mb-4 mt-2">
           <input type="text" placeholder="Search products..." class="w-full py-2 pl-10 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
@@ -181,15 +175,13 @@
         <div class="space-y-0 divide-y divide-gray-100">
           <a href="/user/home" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Home</a>
           <a href="/user/shop" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Shop</a>
-          <a href="/user/categories" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Categories</a>
-          <a href="/user/contact" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Contact</a>
           <a href="/user/cart" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Cart (<span id="mobile-cart-count">0</span>)</a>
           <a href="/user/wishlist" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Wishlist (<span id="mobile-wishlist-count">0</span>)</a>
         </div>
       </div>
     </div>
-
-  <!-- Add this script at the end of your body tag -->
+  </header>
+  
   <!-- Add this script at the end of your body tag -->
   <script>
     // Mobile menu toggle
@@ -199,6 +191,20 @@
     mobileMenuButton.addEventListener('click', () => {
       mobileMenu.classList.toggle('hidden');
     });
+
+    // Function to set active navigation link based on current page
+    function setActiveNavLink() {
+      const currentPath = window.location.pathname;
+      const navLinks = document.querySelectorAll('.nav-link');
+      
+      navLinks.forEach(link => {
+        link.classList.remove('nav-link-active');
+        // Check if the link's href matches the current path
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('nav-link-active');
+        }
+      });
+    }
 
     // Function to fetch and update wishlist count
     async function fetchWishlistCount() {
@@ -278,9 +284,10 @@
       ]);
     }
 
-    // Fetch counts when the page loads
+    // Run on page load
     document.addEventListener('DOMContentLoaded', () => {
       updateCounts();
+      setActiveNavLink();
     });
 
     // Optional: Periodically refresh counts (every 30 seconds)

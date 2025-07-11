@@ -48,12 +48,24 @@ const productSchema = new Schema({
         type: Number,
         min: [0, "Regular price cannot be negative"],
       },
+      discountedPrice:{
+        type: Number,
+        min:[0, "discount price cannot be negative"],
+      },
       quantity: {
         type: Number,
         min: [0, "Quantity cannot be negative"],
       },
     },
   ],
+  offer: {
+    discountPercentage: {
+      type: Number,
+      min: [0, "Discount percentage cannot be negative"],
+      max: [100, "Discount percentage cannot exceed 100"],
+      default: 0
+    }
+  },
 });
 
 module.exports = mongoose.models.Product || mongoose.model('Product', productSchema);

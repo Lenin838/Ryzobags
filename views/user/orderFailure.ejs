@@ -1,0 +1,195 @@
+<%- include("partials/userHeader") %>
+
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-md mx-auto text-center bg-white rounded-lg shadow-lg p-6">
+    <img src="/images/failed-sign-failed-round-ribbon-sticker-failed-sign-160380433.webp" 
+         alt="Order Failure" class="mx-auto mb-6 h-32 w-32">
+    
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Order Failed</h1>
+    
+    <p class="text-gray-600 mb-6" id="errorMessage">
+      <% if (error) { %>
+        <%= error %>
+      <% } else { %>
+        We're sorry, but there was an issue processing your order. Please try again or contact support.
+      <% } %>
+    </p>
+    
+    <!-- Alert Messages -->
+    <div id="successAlert" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"></div>
+    <div id="errorAlert" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+    
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="hidden flex items-center justify-center mb-4">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span class="ml-2">Processing...</span>
+    </div>
+    
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="/user/orderDetails/<%=orderId || '' %>" class="inline-block bg-gray-600 text-white px-6 py-3 rounded-md hover:bg-gray-700 transition-colors">
+        View orderDetails
+      </a>
+      
+      <% if (orderId) { %>
+        <button id="retryPaymentBtn" onclick="retryPayment()" 
+                class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+          Retry Payment
+        </button>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Include Required Scripts -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+
+<script>
+  // Get order ID from EJS
+  const orderId = '<%= orderId %>';
+  
+  function showAlert(message, type) {
+    const alertId = type === 'success' ? 'successAlert' : 'errorAlert';
+    const alertElement = document.getElementById(alertId);
+    
+    // Hide both alerts first
+    document.getElementById('successAlert').classList.add('hidden');
+    document.getElementById('errorAlert').classList.add('hidden');
+    
+    // Show the appropriate alert
+    alertElement.textContent = message;
+    alertElement.classList.remove('hidden');
+    
+    // Hide after 5 seconds
+    setTimeout(() => {
+      alertElement.classList.add('hidden');
+    }, 5000);
+  }
+
+  function showLoading(show) {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const retryBtn = document.getElementById('retryPaymentBtn');
+    const cancelBtn = document.getElementById('cancelOrderBtn');
+    
+    if (show) {
+      loadingSpinner.classList.remove('hidden');
+      if (retryBtn) retryBtn.disabled = true;
+      if (cancelBtn) cancelBtn.disabled = true;
+    } else {
+      loadingSpinner.classList.add('hidden');
+      if (retryBtn) retryBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+    }
+  }
+
+  async function retryPayment() {
+    if (!orderId) {
+      showAlert('Order ID not found', 'error');
+      return;
+    }
+
+    showLoading(true);
+    
+    try {
+      const response = await axios.post(`/user/retry-payment/${orderId}`);
+      
+      if (response.data.success) {
+        const { order_id, key_id, amount, mongoOrderId } = response.data;
+        
+        // Initialize Razorpay payment
+        const options = {
+          key: key_id,
+          amount: amount * 100,
+          currency: 'INR',
+          name: 'Your Store Name',
+          description: 'Retry Payment for Order',
+          order_id: order_id,
+          handler: function (response) {
+            handlePaymentSuccess(response, mongoOrderId);
+          },
+          prefill: {
+            name: '<%= locals.user ? user.name : "Customer" %>',
+            email: '<%= locals.user ? user.email : "customer@example.com" %>',
+            contact: '<%= locals.user ? user.phone : "9999999999" %>'
+          },
+          notes: {
+            order_id: mongoOrderId
+          },
+          theme: {
+            color: '#2563eb'
+          },
+          modal: {
+            ondismiss: function() {
+              showLoading(false);
+              showAlert('Payment was cancelled', 'error');
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          handlePaymentFailure(response, mongoOrderId);
+        });
+        
+        showLoading(false);
+        rzp.open();
+      } else {
+        showLoading(false);
+        showAlert(response.data.message || 'Failed to initiate payment retry', 'error');
+      }
+    } catch (error) {
+      showLoading(false);
+      console.error('Error retrying payment:', error);
+      showAlert(error.response?.data?.message || 'Failed to retry payment', 'error');
+    }
+  }
+
+  async function handlePaymentSuccess(response, mongoOrderId) {
+    showLoading(true);
+    
+    try {
+      const verifyResponse = await axios.post('/user/verify-payment', {
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        orderId: mongoOrderId
+      });
+
+      if (verifyResponse.data.success) {
+        showAlert('Payment successful! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = `/user/orderSuccess?orderId=${mongoOrderId}`;
+        }, 2000);
+      } else {
+        showAlert('Payment verification failed', 'error');
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      showAlert('Payment verification failed', 'error');
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  async function handlePaymentFailure(response, mongoOrderId) {
+    showLoading(true);
+    
+    try {
+      await axios.post('/user/payment-failure', {
+        orderId: mongoOrderId,
+        razorpay_order_id: response.error.metadata.order_id,
+        error_code: response.error.code,
+        error_description: response.error.description
+      });
+
+      showAlert('Payment failed. You can try again.', 'error');
+    } catch (error) {
+      console.error('Error handling payment failure:', error);
+      showAlert('Payment failed', 'error');
+    } finally {
+      showLoading(false);
+    }
+  }
+</script>
+
+<%- include("partials/userFooter") %>

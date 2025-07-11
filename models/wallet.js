@@ -31,7 +31,7 @@ const WalletTransactionSchema = new mongoose.Schema({
       default: 'pending'
     },
     reference: {
-      type: String,  // Order ID for refunds or payments
+      type: String,  
       default: null
     },
     description: {

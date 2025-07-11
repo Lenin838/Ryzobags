@@ -38,12 +38,40 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
           <h5 class="text-lg font-semibold mb-4">Order Details - <%= order.orderId %></h5>
           <p class="text-sm text-gray-500">Date: <%= new Date(order.orderDate).toLocaleDateString() %></p>
+          <p class="text-sm text-gray-500">Time: <%= new Date(order.orderDate).toLocaleTimeString() %></p>
+          <p class="text-sm text-gray-500">Payment type: <%= order.paymentMethod %></p>
           <p class="text-sm text-gray-500">Status: 
             <span class="px-2 py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
               <%= order.status %>
             </span>
           </p>
           
+          <!-- Shipping Address -->
+          <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h6 class="text-md font-semibold mb-2">Shipping Address</h6>
+            <% if (selectedAddress) { %>
+              <p class="text-sm text-gray-700">
+                <strong><%= selectedAddress.name || 'N/A' %></strong><br>
+                <%= selectedAddress.landMark ? selectedAddress.landMark : '' %><br>
+                <%= selectedAddress.city || 'N/A' %>, <%= selectedAddress.state || 'N/A' %> <%= selectedAddress.pincode || 'N/A' %><br>
+                India<br>
+                <% if (selectedAddress.phone) { %>
+                  <span>Phone: <%= selectedAddress.phone %></span>
+                <% } %>
+                <% if (selectedAddress.altPhone) { %>
+                  <br><span>Alt Phone: <%= selectedAddress.altPhone %></span>
+                <% } %>
+                <% if (selectedAddress.addressType) { %>
+                  <br><span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-1">
+                    <%= selectedAddress.addressType %>
+                  </span>
+                <% } %>
+              </p>
+            <% } else { %>
+              <p class="text-sm text-gray-500 italic">No shipping address provided for this order.</p>
+            <% } %>
+          </div>
+
           <!-- Order Summary -->
           <div class="mt-4 p-4 bg-gray-50 rounded-lg">
             <% 
@@ -54,19 +82,19 @@
             %>
             
             <% if (activeItems.length > 0) { %>
-              <p class="text-sm text-gray-700">Active Items Subtotal: $<%= activeItemsTotal.toFixed(2) %></p>
+              <p class="text-sm text-gray-700">Active Items Subtotal: ₹<%= activeItemsTotal.toFixed(2) %></p>
             <% } %>
             
             <% if (cancelledItems.length > 0) { %>
-              <p class="text-sm text-red-600">Cancelled Items Total: $<%= cancelledItemsTotal.toFixed(2) %></p>
+              <p class="text-sm text-red-600">Cancelled Items Total: ₹<%= cancelledItemsTotal.toFixed(2) %></p>
             <% } %>
             
             <% if (order.discount && order.discount > 0) { %>
-              <p class="text-sm text-gray-700">Discount: -$<%= order.discount.toFixed(2) %></p>
+              <p class="text-sm text-gray-700">Discount: -₹<%= order.discount.toFixed(2) %></p>
             <% } %>
             
             <p class="text-lg font-semibold text-gray-900 border-t pt-2 mt-2">
-              Current Total: $<%= (activeItemsTotal - (order.discount || 0)).toFixed(2) %>
+              Current Total: ₹<%= (activeItemsTotal - (order.discount || 0)).toFixed(2) %>
             </p>
             
             <% if (order.status === 'cancelled') { %>
@@ -89,13 +117,13 @@
               <% } %>
             <% } %>
             
-            <% if (['delivered', 'shipped', 'processing'].includes(order.status.toLowerCase()) && activeItems.length > 0) { %>
+            <% if (['delivered'].includes(order.status.toLowerCase()) && activeItems.length > 0) { %>
               <button onclick="returnEntireOrder('<%= order._id %>')" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm">
                 Return Entire Order
               </button>
             <% } %>
             
-            <% if (order.status.toLowerCase() === 'delivered') { %>
+            <% if (order.status.toLowerCase() === 'delivered','partially returned') { %>
               <a href="/user/ordersDetails/<%= order._id %>/invoice" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm">
                 Download Invoice
               </a>
@@ -125,18 +153,18 @@
                     </td>
                     <td class="py-3 px-4 text-sm text-gray-500"><%= item.quantity %></td>
                     <td class="py-3 px-4 text-sm text-gray-500">
-                      $<%= typeof item.productId?.originalPrice === 'number' ? item.productId.originalPrice.toFixed(2) : 'N/A' %>
+                      ₹<%= typeof item.itemSalePrice === 'number' ? item.itemSalePrice.toFixed(2) : 'N/A' %>
                     </td>
                     <td class="py-3 px-4 text-sm text-gray-500">
-                      $<%= typeof item.itemSalePrice === 'number' ? item.itemSalePrice.toFixed(2) : 'N/A' %>
+                      ₹<%= typeof item.itemSalePrice === 'number' ? item.itemSalePrice.toFixed(2) : 'N/A' %>
                     </td>
                     <td class="py-3 px-4 text-sm text-gray-500">
                       <% if (item.status === 'cancelled') { %>
                         <span class="line-through text-red-500">
-                          $<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
+                          ₹<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
                         </span>
                       <% } else { %>
-                        $<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
+                        ₹<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
                       <% } %>
                     </td>
                     <td class="py-3 px-4 text-sm">
@@ -175,7 +203,7 @@
                             const canReturnItem = item.status !== 'cancelled' && 
                                                 item.itemStatus !== 'return request' && 
                                                 item.status !== 'return request' &&
-                                                ['delivered', 'shipped', 'processing'].includes(order.status.toLowerCase());
+                                                ['delivered', 'shipped'].includes(order.status.toLowerCase());
                         %>
                         <% if (canReturnItem) { %>
                           <button 

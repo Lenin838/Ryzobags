@@ -26,10 +26,8 @@ userRouter.get("/google/callback",
   userController.googleCallback
 );
 
-// Google auth failure route
 userRouter.get("/google/failure",userController.googleAuthFailure);
 
-// Auth and Registration Routes
 userRouter.get('/signup', isNotAuthenticated, userController.loadRegister);
 userRouter.post('/verify', isNotAuthenticated, userController.verifyRegister);
 userRouter.get("/enterOtp", isNotAuthenticated, userController.loadOtpPage);
@@ -39,20 +37,12 @@ userRouter.post("/resend-otp", isNotAuthenticated, userController.resendOtp);
 userRouter.get('/login', isNotAuthenticated, userController.loadLogin);
 userRouter.post('/login', isNotAuthenticated, userController.verifyLogin);
 
-// Forgot and Reset Password
 userRouter.get('/forgot-password', isNotAuthenticated, userController.loadForgotPassword);
 userRouter.post('/forgot-password', isNotAuthenticated, userController.forgotPassword);
 userRouter.get('/reset-password/:token', isNotAuthenticated, userController.loadResetPassword);
 userRouter.post('/reset-password/:token', isNotAuthenticated, userController.resetPassword);
 
 userRouter.get('/home', userController.loadHomepage);
-userRouter.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            console.log(err);
-        }
-        return res.redirect('/user/login');
-    });
-});
+userRouter.get('/logout', userController.loadLogout);
 
 module.exports = userRouter;

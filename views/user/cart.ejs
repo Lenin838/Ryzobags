@@ -75,8 +75,8 @@
                                         </td>
                                         <td class="py-4 text-center">
                                             <div>
-                                                <p class="font-medium">₹<%= regularPrice %></p>
-                                                <p class="text-sm text-gray-500">₹<%= regularPrice %> / item</p>
+                                                <p class="font-medium">₹<%= item.finalPrice %></p>
+                                                <p class="text-sm text-gray-500">₹<%= item.finalPrice %> / item</p>
                                             </div>
                                         </td>
                                         <td class="py-4 text-center">
@@ -85,7 +85,7 @@
                                                     class="quantity-btn quantity-decrease w-8 h-8 rounded-l border border-gray-300 bg-gray-100 hover:bg-gray-200"
                                                     data-product-id="<%= item.productId._id %>"
                                                     data-size="<%= item.size %>"
-                                                    data-price="<%= regularPrice %>"
+                                                    data-price="<%= item.finalPrice %>"
                                                     data-index="<%= index %>"
                                                     data-stock="<%= stock %>"
                                                     data-change="-1">
@@ -101,7 +101,7 @@
                                                     class="quantity-btn quantity-increase w-8 h-8 rounded-r border border-gray-300 bg-gray-100 hover:bg-gray-200"
                                                     data-product-id="<%= item.productId._id %>"
                                                     data-size="<%= item.size %>"
-                                                    data-price="<%= regularPrice %>"
+                                                    data-price="<%= item.finalPrice %>"
                                                     data-index="<%= index %>"
                                                     data-stock="<%= stock %>"
                                                     data-change="1">
@@ -110,7 +110,7 @@
                                             </div>
                                         </td>
                                         <td class="py-4 text-center font-medium">
-                                            ₹<span id="subTotal<%= index %>"><%= subtotal %></span>
+                                            ₹<span id="subTotal<%= index %>"><%= item.itemTotal %></span>   
                                         </td>
                                         <td class="py-4 text-center">
                                             <button class="remove-btn text-red-500 hover:text-red-700" data-product-id="<%= item.productId._id %>">
@@ -126,7 +126,7 @@
                                             <img src="/api/placeholder/120/120" alt="Empty Cart" class="w-24 h-24 mb-4">
                                             <p class="text-lg font-medium text-gray-600 mb-2">Your cart is empty</p>
                                             <p class="text-sm text-gray-500 mb-4">Add items to your cart to continue shopping</p>
-                                            <a href="/" class="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700">Continue Shopping</a>
+                                            <a href="/user/shop" class="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700">Continue Shopping</a>
                                         </div>
                                     </td>
                                 </tr>
@@ -134,66 +134,78 @@
                         </tbody>
                     </table>
                 </div>
-                
-                <div class="mt-6 flex justify-between items-center">
-                    <a href="/" class="flex items-center text-blue-600 hover:text-blue-800">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Continue Shopping
-                    </a>
-                    
-                    <!-- Debug button - press D key to toggle debug panel -->
-                    <button onclick="toggleDebug()" class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs">Debug</button>
-                </div>
             </div>
             
             <!-- Order Summary -->
             <%
-            let totalAmount = 0;
+            let totalAmoount = 0;
             let itemCount = 0;
 
             if (cart && cart.items && cart.items.length > 0) {
                 cart.items.forEach(item => {
                     const variant = item.productId.variants.find(v => v.size === item.size);
                     const price = variant ? variant.regularPrice : 0;
-                    totalAmount += price * item.quantity;
+                    totalAmoount += price * item.quantity;
                     itemCount += item.quantity;
                 });
             }
             %>
-            <div class="md:w-1/4">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold mb-4">PRICE DETAILS</h2>
-                    <div class="border-t pt-4">
-                        <div class="flex justify-between py-2">
-                            <span class="text-gray-600">Price (<%= itemCount %> items)</span>
-                            <span>₹<span id="subtotalAmount"><%= totalAmount %></span></span>
-                        </div>
-                        <div class="flex justify-between py-2">
-                            <span class="text-gray-600">Discount</span>
-                            <span class="text-green-600">- ₹0</span>
-                        </div>
-                        <div class="flex justify-between py-2">
-                            <span class="text-gray-600">Delivery Charges</span>
-                            <span class="text-green-600">FREE</span>
-                        </div>
-                        <div class="flex justify-between py-4 border-t border-dashed font-bold">
-                            <span>Total Amount</span>
-                            <span>₹<span id="total"><%= totalAmount %></span></span>
-                        </div>
-                        <div class="text-green-600 text-sm mb-4">You'll save ₹0 on this order</div>
-                    </div>
-                    <button onclick="window.location.href='/user/checkout'" 
-                            class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-md font-medium checkout-btn">
-                        PLACE ORDER
-                    </button>
+            <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4">PRICE DETAILS</h2>
+            <div class="border-t pt-4">
+
+                <!-- Original Price -->
+                <div class="flex justify-between py-2 text-sm text-gray-500 line-through">
+                <span>Original Price (<%= itemCount %> items)</span>
+                <span>₹<%= originalAmount %></span>
                 </div>
 
-                <div class="mt-4 bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center">
-                        <i class="fas fa-shield-alt text-gray-500 mr-2"></i>
-                        <p class="text-sm text-gray-600">Safe and Secure Payments. 100% Authentic products.</p>
-                    </div>
+                <!-- Final Price -->
+                <div class="flex justify-between py-2">
+                <span class="text-gray-600">Price (<%= itemCount %> items)</span>
+                <span>₹<span id="subtotalAmount"><%=totalAmoount %></span></span>
                 </div>
+
+                <!-- Discount -->
+                <div class="flex justify-between py-2">
+                <span class="text-gray-600">Discount</span>
+                <span class="text-green-600">- ₹<%= totalSavings %></span>
+                </div>
+
+                <!-- Delivery -->
+                <div class="flex justify-between py-2">
+                <span class="text-gray-600">Delivery Charges</span>
+                <span class="text-green-600">FREE</span>
+                </div>
+
+                <!-- Final Total -->
+                <div class="flex justify-between py-4 border-t border-dashed font-bold">
+                <span>Total Amount</span>
+                <span>₹<span id="total"><%= totalAmount %></span></span>
+                </div>
+
+                <!-- Savings Message -->
+                <div class="text-green-600 text-sm mb-4">
+                You'll save ₹<%= totalSavings %> on this order
+                </div>
+
+            </div>
+
+            <% if (!hasOutOfStock) { %>
+                <button onclick="window.location.href='/user/checkout'" 
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-md font-medium checkout-btn">
+                PLACE ORDER
+                </button>
+            <% } else { %>
+                <div class="text-red-600 text-center font-medium mt-4 p-3 bg-red-50 rounded-md">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Some items in your cart are out of stock. Please remove them or update quantities to continue.
+                </div>
+                <button disabled 
+                        class="w-full bg-gray-400 text-white py-3 rounded-md font-medium cursor-not-allowed mt-3">
+                PLACE ORDER (UNAVAILABLE)
+                </button>
+            <% } %>
             </div>
         </div>
     </main>

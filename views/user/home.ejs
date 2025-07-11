@@ -42,9 +42,6 @@
                         <a href="/user/shop" class="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-md font-semibold transition duration-300 inline-block shadow-lg">
                             Shop Collection
                         </a>
-                        <a href="/user/categories" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/30 px-8 py-4 rounded-md font-semibold transition duration-300 inline-block">
-                            Explore Categories
-                        </a>
                     </div>
                 </div>
             </div>
@@ -73,15 +70,12 @@
                         <div class="p-5">
                             <h5 class="text-lg font-semibold text-gray-800 mb-2 truncate"><%= product.name %></h5>
                             <div>
-                                <% const variant = product.variants[0]; %>
-                                <% const discountedPrice = variant.regularPrice - (variant.regularPrice * product.offer / 100); %>
-                                
-                                <% if (product.offer > 0) { %>
-                                    <span class="text-sm line-through text-gray-400">₹<%= variant.regularPrice.toFixed(2) %></span>
-                                    <span class="text-xl font-bold text-primary ml-2">₹<%= discountedPrice.toFixed(2) %></span>
-                                    <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">(<%= product.offer %>% off)</span>
+                                <% if (product.maxDiscount > 0) { %>
+                                <span class="text-sm line-through text-gray-400">₹<%= product.variantPrice.toFixed(2) %></span>
+                                <span class="text-xl font-bold text-primary ml-2">₹<%= product.discountedPrice.toFixed(2) %></span>
+                                <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">(<%= product.maxDiscount %>% off)</span>
                                 <% } else { %>
-                                    <span class="text-xl font-bold text-primary">₹<%= variant.regularPrice.toFixed(2) %></span>
+                                <span class="text-xl font-bold text-primary">₹<%= product.variantPrice.toFixed(2) %></span>
                                 <% } %>
                             </div>
                             <div class="mt-4 flex justify-between items-center">
@@ -91,11 +85,6 @@
                                     </svg>
                                     <span class="text-xs text-gray-500 ml-1">5.0</span>
                                 </div>
-                                <button class="text-gray-400 hover:text-primary transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -189,16 +178,15 @@
                                 <span class="text-xs text-gray-500 ml-1">(5.0)</span>
                             </div>
                             <div>
-                                <% const variant = product.variants[0]; %>
-                                <% const discountedPrice = variant.regularPrice - (variant.regularPrice * product.offer / 100); %>
-                                
-                                <% if (product.offer > 0) { %>
-                                    <span class="text-sm line-through text-gray-400">₹<%= variant.regularPrice.toFixed(2) %></span>
-                                    <span class="text-xl font-bold text-primary ml-2">₹<%= discountedPrice.toFixed(2) %></span>
-                                    <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">(<%= product.offer %>% off)</span>
-                                <% } else { %>
-                                    <span class="text-xl font-bold text-primary">₹<%= variant.regularPrice.toFixed(2) %></span>
-                                <% } %>
+                               <% if (product.maxDiscount > 0) { %>
+                            <span class="text-sm line-through text-gray-400">₹<%= product.variantPrice.toFixed(2) %></span>
+                            <span class="text-xl font-bold text-primary ml-2">₹<%= product.discountedPrice.toFixed(2) %></span>
+                            <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">
+                                (<%= product.maxDiscount %>% off)
+                            </span>
+                            <% } else { %>
+                            <span class="text-xl font-bold text-primary">₹<%= product.variantPrice.toFixed(2) %></span>
+                            <% } %>
                             </div>
                             <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between">
                                 <a href="/user/productView/<%=product._id%>" class="text-primary hover:text-primary-dark font-medium text-sm flex items-center">
@@ -207,41 +195,10 @@
                                         <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
                                 </a>
-                                <button class="text-gray-400 hover:text-primary transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </div>
                 <% }); %>
-            </div>
-        </div>
-    </section>
-
-    <!-- Newsletter Section -->
-    <section class="relative py-20 overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark -z-10"></div>
-        <div class="absolute inset-0 opacity-10 -z-10">
-            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                    <pattern id="pattern" width="100" height="100" patternUnits="userSpaceOnUse">
-                        <circle cx="50" cy="50" r="1" fill="white"></circle>
-                    </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#pattern)"></rect>
-            </svg>
-        </div>
-        <div class="container mx-auto px-4">
-            <div class="max-w-3xl mx-auto text-center">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Join Our Community</h2>
-                <p class="text-primary-light mb-8 text-lg">Subscribe to receive updates on new arrivals, special offers and exclusive discounts</p>
-                <form class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-                    <input type="email" placeholder="Your email address" class="flex-grow px-4 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/10 backdrop-blur-sm text-white placeholder-white/70 border border-white/20">
-                    <button type="submit" class="bg-white hover:bg-gray-100 text-primary px-6 py-3 rounded-md font-semibold transition duration-300 shadow-lg">Subscribe</button>
-                </form>
-                <p class="text-primary-light text-sm mt-4">By subscribing, you agree to our Privacy Policy</p>
             </div>
         </div>
     </section>

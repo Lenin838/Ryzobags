@@ -1,13 +1,12 @@
-const Product = require('../../models/Product');
+const Product = require('../../models/product');
 
 const adminInventoryController = {
-  // GET /admin/inventory
   getInventory: async (req, res) => {
     try {
       const { search = '', page = 1 } = req.query;
-      const limit = 10;
+      const limit = 2;
       const skip = (page - 1) * limit;
-      const lowStockThreshold = 10;
+      const lowStockThreshold = 5;
 
       let query = { isDeleted: false };
       if (search) {
@@ -35,7 +34,8 @@ const adminInventoryController = {
         });
       });
 
-      res.render('admin/inventory', {
+      res.render('admin/layout', {
+        body: 'inventory',
         products,
         currentPage: parseInt(page),
         totalPages,
@@ -62,7 +62,6 @@ const adminInventoryController = {
     }
   },
 
-  // POST /admin/inventory/update/:id
   updateStock: async (req, res) => {
     try {
       const { id } = req.params;

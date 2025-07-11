@@ -23,6 +23,11 @@
             },
           },
         },
+        variants: {
+      extend: {
+        textColor: ['hover']
+      }
+    }
       };
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -45,7 +50,7 @@
 
   <!-- Search -->
   <div class="container mx-auto px-4 mb-8">
-    <form action="/user/shop" method="get" class="flex justify-center">
+    <form action="/user/shop" method="GET" class="flex justify-center">
       <div class="relative w-full max-w-2xl">
         <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,7 +76,6 @@
           </button>
         </div>
       </div>
-    </form>
   </div>
 
   <div class="container mx-auto px-4">
@@ -85,7 +89,6 @@
             </svg>
             Filters
           </h5>
-          <form action="/user/shop" method="GET">
 
             <!-- Brand -->
             <div class="mb-6">
@@ -100,7 +103,8 @@
                            type="checkbox" 
                            id="brand-<%= brand.name %>" 
                            name="brand" 
-                           value="<%= brand.name %>">
+                           value="<%= brand.name %>"
+                           <%= selectedBrands && selectedBrands.includes(brand.name) ? 'checked' : '' %>>
                     <label class="ml-2 text-sm text-gray-700 hover:text-primary cursor-pointer" for="brand-<%= brand.name %>"><%= brand.name %></label>
                   </div>
                 <% }) %>
@@ -120,7 +124,8 @@
                            type="checkbox" 
                            id="category-<%= category.name %>" 
                            name="category" 
-                           value="<%= category.name %>">
+                           value="<%= category.name %>"
+                           <%= selectedCategories && selectedCategories.includes(category.name) ? 'checked' : '' %>>
                     <label class="ml-2 text-sm text-gray-700 hover:text-primary cursor-pointer" for="category-<%= category.name %>"><%= category.name %></label>
                   </div>
                 <% }) %>
@@ -134,15 +139,15 @@
                 Sort By
               </h6>
               <select name="sort" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5 appearance-none bg-no-repeat bg-right pr-8" style="background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22%23666%22 viewBox=%220 0 16 16%22><path d=%22M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z%22/></svg>'); background-position: right 0.75rem center;">
-                <option value="">Default</option>
-                <option value="priceLowToHigh">Price: Low to High</option>
-                <option value="priceHighToLow">Price: High to Low</option>
-                <option value="nameAToZ">Name: A - Z</option>
-                <option value="nameZToA">Name: Z - A</option>
+                <option value="" <%= !sortOption ? 'selected' : '' %>>Default</option>
+                <option value="priceLowToHigh" <%= sortOption === 'priceLowToHigh' ? 'selected' : '' %>>Price: Low to High</option>
+                <option value="priceHighToLow" <%= sortOption === 'priceHighToLow' ? 'selected' : '' %>>Price: High to Low</option>
+                <option value="nameAToZ" <%= sortOption === 'nameAToZ' ? 'selected' : '' %>>Name: A - Z</option>
+                <option value="nameZToA" <%= sortOption === 'nameZToA' ? 'selected' : '' %>>Name: Z - A</option>
               </select>
             </div>
             
-            <!-- Price Range (New) -->
+            <!-- Price Range -->
             <div class="mb-6">
               <h6 class="font-medium text-gray-800 mb-3 flex items-center">
                 <span class="w-1 h-4 bg-primary rounded-full mr-2"></span>
@@ -150,10 +155,14 @@
               </h6>
               <div class="flex space-x-4">
                 <div class="w-1/2">
-                  <input type="number" name="minPrice" placeholder="Min" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5">
+                  <input type="number" name="minPrice" placeholder="Min" 
+                         value="<%= minPrice %>"
+                         class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5">
                 </div>
                 <div class="w-1/2">
-                  <input type="number" name="maxPrice" placeholder="Max" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5">
+                  <input type="number" name="maxPrice" placeholder="Max" 
+                         value="<%= maxPrice %>"
+                         class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5">
                 </div>
               </div>
             </div>
@@ -166,11 +175,11 @@
               Apply Filters
             </button>
             
-            <!-- Reset Filters (New) -->
+            <!-- Reset Filters -->
             <a href="/user/shop" class="mt-3 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition duration-300 ease-in-out text-center block">
               Reset Filters
             </a>
-          </form>
+            </form>
         </div>
       </div>
       
@@ -182,13 +191,6 @@
             <h2 class="text-xl font-semibold text-gray-800">All Products</h2>
             <p class="text-gray-500 text-sm mt-1">Showing <%= products.length %> results</p>
           </div>
-          <div class="mt-3 sm:mt-0">
-            <select class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5 pr-8 appearance-none bg-no-repeat bg-right" style="background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22%23666%22 viewBox=%220 0 16 16%22><path d=%22M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z%22/></svg>'); background-position: right 0.75rem center;">
-              <option value="12">Show: 12</option>
-              <option value="24">Show: 24</option>
-              <option value="36">Show: 36</option>
-            </select>
-          </div>
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
@@ -198,7 +200,7 @@
                 <img src="<%= product.mainImage %>" class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105" alt="<%= product.name %>">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <button type="button" onclick="addToWishlist('<%= product._id %>', event)" class="absolute top-3 right-3 text-gray-100 hover:text-red-500 bg-black/20 hover:bg-white backdrop-blur-sm rounded-full p-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <i class="bi bi-heart"></i>
+                  <i class="bi <%= wishlist.includes(product._id.toString()) ? 'bi-heart-fill text-red-600' : 'bi-heart' %>"></i>
                 </button>
                 <div class="absolute top-3 left-3">
                   <span class="bg-primary text-white text-xs font-bold px-2.5 py-1.5 rounded-full">NEW</span>
@@ -228,14 +230,15 @@
                 
                 <!-- Volume Dropdown and Price Display -->
                 <div class="mb-4">
-                  <select class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5 product-volume" 
+                  <select class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary p-2.5 product-size" 
                           data-product-id="<%= product._id %>"
                           onchange="updatePrice(this, '<%= product._id %>')">
                     <option value="" disabled selected>Select Size</option>
-                    <% product.variants.forEach((variant, index) => { %>
-                      <option value="<%= variant.size %>" 
-                              data-price="<%= variant.regularPrice %>"
-                              data-variant-index="<%= index %>">
+                    <% product.variants.forEach(variant => { %>
+                      <option 
+                        value="<%= variant._id %>" 
+                        data-regular="<%= variant.regularPrice %>" 
+                        data-discounted="<%= variant.discountedPrice %>">
                         <%= variant.size %>
                       </option>
                     <% }) %>
@@ -244,24 +247,25 @@
                 
                 <!-- Price will update based on selected volume -->
                 <div class="flex items-center justify-between mb-4">
-                  <p class="text-xl font-bold text-primary" id="price-<%= product._id %>">
-                    <% if(product.variants && product.variants.length > 0) { %>
-                        ₹<%= product.variants[0].regularPrice %>
+                  <p class="text-xl font-bold text-primary flex items-center gap-2" id="price-<%= product._id %>">
+                    <% if (product.variants && product.variants.length > 0) { %>
+                      <% const firstVariant = product.variants[0]; %>
+                      <% if (firstVariant.discountedPrice < firstVariant.regularPrice) { %>
+                        <span>₹<%= firstVariant.discountedPrice %></span>
+                        <span class="text-sm line-through text-gray-500 font-normal">₹<%= firstVariant.regularPrice %></span>
+                        <span class="text-sm text-green-600 font-medium">
+                          (<%= Math.round(100 - (firstVariant.discountedPrice / firstVariant.regularPrice) * 100) %>% OFF)
+                        </span>
                       <% } else { %>
-                        Price not available
+                        ₹<%= firstVariant.regularPrice %>
                       <% } %>
+                    <% } else { %>
+                      Price not available
+                    <% } %>
                   </p>
                 </div>
                 
                 <div class="flex space-x-2">
-                  <!-- <button type="button" 
-                          class="flex-grow bg-primary hover:bg-primary-dark text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 ease-in-out flex items-center justify-center" 
-                          onclick="addtoCart('<%= product._id %>')">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Add to Cart
-                  </button> -->
                   <button type="button" 
                         class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 ease-in-out" 
                         onclick="addtoCart('<%= product._id %>')">
@@ -299,10 +303,11 @@
         <!-- Pagination -->
         <% if (totalPages > 1) { %>
           <nav class="flex justify-center mt-12 mb-8">
-            <ul class="flex space-x-2">
+            <ul class="flex flex-wrap gap-2">
               <% if(currentPage > 1) { %>
                 <li>
-                  <a href="?page=<%= currentPage - 1 %>" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
+                  <a href="?page=<%= currentPage - 1 %><%= search %>" 
+                     class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -311,9 +316,17 @@
                 </li>
               <% } %>
 
-              <% for(let i = 1; i <= totalPages; i++) { %>
+              <% const maxVisiblePages = 5;
+                 let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                 let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                 
+                 if (endPage - startPage + 1 < maxVisiblePages) {
+                   startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                 }
+                 
+                 for(let i = startPage; i <= endPage; i++) { %>
                 <li>
-                  <a href="?page=<%= i %>" 
+                  <a href="?page=<%= i %><%= search %>" 
                      class="px-4 py-2 <%= i === currentPage ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50' %> border border-gray-200 rounded-lg">
                     <%= i %>
                   </a>
@@ -322,7 +335,8 @@
 
               <% if(currentPage < totalPages) { %>
                 <li>
-                  <a href="?page=<%= currentPage + 1 %>" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
+                  <a href="?page=<%= currentPage + 1 %><%= search %>" 
+                     class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
                     Next
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -341,26 +355,35 @@
 
   <script>
     document.getElementById("clearSearch").addEventListener("click", function() {
-      document.getElementById("searchInput").value = ""; // Clear input field
-      window.location.href = "/user/shop"; // Reload page without search query
+      document.getElementById("searchInput").value = "";
+      window.location.href = "/user/shop";
     });
 
     // Function to update price when volume is selected
-    function updatePrice(selectElement, productId) {
-      const selectedOption = selectElement.options[selectElement.selectedIndex];
-      const price = selectedOption.getAttribute('data-price');
-      const priceElement = document.getElementById(`price-${productId}`);
-      
-      if (price) {
-        priceElement.textContent = `₹${price}`;
-      }
-    }
+function updatePrice(productId) {
+  const select = document.getElementById(`variant-${productId}`);
+  const regular = parseFloat(select.selectedOptions[0].dataset.regular);
+  const discounted = parseFloat(select.selectedOptions[0].dataset.discounted);
+  const priceBlock = document.getElementById(`price-${productId}`);
 
-    async function addtoCart(productId) {
-  // Get the selected volume for this product - FIX: Corrected the selector syntax
-  const volumeSelector = document.querySelector(`.product-volume[data-product-id="${productId}"]`);
+  if (regular > discounted) {
+    priceBlock.innerHTML = `
+      ₹${discounted} 
+      <span class="text-sm line-through text-gray-500 font-normal">₹${regular}</span>
+      <span class="text-sm text-green-600 font-medium">(${Math.round(((regular - discounted) / regular) * 100)}% OFF)</span>
+    `;
+  } else {
+    priceBlock.innerHTML = `₹${regular}`;
+  }
+}
+
+
+
+
+async function addtoCart(productId) {
+  const sizeSelector = document.querySelector(`.product-size[data-product-id="${productId}"]`);
   
-  if (!volumeSelector || volumeSelector.selectedIndex === 0) {
+  if (!sizeSelector || sizeSelector.selectedIndex === 0) {
     Swal.fire({
       icon: 'warning',
       title: 'Oops...',
@@ -369,7 +392,7 @@
     return;
   }
   
-  const selectedOption = volumeSelector.options[volumeSelector.selectedIndex];
+  const selectedOption = sizeSelector.options[sizeSelector.selectedIndex];
   const selectedSize = selectedOption.value;
   const variantIndex = selectedOption.getAttribute('data-variant-index');
   
@@ -408,41 +431,128 @@
   }
 }
 
-
-   // Modify the addToWishlist function to prevent event propagation
+// Modified addToWishlist function
 async function addToWishlist(productId, event) {
-  // Prevent the click event from bubbling up to parent elements
   event.preventDefault();
   event.stopPropagation();
   
-  const heartIcon = event.currentTarget.querySelector('i.bi-heart');
+  const heartIcon = event.currentTarget.querySelector('i.bi-heart, i.bi-heart-fill');
+  const isCurrentlyInWishlist = heartIcon.classList.contains('bi-heart-fill');
   
-  const response = await fetch(`/user/addtoWishlist/${productId}`, {
-    method: "POST",
-  });
-  const result = await response.json();
-
-  if(result.success) {
-    // Change heart icon to red/filled
-    heartIcon.classList.remove('bi-heart');
-    heartIcon.classList.add('bi-heart-fill');
-    heartIcon.style.color = 'red';
-    
-    Swal.fire({
-      icon: 'success',
-      title: 'Success',
-      text: result.message,
-      confirmButtonColor: '#007D8B'
+  try {
+    const response = await fetch(`/user/addtoWishlist/${productId}`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"}
     });
-  } else {
+    
+    const result = await response.json();
+
+    if(result.success) {
+      if (isCurrentlyInWishlist) {
+        // Remove from wishlist
+        heartIcon.classList.remove('bi-heart-fill');
+        heartIcon.classList.add('bi-heart');
+        heartIcon.style.color = '';
+      } else {
+        // Add to wishlist
+        heartIcon.classList.remove('bi-heart');
+        heartIcon.classList.add('bi-heart-fill');
+        heartIcon.style.color = 'red';
+      }
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: result.message,
+        confirmButtonColor: '#007D8B'
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: result.message,
+        confirmButtonColor: '#007D8B'
+      });
+    }
+  } catch (error) {
+    console.error("Error updating wishlist:", error);
     Swal.fire({
       icon: 'error',
       title: 'Error',
-      text: result.message,
+      text: 'An unexpected error occurred. Please try again.',
       confirmButtonColor: '#007D8B'
     });
   }
 }
+
+// Fixed function to check wishlist status on page load
+async function checkWishlistStatus() {
+  try {
+    const response = await fetch('/user/getWishlist', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      console.error('Wishlist fetch failed:', response.status, response.statusText);
+      return;
+    }
+
+    const result = await response.json();
+    console.log('Wishlist response:', result);
+
+    if (result.success && Array.isArray(result.wishlist)) {
+      // Get all wishlist product IDs for easier lookup
+      const wishlistProductIds = result.wishlist.map(item => {
+        // Handle both string and object cases
+        return typeof item === 'string' ? item : (item.productId || item._id || item.product);
+      });
+      
+      console.log('Wishlist product IDs:', wishlistProductIds);
+
+      // Find all heart icons and update them
+      document.querySelectorAll('button[onclick*="addToWishlist"]').forEach(button => {
+        const onclickAttr = button.getAttribute('onclick');
+        const productIdMatch = onclickAttr.match(/addToWishlist\(['"]([^'"]+)['"]/);
+        
+        if (!productIdMatch) {
+          console.warn('No productId found for button:', button);
+          return;
+        }
+        
+        const productId = productIdMatch[1];
+        console.log('Checking productId:', productId);
+
+        // Check if this product is in the wishlist
+        if (wishlistProductIds.includes(productId)) {
+          const heartIcon = button.querySelector('i.bi-heart, i.bi-heart-fill');
+          if (heartIcon) {
+            console.log('Updating icon for productId:', productId);
+            heartIcon.classList.remove('bi-heart');
+            heartIcon.classList.add('bi-heart-fill');
+            heartIcon.style.color = 'red';
+          } else {
+            console.warn('No heart icon found for productId:', productId);
+          }
+        }
+      });
+    } else {
+      console.warn('Invalid wishlist data:', result);
+    }
+  } catch (error) {
+    console.error('Error checking wishlist status:', error);
+  }
+}
+
+// Clear search functionality
+document.getElementById("clearSearch").addEventListener("click", function() {
+  document.getElementById("searchInput").value = "";
+  window.location.href = "/user/shop";
+});
+
+// Call the function on page load
+document.addEventListener('DOMContentLoaded', checkWishlistStatus);
   </script>
 </body>
 </html>

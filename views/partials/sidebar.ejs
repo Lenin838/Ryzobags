@@ -47,8 +47,8 @@
         <nav>
             <ul>
                 <li>
-                    <a href="/admin/products" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <a href="/admin/products" class="flex items-center px-4 py-5 hover:bg-indigo-800 transition-colors">
+                        <svg class="w-5 h-5 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                         </svg>
                         <span>Products</span>
@@ -63,28 +63,76 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/admin/brands" class="flex items-center px-4 py-3 bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <a href="/admin/brands" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
+                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                         </svg>
                         <span>Brands</span>
                     </a>
                 </li>
-                    <a href="/admin/orders" class="flex items-center px-4 py-3 bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <li>
+                    <a href="/admin/orders" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
+                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                         </svg>
                         <span>Order Management</span>
                     </a>
                 </li>
-                    <a href="/admin/inventory" class="flex items-center px-4 py-3 bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <li>
+                    <a href="/admin/inventory" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
+                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                         </svg>
-                        <span>inventory/stock management</span>
+                        <span>Stock Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/coupons/list" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
+                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                        <span>Coupon Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/sales-report" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
+                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                        <span>Sales Report</span>
                     </a>
                 </li>
             </ul>
         </nav>
     </div>
+
+    <!-- JavaScript to set active sidebar link -->
+    <script>
+        function setActiveSidebarLink() {
+            const currentPath = window.location.pathname;
+            const sidebarLinks = document.querySelectorAll('aside nav a');
+
+            sidebarLinks.forEach(link => {
+                // Remove active styles
+                link.classList.remove('bg-indigo-800');
+                const icon = link.querySelector('svg');
+                if (icon) {
+                    icon.classList.remove('text-white');
+                    icon.classList.add('text-indigo-300');
+                }
+
+                // Add active styles if href matches current path
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('bg-indigo-800');
+                    if (icon) {
+                        icon.classList.remove('text-indigo-300');
+                        icon.classList.add('text-white');
+                    }
+                }
+            });
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', setActiveSidebarLink);
+    </script>
 </aside>

@@ -13,7 +13,6 @@ const sharp = require("sharp");
 
 const mkdir = util.promisify(fs.mkdir);
 
-// Multer configuration
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -27,10 +26,9 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// Consolidated saveUserImage function
 const saveUserImage = async (req, file) => {
   if (!file || !file.buffer) {
     console.error("Invalid file input:", file);
@@ -57,7 +55,6 @@ const saveUserImage = async (req, file) => {
   }
 };
 
-// Nodemailer configuration
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -73,7 +70,6 @@ const transporter = nodemailer.createTransport({
   debug: true,
 });
 
-// Middleware to clean expired OTPs
 const cleanExpiredOtps = async (req, res, next) => {
   try {
     if (req.user && req.path !== '/profile/verify-email') {
@@ -94,7 +90,6 @@ const cleanExpiredOtps = async (req, res, next) => {
 };
 
 const userProfileController = {
-  // GET /user/profile
   getProfile: async (req, res) => {
     try {
       const { tab = "profile", search, page = 1 } = req.query;
@@ -117,8 +112,12 @@ const userProfileController = {
       const totalOrders = await Order.countDocuments(ordersQuery);
       const totalPages = Math.ceil(totalOrders / limit);
 
-      const addressDoc = await Address.findOne({ userId: req.user._id }).lean();
-      const addresses = addressDoc ? addressDoc.address : [];
+      const addressDoc = await Address.findOne({ userId: req.user._id}).lean();
+      // const addresses = addressDoc ? addressDoc.address : [];
+
+      const addresses = addressDoc && addressDoc.address 
+        ? addressDoc.address.filter((addr) => addr.status === "active")
+        : [];
 
       const lastTx = await WalletTransaction.findOne({ userId: req.user._id })
         .sort({ createdAt: -1 })
@@ -152,7 +151,6 @@ const userProfileController = {
     }
   },
 
-  // GET /user/wallet-status
   getWalletStatus: async (req, res) => {
     try {
       const user = await User.findById(req.user._id).select("-password").lean();
@@ -179,7 +177,6 @@ const userProfileController = {
     }
   },
 
-  // GET /user/profile/address/add
   getAddAddress: (req, res) => {
     res.render("user/addressForm", {
       action: "/user/profile/address/add",
@@ -189,7 +186,6 @@ const userProfileController = {
     });
   },
 
-  // POST /user/profile/address/add
   postAddAddress: async (req, res) => {
     try {
       const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
@@ -234,43 +230,55 @@ const userProfileController = {
     }
   },
 
-  // GET /user/profile/address/edit/:index
   getEditAddress: async (req, res) => {
-    try {
-      const { index } = req.params;
-      const addressDoc = await Address.findOne({ userId: req.user._id }).lean();
+  try {
+    const { id } = req.params;
+    const addressDoc = await Address.findOne({ userId: req.user._id }).lean();
 
-      if (!addressDoc || !addressDoc.address[index]) {
-        req.flash("error", "Address not found");
-        return res.redirect("/user/profile?tab=addresses");
-      }
-
-      res.render("user/addressForm", {
-        action: `/user/profile/address/edit/${index}`,
-        address: addressDoc.address[index],
-        success: req.flash("success"),
-        error: req.flash("error"),
-      });
-    } catch (err) {
-      console.error(err);
-      req.flash("error", "Error loading address");
-      res.redirect("/user/profile?tab=addresses");
+    if (!addressDoc) {
+      req.flash("error", "No addresses found");
+      return res.redirect("/user/profile?tab=addresses");
     }
-  },
 
-  // POST /user/profile/address/edit/:index
+    const address = addressDoc.address.find(addr => addr._id.toString() === id);
+    
+    if (!address) {
+      req.flash("error", "Address not found");
+      return res.redirect("/user/profile?tab=addresses");
+    }
+
+    res.render("user/addressForm", {
+      action: `/user/profile/address/edit/${id}`,
+      address: address,
+      success: req.flash("success"),
+      error: req.flash("error"),
+    });
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Error loading address");
+    res.redirect("/user/profile?tab=addresses");
+  }
+},
+
   postEditAddress: async (req, res) => {
     try {
-      const { index } = req.params;
+      const { id } = req.params;
       const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
 
       if (!name || !city || !state || !pincode || !phone) {
         req.flash("error", "All required fields must be filled");
-        return res.redirect(`/user/profile/address/edit/${index}`);
+        return res.redirect(`/user/profile/address/edit/${id}`);
       }
 
       const addressDoc = await Address.findOne({ userId: req.user._id });
-      if (!addressDoc || !addressDoc.address[index]) {
+      if (!addressDoc) {
+        req.flash("error", "No addresses found");
+        return res.redirect("/user/profile?tab=addresses");
+      }
+
+      const addressIndex = addressDoc.address.findIndex(addr => addr._id.toString() === id);
+      
+      if (addressIndex === -1) {
         req.flash("error", "Address not found");
         return res.redirect("/user/profile?tab=addresses");
       }
@@ -279,7 +287,8 @@ const userProfileController = {
         addressDoc.address.forEach((addr) => (addr.isDefault = false));
       }
 
-      addressDoc.address[index] = {
+      addressDoc.address[addressIndex] = {
+        _id: addressDoc.address[addressIndex]._id, 
         name,
         landMark: landMark || "",
         city,
@@ -288,8 +297,8 @@ const userProfileController = {
         phone,
         addressType: addressType || "Home",
         isDefault: isDefault === "on",
-        status: addressDoc.address[index].status || "active",
-        createdAt: addressDoc.address[index].createdAt || new Date(),
+        status: addressDoc.address[addressIndex].status || "active",
+        createdAt: addressDoc.address[addressIndex].createdAt || new Date(),
       };
 
       addressDoc.markModified('address');
@@ -299,50 +308,87 @@ const userProfileController = {
     } catch (err) {
       console.error(err);
       req.flash("error", "Error updating address");
-      res.redirect(`/user/profile/address/edit/${index}`);
+      res.redirect(`/user/profile/address/edit/${id}`);
     }
   },
 
-  // POST /user/profile/address/delete/:index
   deleteAddress: async (req, res) => {
     try {
-      const { index } = req.params;
+      const { id } = req.params;
       const addressDoc = await Address.findOne({ userId: req.user._id });
 
-      if (!addressDoc || !addressDoc.address[index]) {
+      if (!addressDoc) {
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+          return res.status(404).json({ 
+            success: false, 
+            message: "No addresses found" 
+          });
+        }
+        req.flash("error", "No addresses found");
+        return res.redirect("/user/profile?tab=addresses");
+      }
+
+      const addressIndex = addressDoc.address.findIndex(addr => addr._id.toString() === id);
+      
+      if (addressIndex === -1) {
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+          return res.status(404).json({ 
+            success: false, 
+            message: "Address not found" 
+          });
+        }
         req.flash("error", "Address not found");
         return res.redirect("/user/profile?tab=addresses");
       }
 
-      const wasDefault = addressDoc.address[index].isDefault;
-      addressDoc.address.splice(index, 1);
-
-      if (wasDefault && addressDoc.address.length > 0) {
-        addressDoc.address[0].isDefault = true;
+      const wasDefault = addressDoc.address[addressIndex].isDefault;
+      
+      addressDoc.address[addressIndex].status = "inactive";
+      if (wasDefault) {
+        const firstActiveAddress = addressDoc.address.find(addr => 
+          addr.status === "active" && addr._id.toString() !== id
+        );
+        if (firstActiveAddress) {
+          firstActiveAddress.isDefault = true;
+        }
       }
 
       addressDoc.markModified('address');
       await addressDoc.save();
+      if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.json({ 
+          success: true, 
+          message: "Address deleted successfully" 
+        });
+      }
+
       req.flash("success", "Address deleted successfully");
       res.redirect("/user/profile?tab=addresses");
+      
     } catch (err) {
       console.error(err);
+      
+      if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.status(500).json({ 
+          success: false, 
+          message: "Error deleting address" 
+        });
+      }
+      
       req.flash("error", "Error deleting address");
       res.redirect("/user/profile?tab=addresses");
     }
   },
 
-  // POST /user/profile/address/set-default/:index
   setDefaultAddress: async (req, res) => {
     try {
-      const { index } = req.params;
-      const parsedIndex = parseInt(index);
+      const { id } = req.params;
 
-      console.log(`🔄 Attempting to set default address for user ${req.user._id}, index: ${parsedIndex}`);
+      console.log(`🔄 Attempting to set default address for user ${req.user._id}, id: ${id}`);
 
-      if (isNaN(parsedIndex) || parsedIndex < 0) {
-        console.log("❌ Invalid index provided:", index);
-        return res.status(400).json({ success: false, message: "Invalid address index" });
+      if (!id) {
+        console.log("❌ No ID provided");
+        return res.status(400).json({ success: false, message: "Address ID is required" });
       }
 
       const addressDoc = await Address.findOne({ userId: req.user._id });
@@ -351,13 +397,20 @@ const userProfileController = {
         return res.status(404).json({ success: false, message: "No addresses found" });
       }
 
-      if (parsedIndex >= addressDoc.address.length) {
-        console.log("❌ Index out of bounds:", parsedIndex, "Total addresses:", addressDoc.address.length);
+      const targetAddress = addressDoc.address.find(addr => addr._id.toString() === id);
+      
+      if (!targetAddress) {
+        console.log("❌ Address not found with ID:", id);
         return res.status(404).json({ success: false, message: "Address not found" });
       }
 
-      if (addressDoc.address[parsedIndex].isDefault) {
-        console.log("ℹ️ Address already default at index:", parsedIndex);
+      if (targetAddress.status === "inactive") {
+        console.log("❌ Cannot set inactive address as default:", id);
+        return res.status(400).json({ success: false, message: "Cannot set inactive address as default" });
+      }
+
+      if (targetAddress.isDefault) {
+        console.log("ℹ️ Address already default with ID:", id);
         return res.status(200).json({ success: true, message: "Address is already set as default" });
       }
 
@@ -365,11 +418,11 @@ const userProfileController = {
         addr.isDefault = false;
       });
 
-      addressDoc.address[parsedIndex].isDefault = true;
+      targetAddress.isDefault = true;
       addressDoc.markModified('address');
 
-      const savedDoc = await addressDoc.save();
-      console.log("💾 Default address set successfully for index:", parsedIndex);
+      await addressDoc.save();
+      console.log("💾 Default address set successfully for ID:", id);
 
       const verifyDoc = await Address.findOne({ userId: req.user._id });
       const defaultAddress = verifyDoc.address.find((addr) => addr.isDefault);
@@ -382,7 +435,6 @@ const userProfileController = {
     }
   },
 
-  // ... (other controller methods remain unchanged)
   getEditProfile: [cleanExpiredOtps, async (req, res) => {
     try {
       const user = await User.findById(req.user._id).select("-password").lean();

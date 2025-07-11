@@ -35,6 +35,12 @@
                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-all duration-300"
                                    aria-required="true">
                         </div>
+                        <div>
+                            <label for="discountPercentage" class="block text-sm font-medium text-gray-700 mb-2">Discount Percentage (%)</label>
+                            <input type="number" id="discountPercentage" name="discountPercentage" min="0" max="100" step="0.01" value="<%= discountPercentage %>"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-all duration-300"
+                                   placeholder="Enter discount percentage (0-100)">
+                        </div>
                     </div>
 
                     <div>
@@ -115,7 +121,7 @@
                         <div class="flex items-center space-x-4">
                             <button type="button" onclick="document.getElementById('mainImageUpload').click()"
                                     class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2 shadow-md transform hover:scale-105">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 94949494949494 stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <span>Change Main Image</span>
@@ -257,7 +263,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
     <script>
-
 const deletedImages = { main: false, sub: [] };
 let cropper;
 let currentCropType = null;
@@ -353,6 +358,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const variantsContainer = document.getElementById('variantsContainer');
     const addVariantBtn = document.getElementById('addVariantBtn');
+    const discountPercentageInput = document.getElementById('discountPercentage');
+
+    // Client-side validation for discount percentage
+    discountPercentageInput.addEventListener('input', function(e) {
+        const value = parseFloat(e.target.value);
+        if (isNaN(value) || value < 0 || value > 100) {
+            e.target.setCustomValidity('Discount percentage must be between 0 and 100');
+            showToast('Discount percentage must be between 0 and 100', 'error');
+        } else {
+            e.target.setCustomValidity('');
+        }
+    });
 
     function createVariantRow(index = Date.now(), variant = {}) {
         const wrapper = document.createElement('div');
@@ -581,12 +598,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const discountPercentage = parseFloat(document.getElementById('discountPercentage').value);
+        if (!isNaN(discountPercentage) && (discountPercentage < 0 || discountPercentage > 100)) {
+            showToast('Discount percentage must be between 0 and 100', 'error');
+            return;
+        }
+
         const formData = new FormData();
         formData.append('_method', 'PUT');
         formData.append('name', document.getElementById('name').value);
         formData.append('description', document.getElementById('description').value);
         formData.append('category', document.getElementById('category').value);
         formData.append('brand', document.getElementById('brand').value);
+        if (!isNaN(discountPercentage)) {
+            formData.append('discountPercentage', discountPercentage);
+        }
 
         const mainImageInput = document.getElementById('mainImageUpload');
         if (croppedImages.main) {

@@ -55,14 +55,48 @@
   
     <!-- Pagination -->
     <% if (totalPages > 1) { %>
-      <div class="mt-6 flex justify-center items-center gap-2">
-        <% for (let i = 1; i <= totalPages; i++) { %>
-          <a href="/admin/brands?page=<%= i %>&search=<%= searchQuery %>"
-            class="px-3 py-1 rounded-md border <%= i === currentPage ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' %>">
-            <%= i %>
-          </a>
-        <% } %>
+      <div class="mt-6 flex flex-col sm:flex-row justify-between items-center">
+        <p class="text-sm text-gray-600 mb-4 sm:mb-0">
+          Showing <%= (currentPage - 1) * limit + 1 %> to <%= Math.min(currentPage * limit, totalBrands) %> of <%= totalBrands %> brands
+        </p>
+        <div class="flex gap-1">
+          <% if (currentPage > 1) { %>
+            <a href="/admin/brands?page=1&search=<%= searchQuery %>"
+              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              First
+            </a>
+            <a href="/admin/brands?page=<%= currentPage - 1 %>&search=<%= searchQuery %>"
+              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              Prev
+            </a>
+          <% } %>
+
+          <% const maxVisiblePages = 5;
+             let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+             let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+             
+             if (endPage - startPage + 1 < maxVisiblePages) {
+               startPage = Math.max(1, endPage - maxVisiblePages + 1);
+             }
+             
+             for (let i = startPage; i <= endPage; i++) { %>
+            <a href="/admin/brands?page=<%= i %>&search=<%= searchQuery %>"
+              class="px-3 py-1 rounded-md border <%= i === currentPage ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' %>">
+              <%= i %>
+            </a>
+          <% } %>
+
+          <% if (currentPage < totalPages) { %>
+            <a href="/admin/brands?page=<%= currentPage + 1 %>&search=<%= searchQuery %>"
+              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              Next
+            </a>
+            <a href="/admin/brands?page=<%= totalPages %>&search=<%= searchQuery %>"
+              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              Last
+            </a>
+          <% } %>
+        </div>
       </div>
     <% } %>
   </div>
-  

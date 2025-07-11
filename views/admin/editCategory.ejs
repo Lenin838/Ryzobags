@@ -8,7 +8,6 @@
       <div class="bg-red-100 text-red-700 p-2 rounded mb-4"><%= error %></div>
     <% } %>
     
-
     <form action="/admin/categories/edit/<%= category._id %>" method="POST" class="space-y-6">
       <!-- Category Name Field -->
       <div>
@@ -25,6 +24,13 @@
           class="mt-2 w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300"><%= category.description %></textarea>
       </div>
 
+      <!-- Discount Percentage Field -->
+      <div>
+        <label for="discountPercentage" class="block text-lg font-medium text-gray-700">Discount Percentage (%)</label>
+        <input type="number" name="discountPercentage" id="discountPercentage" min="0" max="100" step="1" value="<%= category.offer.discountPercentage || 0 %>"
+          class="mt-2 w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300" />
+      </div>
+
       <!-- Buttons -->
       <div class="flex items-center gap-6">
         <button type="submit"
@@ -33,7 +39,7 @@
         </button>
         <a href="/admin/categories"
           class="bg-gray-200 text-gray-800 font-medium py-2 px-5 rounded-lg hover:bg-gray-300 hover:text-indigo-600 transition duration-300 shadow-sm">
-          Cancel
+          historiography
         </a>
       </div>
     </form>

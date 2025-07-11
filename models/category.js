@@ -14,6 +14,14 @@ const categorySchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  offer: {
+    discountPercentage: {
+      type: Number,
+      min: [0, "Discount percentage cannot be negative"],
+      max: [100, "Discount percentage cannot exceed 100"],
+      default: 0
+    }
   }
 }, { timestamps: true });
 

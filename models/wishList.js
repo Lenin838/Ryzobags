@@ -1,7 +1,7 @@
 const mongoose=require('mongoose')
 const {Schema}=mongoose
 
-const whishlistSchema=new Schema({
+const wishListSchema=new Schema({
     userId:{
         type:Schema.Types.ObjectId,
         ref:"User",
@@ -19,5 +19,5 @@ const whishlistSchema=new Schema({
     }
    }]
 })
-const Whishlist=mongoose.model("Whishlist",whishlistSchema)
-module.exports=Whishlist
+const Wishlist=mongoose.model("Wishlist",wishListSchema)
+module.exports=Wishlist;

@@ -1,40 +1,34 @@
 <header class="bg-indigo-600 text-white px-6 py-4 shadow flex justify-between items-center fixed w-full top-0 z-50">
-  <div class="flex items-center">
+  <div class="flex items-center gap-6">
+    <!-- Mobile menu toggle -->
     <button type="button" class="sm:hidden mr-4 text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" id="mobile-menu-toggle" aria-controls="mobile-menu" aria-expanded="false">
       <span class="sr-only">Open menu</span>
       <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
+    <!-- Brand or title -->
     <h1 class="text-xl font-semibold tracking-wide">User Dashboard</h1>
+
+    <!-- Top navigation links -->
+    <nav class="hidden sm:flex gap-4 ml-6 text-sm">
+      <a href="/user/home" class="hover:underline">Home</a>
+      <a href="/user/shop" class="hover:underline">Shop</a>
+      <a href="/user/wishlist" class="hover:underline">Wishlist</a>
+      <a href="/user/cart" class="hover:underline">Cart</a>
+      <a href="/user/profile" class="hover:underline">Profile</a>
+    </nav>
   </div>
+
   <div class="flex items-center gap-4">
     <span class="hidden md:block text-sm">Welcome, <%= user.fullname %></span>
     <% if (user.profileImage) { %>
       <img src="/Uploads/ProfileImages/<%= user.profileImage.split('/').pop() %>" alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow" />
     <% } else { %>
-      <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm font-medium"><%= user.fullname.charAt(0).toUpperCase() %></div>
+      <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm font-medium">
+        <%= user.fullname.charAt(0).toUpperCase() %>
+      </div>
     <% } %>
     <a href="/user/logout" class="text-white hover:text-gray-200 text-sm font-medium">Logout</a>
   </div>
 </header>
-<div class="hidden sm:hidden fixed inset-0 bg-gray-800 bg-opacity-75 z-40" id="mobile-menu">
-  <div class="bg-white w-64 h-full p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-bold text-indigo-600">Menu</h2>
-      <button type="button" class="text-gray-600 hover:text-gray-800 focus:outline-none" id="close-mobile-menu">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <ul class="space-y-2">
-      <li><a href="/" class="block py-2 px-4 rounded hover:bg-gray-100 text-gray-600">Home</a></li>
-      <li><a href="/user/profile" class="block py-2 px-4 rounded hover:bg-gray-100 text-gray-600">Profile</a></li>
-      <li><a href="/user/logout" class="block py-2 px-4 rounded hover:bg-gray-100 text-gray-600">Logout</a></li>
-      <li>
-        <button id="toggle-sidebar" class="block w-full text-left py-2 px-4 rounded hover:bg-gray-100 text-gray-600">Show Sidebar</button>
-      </li>
-    </ul>
-  </div>
-</div>

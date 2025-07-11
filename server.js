@@ -16,8 +16,10 @@ app.use(express.urlencoded({extended:true}));
 app.use(session({
     secret: process.env.SESSION_SECRET || "fallback-secret", 
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }  
+    saveUninitialized: false,
+    cookie: { secure: false,
+        maxAge: 5*60*60*1000
+     }  
 }));
 
 app.use((req, res, next) => {
@@ -48,7 +50,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use((req, res, next) => {
-    console.log(`Requested: ${req.method} ${req.originalUrl}`);
+    console.log(`Requested: ${req.method} ${req.originalUrl}`); 
     next();
   });
 app.use((req, res, next) => {

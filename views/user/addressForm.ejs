@@ -25,10 +25,11 @@
         <% } %>
         <div class="bg-white rounded-lg shadow-lg p-6">
           <h5 class="text-lg font-semibold mb-4"><%= address._id ? 'Edit Address' : 'Add Address' %></h5>
-          <form action="<%= action %>" method="POST">
+          <form action="<%= action %>" method="POST" id="addressForm">
             <div class="mb-4">
               <label for="name" class="block text-sm font-medium text-gray-700">Name *</label>
-              <input type="text" id="name" name="name" value="<%= address.name || '' %>" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <input type="text" id="name" name="name" value="<%= address.name || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <p class="text-red-500 text-xs mt-1 hidden" id="nameError">Name is required (3-50 characters)</p>
             </div>
             <div class="mb-4">
               <label for="landMark" class="block text-sm font-medium text-gray-700">Landmark</label>
@@ -36,19 +37,23 @@
             </div>
             <div class="mb-4">
               <label for="city" class="block text-sm font-medium text-gray-700">City *</label>
-              <input type="text" id="city" name="city" value="<%= address.city || '' %>" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <input type="text" id="city" name="city" value="<%= address.city || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <p class="text-red-500 text-xs mt-1 hidden" id="cityError">City is required (2-50 characters)</p>
             </div>
             <div class="mb-4">
               <label for="state" class="block text-sm font-medium text-gray-700">State *</label>
-              <input type="text" id="state" name="state" value="<%= address.state || '' %>" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <input type="text" id="state" name="state" value="<%= address.state || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <p class="text-red-500 text-xs mt-1 hidden" id="stateError">State is required (2-50 characters)</p>
             </div>
             <div class="mb-4">
               <label for="pincode" class="block text-sm font-medium text-gray-700">Pincode *</label>
-              <input type="text" id="pincode" name="pincode" value="<%= address.pincode || '' %>" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <input type="text" id="pincode" name="pincode" value="<%= address.pincode || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <p class="text-red-500 text-xs mt-1 hidden" id="pincodeError">Pincode must be 6 digits</p>
             </div>
             <div class="mb-4">
               <label for="phone" class="block text-sm font-medium text-gray-700">Phone *</label>
-              <input type="tel" id="phone" name="phone" value="<%= address.phone || '' %>" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <input type="tel" id="phone" name="phone" value="<%= address.phone || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <p class="text-red-500 text-xs mt-1 hidden" id="phoneError">Phone must be 10 digits</p>
             </div>
             <div class="mb-4">
               <label for="addressType" class="block text-sm font-medium text-gray-700">Address Type</label>
@@ -74,6 +79,7 @@
       const closeMobileMenu = document.getElementById("close-mobile-menu");
       const toggleSidebar = document.getElementById("toggle-sidebar");
       const sidebar = document.getElementById("sidebar");
+      const addressForm = document.getElementById("addressForm");
 
       mobileMenuToggle.addEventListener("click", () => {
         mobileMenu.classList.toggle("hidden");
@@ -91,6 +97,54 @@
       window.addEventListener("click", (e) => {
         if (e.target === mobileMenu) {
           mobileMenu.classList.add("hidden");
+        }
+      });
+
+      // Form validation
+      addressForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        let isValid = true;
+
+        // Reset error messages
+        document.querySelectorAll('.text-red-500').forEach(error => error.classList.add('hidden'));
+
+        // Name validation
+        const name = document.getElementById("name").value.trim();
+        if (!name || name.length < 3 || name.length > 50) {
+          document.getElementById("nameError").classList.remove('hidden');
+          isValid = false;
+        }
+
+        // City validation
+        const city = document.getElementById("city").value.trim();
+        if (!city || city.length < 2 || city.length > 50) {
+          document.getElementById("cityError").classList.remove('hidden');
+          isValid = false;
+        }
+
+        // State validation
+        const state = document.getElementById("state").value.trim();
+        if (!state || state.length < 2 || state.length > 50) {
+          document.getElementById("stateError").classList.remove('hidden');
+          isValid = false;
+        }
+
+        // Pincode validation
+        const pincode = document.getElementById("pincode").value.trim();
+        if (!/^\d{6}$/.test(pincode)) {
+          document.getElementById("pincodeError").classList.remove('hidden');
+          isValid = false;
+        }
+
+        // Phone validation
+        const phone = document.getElementById("phone").value.trim();
+        if (!/^\d{10}$/.test(phone)) {
+          document.getElementById("phoneError").classList.remove('hidden');
+          isValid = false;
+        }
+
+        if (isValid) {
+          addressForm.submit();
         }
       });
     });

@@ -44,11 +44,10 @@ const productController = {
       const brands = await Brand.find({ isActive: true });
       res.render('admin/layout', {
         body: 'productAdd',
-        categories, 
+        categories,
         brands,
         variant: [],
         validationErrors: {},
-        
       });
     } catch (error) {
       console.error('Load add product error:', error.message);
@@ -65,17 +64,17 @@ const productController = {
       if (!product) {
         return res.status(404).send('Product not found');
       }
-  
 
       const categories = await Category.find({ isActive: true });
       const brands = await Brand.find({ isActive: true });
-  
+
       res.render('admin/layout', {
         body: 'productEdit',
         product,
         categories,
         brands,
         validationErrors: {},
+        discountPercentage: product.offer?.discountPercentage || 0,
       });
     } catch (error) {
       console.error('Load edit product error:', error.message);
@@ -84,245 +83,284 @@ const productController = {
   },
   addProduct: async (req, res) => {
     try {
-        console.log('Add product request received');
+      console.log('Add product request received');
 
-        if (!req.files?.mainImage || !req.files?.subImages) {
-            return res.status(400).json({
-                success: false,
-                message: 'Missing required image fields (mainImage or subImages)'
-            });
+      if (!req.files?.mainImage || !req.files?.subImages) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required image fields (mainImage or subImages)',
+        });
+      }
+      const name = req.body.name?.trim();
+      const productDup = await Product.findOne({ name: { $regex: name, $options: 'i' } });
+      if (productDup) {
+        return res.status(400).json({
+          success: false,
+          message: 'Product with same name already available',
+        });
+      }
+
+      const mainImage = req.files['mainImage'][0];
+      const subImages = req.files['subImages'];
+
+      if (!mainImage || subImages.length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please upload 1 main image and at least 2 sub images',
+        });
+      }
+
+      console.log(`Processing images: mainImage=${mainImage.originalname}, subImages=${subImages.length}`);
+
+      const processedMainImage = await resizeAndSaveImages([mainImage]);
+      const processedSubImages = await resizeAndSaveImages(subImages);
+
+      let variants = [];
+        if (req.body.variants && typeof req.body.variants === 'object') {
+          const categoryDoc = await Category.findById(req.body.category).lean();
+          const productDiscount = Number(req.body.discountPercentage) || 0;
+          const categoryDiscount = categoryDoc?.offer?.discountPercentage || 0;
+          const maxDiscount = Math.max(productDiscount, categoryDiscount);
+
+          const variantsObj = req.body.variants;
+          variants = Object.values(variantsObj)
+            .map((v) => {
+              const regularPrice = Number(v.regularPrice);
+              const discountedPrice = Math.round(regularPrice - (regularPrice * maxDiscount / 100));
+              return {
+                size: v.size,
+                regularPrice,
+                discountedPrice,
+                quantity: Number(v.quantity),
+              };
+            })
+            .filter((v) => v.size && !isNaN(v.regularPrice) && !isNaN(v.quantity));
         }
-        const name=req.body.name?.trim();
-        const productDup=await Product.findOne({name:{$regex:name,$options:'i'}})
-        if(productDup){
+
+
+      const product = new Product({
+        name: req.body.name?.trim(),
+        description: req.body.description?.trim(),
+        category: req.body.category,
+        brand: req.body.brand,
+        mainImage: processedMainImage[0],
+        subImages: processedSubImages,
+        variants,
+        offer: {
+          discountPercentage: Number(req.body.discountPercentage) || 0,
+        },
+      });
+
+      await product.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Product added successfully',
+        productId: product._id,
+      });
+    } catch (error) {
+      console.error('Add product error:', error);
+      return res.status(500).json({
+        success: false,
+        message: `Server error: ${error.message}`,
+      });
+    }
+  },
+editProduct: async (req, res) => {
+    try {
+      const product = await Product.findById(req.params.id);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+
+      const { name, description, category, brand, discountPercentage } = req.body;
+
+      if (!name?.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Product name is required'
+        });
+      }
+      if (!description?.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Description is required'
+        });
+      }
+      if (!category) {
+        return res.status(400).json({
+          success: false,
+          message: 'Category is required'
+        });
+      }
+      if (!brand) {
+        return res.status(400).json({
+          success: false,
+          message: 'Brand is required'
+        });
+      }
+
+      const parsedDiscount = parseFloat(discountPercentage);
+      if (discountPercentage !== undefined && (isNaN(parsedDiscount) || parsedDiscount < 0 || parsedDiscount > 100)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Discount percentage must be a number between 0 and 100'
+        });
+      }
+
+      const productDup = await Product.findOne({
+        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+        _id: { $ne: req.params.id }
+      });
+      if (productDup) {
+        return res.status(400).json({
+          success: false,
+          message: 'Product with same name already exists'
+        });
+      }
+
+      let mainImage = product.mainImage;
+      let subImages = [...product.subImages];
+
+      if (req.body.deleteMainImage === 'true') {
+        if (!req.files?.mainImage) {
           return res.status(400).json({
             success: false,
-            message: 'Product with same name already available'
-        });
+            message: 'Main image is required and cannot be deleted without uploading a new one'
+          });
         }
-
-        const mainImage = req.files['mainImage'][0];
-        const subImages = req.files['subImages'];
-
-        if (!mainImage || subImages.length < 2) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please upload 1 main image and at least 2 sub images'
-            });
-        }
-
-        console.log(`Processing images: mainImage=${mainImage.originalname}, subImages=${subImages.length}`);
-
-        const processedMainImage = await resizeAndSaveImages([mainImage]);
-        const processedSubImages = await resizeAndSaveImages(subImages);
-
-        let variants = [];
-        if (req.body.variants && typeof req.body.variants === 'object') {
-            const variantsObj = req.body.variants;
-            variants = Object.values(variantsObj).map(v => ({
-                size: v.size,
-                regularPrice: Number(v.regularPrice),
-                quantity: Number(v.quantity),
-            })).filter(v => v.size && !isNaN(v.regularPrice) && !isNaN(v.quantity));
-        }
-
-        const product = new Product({
-            name: req.body.name?.trim(),
-            description: req.body.description?.trim(),
-            category: req.body.category,
-            brand: req.body.brand,
-            mainImage: processedMainImage[0],
-            subImages: processedSubImages,
-            variants
-        });
-
-        await product.save();
-
-        return res.status(200).json({
-            success: true,
-            message: 'Product added successfully',
-            productId: product._id
-        });
-    } catch (error) {
-        console.error('Add product error:', error);
-        return res.status(500).json({
-            success: false,
-            message: `Server error: ${error.message}`
-        });
-    }
-},
-editProduct: async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
-    }
-
-    const { name, description, category, brand } = req.body;
-    if (!name?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product name is required'
-      });
-    }
-    if (!description?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Description is required'
-      });
-    }
-    if (!category) {
-      return res.status(400).json({
-        success: false,
-        message: 'Category is required'
-      });
-    }
-    if (!brand) {
-      return res.status(400).json({
-        success: false,
-        message: 'Brand is required'
-      });
-    }
-
-    const productDup = await Product.findOne({
-      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
-      _id: { $ne: req.params.id }
-    });
-    if (productDup) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product with same name already exists'
-      });
-    }
-
-    let mainImage = product.mainImage;
-    let subImages = [...product.subImages];
-
-    if (req.body.deleteMainImage === 'true') {
-      if (!req.files?.mainImage) {
-        return res.status(400).json({
-          success: false,
-          message: 'Main image is required and cannot be deleted without uploading a new one'
-        });
       }
-    }
 
-    if (req.files?.mainImage) {
-      try {
-        console.log('Main image file:', req.files['mainImage'][0]);
-        const processedMainImage = await resizeAndSaveImages([req.files['mainImage'][0]]);
-        console.log('Processed main image:', processedMainImage);
-        
-        if (!Array.isArray(processedMainImage) || !processedMainImage[0]) {
-          throw new Error('Main image processing failed: Empty result');
-        }
-        
-        if (typeof processedMainImage[0] === 'object' && processedMainImage[0].filename) {
-          mainImage = processedMainImage[0].filename;
-        } else {
-          mainImage = processedMainImage[0];
-        }
-      } catch (error) {
-        console.error('Main image processing error:', error);
-        return res.status(400).json({
-          success: false,
-          message: `Failed to process main image: ${error.message}`
-        });
-      }
-    }
-
-    if (!mainImage) {
-      return res.status(400).json({
-        success: false,
-        message: 'Main image is required'
-      });
-    }
-    console.log('Final mainImage:', mainImage);
-
-    if (req.files?.subImages) {
-      try {
-        console.log('Sub image files:', req.files['subImages']);
-        const processedSubImages = await resizeAndSaveImages(req.files['subImages']);
-        console.log('Processed sub images:', processedSubImages);
-        
-        if (!Array.isArray(processedSubImages)) {
-          throw new Error('Sub-image processing failed: Invalid output format');
-        }
-        
-        const newSubImages = processedSubImages.map(img => {
-          if (typeof img === 'object' && img.filename) {
-            return img.filename;
+      if (req.files?.mainImage) {
+        try {
+          console.log('Main image file:', req.files['mainImage'][0]);
+          const processedMainImage = await resizeAndSaveImages([req.files['mainImage'][0]]);
+          console.log('Processed main image:', processedMainImage);
+          
+          if (!Array.isArray(processedMainImage) || !processedMainImage[0]) {
+            throw new Error('Main image processing failed: Empty result');
           }
-          return img; 
-        });
-        
-        subImages = [...subImages, ...newSubImages];
-      } catch (error) {
-        console.error('Sub-images processing error:', error);
+          
+          if (typeof processedMainImage[0] === 'object' && processedMainImage[0].filename) {
+            mainImage = processedMainImage[0].filename;
+          } else {
+            mainImage = processedMainImage[0];
+          }
+        } catch (error) {
+          console.error('Main image processing error:', error);
+          return res.status(400).json({
+            success: false,
+            message: `Failed to process main image: ${error.message}`
+          });
+        }
+      }
+
+      if (!mainImage) {
         return res.status(400).json({
           success: false,
-          message: `Failed to process sub-images: ${error.message}`
+          message: 'Main image is required'
         });
       }
-    }
+      console.log('Final mainImage:', mainImage);
 
-    if (req.body.deletedSubImages) {
-      const deletedIndices = Array.isArray(req.body.deletedSubImages)
-        ? req.body.deletedSubImages.map(Number)
-        : [Number(req.body.deletedSubImages)];
-      subImages = subImages.filter((_, index) => !deletedIndices.includes(index));
-    }
+      if (req.files?.subImages) {
+        try {
+          console.log('Sub image files:', req.files['subImages']);
+          const processedSubImages = await resizeAndSaveImages(req.files['subImages']);
+          console.log('Processed sub images:', processedSubImages);
+          
+          if (!Array.isArray(processedSubImages)) {
+            throw new Error('Sub-image processing failed: Invalid output format');
+          }
+          
+          const newSubImages = processedSubImages.map(img => {
+            if (typeof img === 'object' && img.filename) {
+              return img.filename;
+            }
+            return img;
+          });
+          
+          subImages = [...subImages, ...newSubImages];
+        } catch (error) {
+          console.error('Sub-images processing error:', error);
+          return res.status(400).json({
+            success: false,
+            message: `Failed to process sub-images: ${error.message}`
+          });
+        }
+      }
 
-    if (subImages.length < 3) {
-      return res.status(400).json({
+      if (req.body.deletedSubImages) {
+        const deletedIndices = Array.isArray(req.body.deletedSubImages)
+          ? req.body.deletedSubImages.map(Number)
+          : [Number(req.body.deletedSubImages)];
+        subImages = subImages.filter((_, index) => !deletedIndices.includes(index));
+      }
+
+      if (subImages.length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least 3 sub-images are required'
+        });
+      }
+
+      let variants = [];
+      if (req.body.variants && typeof req.body.variants === 'object') {
+        const categoryDoc = await Category.findById(category).lean();
+        const productDiscount = Number(discountPercentage) || 0;
+        const categoryDiscount = categoryDoc?.offer?.discountPercentage || 0;
+        const maxDiscount = Math.max(productDiscount, categoryDiscount);
+
+        variants = Object.values(req.body.variants)
+          .filter(v => v.size?.trim() && !isNaN(v.regularPrice) && !isNaN(v.quantity))
+          .map(v => {
+            const regularPrice = Number(v.regularPrice);
+            const discountedPrice = Math.round(regularPrice - (regularPrice * maxDiscount / 100));
+            return {
+              size: v.size.trim(),
+              regularPrice,
+              discountedPrice,
+              quantity: Number(v.quantity),
+            };
+          });
+      }
+
+      if (variants.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one variant is required'
+        });
+      }
+
+      product.name = name.trim();
+      product.description = description.trim();
+      product.category = category;
+      product.brand = brand;
+      product.mainImage = mainImage;
+      product.subImages = subImages;
+      product.variants = variants;
+      product.offer = {
+        discountPercentage: parsedDiscount || 0, 
+      };
+
+      await product.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Product updated successfully',
+        productId: product._id
+      });
+    } catch (error) {
+      console.error('Edit product error:', error);
+      return res.status(500).json({
         success: false,
-        message: 'At least 3 sub-images are required'
+        message: `Server error: ${error.message}`
       });
     }
-
-    let variants = [];
-    if (req.body.variants && typeof req.body.variants === 'object') {
-      variants = Object.values(req.body.variants)
-        .filter(v => v.size?.trim() && !isNaN(v.regularPrice) && !isNaN(v.quantity))
-        .map(v => ({
-          size: v.size.trim(),
-          regularPrice: Number(v.regularPrice),
-          quantity: Number(v.quantity),
-        }));
-    }
-    if (variants.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one variant is required'
-      });
-    }
-
-    product.name = name.trim();
-    product.description = description.trim();
-    product.category = category;
-    product.brand = brand;
-    product.mainImage = mainImage;
-    product.subImages = subImages;
-    product.variants = variants;
-
-    await product.save();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Product updated successfully',
-      productId: product._id
-    });
-  } catch (error) {
-    console.error('Edit product error:', error);
-    return res.status(500).json({
-      success: false,
-      message: `Server error: ${error.message}`
-    });
-  }
-},
+  },
 
 
   toggleProductListing: async (req, res) => {

@@ -1,0 +1,315 @@
+<div class="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-8">
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Coupon Management</h2>
+
+    <form id="couponForm" class="space-y-4 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="relative">
+          <input type="text" name="code" placeholder="Coupon Code" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+          <div class="text-red-500 text-sm mt-1" id="error-code"></div>
+        </div>
+        <div class="relative">
+          <input type="number" name="discountAmount" placeholder="Discount Amount" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"  />
+          <div class="text-red-500 text-sm mt-1" id="error-discountAmount"></div>
+        </div>
+        <div class="relative">
+          <input type="number" name="minCartAmount" placeholder="Min Cart Amount" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+          <div class="text-red-500 text-sm mt-1" id="error-minCartAmount"></div>
+        </div>
+        <div class="relative">
+          <input type="number" name="maxDiscount" placeholder="Max Discount" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+          <div class="text-red-500 text-sm mt-1" id="error-maxDiscount"></div>
+        </div>
+        <div class="relative">
+          <input type="number" name="usageLimit" placeholder="Usage Limit" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+          <div class="text-red-500 text-sm mt-1" id="error-usageLimit"></div>
+        </div>
+        <div class="relative">
+          <input type="date" name="expiresAt" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"  />
+          <div class="text-red-500 text-sm mt-1" id="error-expiresAt"></div>
+        </div>
+      </div>
+      <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition w-full sm:w-auto">Create Coupon</button>
+      <p id="formError" class="text-red-500 text-sm mt-2"></p>
+      <p id="formSuccess" class="text-green-500 text-sm mt-2"></p>
+    </form>
+
+    <!-- Edit Coupon Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-lg relative">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Edit Coupon</h3>
+        <form id="editCouponForm" class="space-y-3">
+          <input type="hidden" name="id" id="edit-id" />
+          <div class="relative">
+            <input type="text" name="code" id="edit-code" placeholder="Coupon Code" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"  />
+            <div class="text-red-500 text-sm mt-1" id="error-edit-code"></div>
+          </div>
+          <div class="relative">
+            <input type="number" name="discountAmount" id="edit-discountAmount" placeholder="Discount Amount" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"  />
+            <div class="text-red-500 text-sm mt-1" id="error-edit-discountAmount"></div>
+          </div>
+          <div class="relative">
+            <input type="number" name="minCartAmount" id="edit-minCartAmount" placeholder="Min Cart Amount" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+            <div class="text-red-500 text-sm mt-1" id="error-edit-minCartAmount"></div>
+          </div>
+          <div class="relative">
+            <input type="number" name="maxDiscount" id="edit-maxDiscount" placeholder="Max Discount" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+            <div class="text-red-500 text-sm mt-1" id="error-edit-maxDiscount"></div>
+          </div>
+          <div class="relative">
+            <input type="number" name="usageLimit" id="edit-usageLimit" placeholder="Usage Limit" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+            <div class="text-red-500 text-sm mt-1" id="error-edit-usageLimit"></div>
+          </div>
+          <div class="relative">
+            <input type="date" name="expiresAt" id="edit-expiresAt" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+            <div class="text-red-500 text-sm mt-1" id="error-edit-expiresAt"></div>
+          </div>
+          <select name="isActive" id="edit-isActive" class="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+          <div class="text-red-500 text-sm" id="editFormError"></div>
+          <div class="text-green-500 text-sm" id="editFormSuccess"></div>
+          <div class="flex justify-end gap-3 pt-4">
+            <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">Cancel</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <hr class="my-8 border-gray-200" />
+
+    <div class="overflow-x-auto">
+      <table class="w-full border text-sm">
+        <thead>
+          <tr class="bg-gray-200 text-gray-700">
+            <th class="p-3 text-left">Code</th>
+            <th class="p-3 text-left">Discount</th>
+            <th class="p-3 text-left">Min Cart</th>
+            <th class="p-3 text-left">Max Discount</th>
+            <th class="p-3 text-left">Expires</th>
+            <th class="p-3 text-left">Usage</th>
+            <th class="p-3 text-left">Status</th>
+            <th class="p-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% coupons.forEach(coupon => { %>
+            <tr class="border-b hover:bg-gray-50">
+              <td class="p-3"><%= coupon.code %></td>
+              <td class="p-3"><%= coupon.discountAmount %></td>
+              <td class="p-3"><%= coupon.minCartAmount %></td>
+              <td class="p-3"><%= coupon.maxDiscount %></td>
+              <td class="p-3"><%= new Date(coupon.expiresAt).toLocaleDateString() %></td>
+              <td class="p-3"><%= coupon.usageLimit %></td>
+              <td class="p-3">
+                <span class="<%= coupon.isActive ? 'text-green-500' : 'text-red-500' %>">
+                  <%= coupon.isActive ? "Active" : "Inactive" %>
+                </span>
+              </td>
+              <td class="p-3 flex gap-2">
+                <button onclick='openEditModal(JSON.parse(`<%- JSON.stringify(coupon) %>`))' class="text-blue-500 hover:text-blue-700">Edit</button>
+                <button onclick="deleteCoupon('<%= coupon._id %>')" class="text-red-500 hover:text-red-700">Delete</button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// Validation function
+function validateFormData(data, prefix = '') {
+  const errors = {};
+  
+  // Coupon Code: Required, min 3 chars, alphanumeric or hyphens
+  if (!data.code) {
+    errors[`${prefix}code`] = 'Coupon code is required';
+  } else if (data.code.length < 3) {
+    errors[`${prefix}code`] = 'Coupon code must be at least 3 characters';
+  } else if (!/^[a-zA-Z0-9-]+$/.test(data.code)) {
+    errors[`${prefix}code`] = 'Coupon code can only contain letters, numbers, or hyphens';
+  }
+
+  // Discount Amount: Required, positive number
+  if (!data.discountAmount) {
+    errors[`${prefix}discountAmount`] = 'Discount amount is required';
+  } else if (isNaN(data.discountAmount) || Number(data.discountAmount) < 1) {
+    errors[`${prefix}discountAmount`] = 'Discount amount must be a positive number';
+  }
+
+  // Min Cart Amount: Optional, non-negative number
+  if (data.minCartAmount && (isNaN(data.minCartAmount) || Number(data.minCartAmount) < 0)) {
+    errors[`${prefix}minCartAmount`] = 'Minimum cart amount must be non-negative';
+  }
+
+  // Max Discount: Optional, positive and >= discountAmount
+  if (data.maxDiscount) {
+    if (isNaN(data.maxDiscount) || Number(data.maxDiscount) < 1) {
+      errors[`${prefix}maxDiscount`] = 'Max discount must be a positive number';
+    } else if (Number(data.maxDiscount) < Number(data.discountAmount)) {
+      errors[`${prefix}maxDiscount`] = 'Max discount must be greater than or equal to discount amount';
+    }
+  }
+
+  // Usage Limit: Optional, positive integer
+  if (data.usageLimit && (isNaN(data.usageLimit) || Number(data.usageLimit) < 1 || !Number.isInteger(Number(data.usageLimit)))) {
+    errors[`${prefix}usageLimit`] = 'Usage limit must be a positive integer';
+  }
+
+  // Expires At: Required, not in the past
+  if (!data.expiresAt) {
+    errors[`${prefix}expiresAt`] = 'Expiration date is required';
+  } else {
+    const today = new Date('2025-07-11');
+    const expires = new Date(data.expiresAt);
+    if (expires < today) {
+      errors[`${prefix}expiresAt`] = 'Expiration date cannot be in the past';
+    }
+  }
+
+  return errors;
+}
+
+// Clear error messages
+function clearErrors(prefix = '') {
+  const fields = ['code', 'discountAmount', 'minCartAmount', 'maxDiscount', 'usageLimit', 'expiresAt'];
+  fields.forEach(field => {
+    document.getElementById(`error-${prefix}${field}`).innerText = '';
+  });
+  document.getElementById(`${prefix}formError`).innerText = '';
+}
+
+// Create Coupon Form Submission
+document.getElementById('couponForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+
+  // Clear previous errors
+  clearErrors();
+
+  // Validate form data
+  const errors = validateFormData(data);
+  if (Object.keys(errors).length > 0) {
+    Object.keys(errors).forEach(key => {
+      document.getElementById(`error-${key}`).innerText = errors[key];
+    });
+    return;
+  }
+
+  try {
+    const res = await fetch('/admin/coupons/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      document.getElementById('formSuccess').innerText = result.message;
+      document.getElementById('formError').innerText = '';
+      form.reset();
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      document.getElementById('formError').innerText = result.error || 'Failed';
+    }
+  } catch (err) {
+    document.getElementById('formError').innerText = 'Something went wrong.';
+  }
+});
+
+// Edit Coupon Form Submission
+document.getElementById('editCouponForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const id = form.id.value;
+  const data = {
+    code: form.code.value,
+    discountAmount: form.discountAmount.value,
+    minCartAmount: form.minCartAmount.value,
+    maxDiscount: form.maxDiscount.value,
+    usageLimit: form.usageLimit.value,
+    expiresAt: form.expiresAt.value,
+    isActive: form.isActive.value,
+  };
+
+  // Clear previous errors
+  clearErrors('edit-');
+
+  // Validate form data
+  const errors = validateFormData(data, 'edit-');
+  if (Object.keys(errors).length > 0) {
+    Object.keys(errors).forEach(key => {
+      document.getElementById(`error-${key}`).innerText = errors[key];
+    });
+    return;
+  }
+
+  try {
+    const res = await fetch(`/admin/coupons/edit/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      document.getElementById('editFormSuccess').innerText = result.message;
+      setTimeout(() => {
+        closeEditModal();
+        window.location.reload();
+      }, 1000);
+    } else {
+      document.getElementById('editFormError').innerText = result.error || 'Update failed';
+    }
+  } catch (err) {
+    document.getElementById('editFormError').innerText = 'Server error';
+  }
+});
+
+// Delete Coupon
+async function deleteCoupon(id) {
+  if (!confirm('Are you sure to delete this coupon?')) return;
+
+  try {
+    const res = await fetch(`/admin/coupons/delete/${id}`, {
+      method: 'POST',
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      alert(result.message);
+      window.location.reload();
+    } else {
+      alert(result.error || 'Failed');
+    }
+  } catch (err) {
+    alert('Error deleting coupon');
+  }
+}
+
+// Open Edit Modal
+function openEditModal(coupon) {
+  document.getElementById('edit-id').value = coupon._id;
+  document.getElementById('edit-code').value = coupon.code;
+  document.getElementById('edit-discountAmount').value = coupon.discountAmount;
+  document.getElementById('edit-minCartAmount').value = coupon.minCartAmount || '';
+  document.getElementById('edit-maxDiscount').value = coupon.maxDiscount || '';
+  document.getElementById('edit-usageLimit').value = coupon.usageLimit || '';
+  document.getElementById('edit-expiresAt').value = coupon.expiresAt.split('T')[0];
+  document.getElementById('edit-isActive').value = coupon.isActive.toString();
+
+  clearErrors('edit-');
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+// Close Edit Modal
+function closeEditModal() {
+  document.getElementById('editModal').classList.add('hidden');
+}
+</script>
