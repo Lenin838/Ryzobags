@@ -27,19 +27,28 @@
         };
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        @media (max-width: 639px) {
+            .hero-img {
+                object-position: center; /* Ensure hero image is centered on mobile */
+            }
+            .card-hover:hover {
+                transform: none; /* Disable hover transform on mobile for touch devices */
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans">
-
     <!-- Hero Section -->
-    <section class="relative w-full h-[85vh] overflow-hidden">
-        <img src="/images/b5788c3b3c588b14834a48fd5c0074fb.jpg" alt="Hero Image" class="w-full h-full object-cover">
+    <section class="relative w-full h-[60vh] sm:h-[85vh] overflow-hidden">
+        <img src="/images/b5788c3b3c588b14834a48fd5c0074fb.jpg" alt="Hero Image" class="w-full h-full object-cover hero-img">
         <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30 flex items-center">
-            <div class="container mx-auto px-4 md:px-8">
-                <div class="max-w-xl">
-                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">Elevate Your Style With Premium Bags</h1>
-                    <p class="text-xl text-gray-200 mb-8 leading-relaxed">Discover our curated collection of high-quality bags designed for the modern lifestyle</p>
-                    <div class="flex flex-wrap gap-4">
-                        <a href="/user/shop" class="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-md font-semibold transition duration-300 inline-block shadow-lg">
+            <div class="container mx-auto px-2 sm:px-4">
+                <div class="max-w-full sm:max-w-xl">
+                    <h1 class="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight">Elevate Your Style With Premium Bags</h1>
+                    <p class="text-base sm:text-xl text-gray-200 mb-6 sm:mb-8 leading-relaxed">Discover our curated collection of high-quality bags designed for the modern lifestyle</p>
+                    <div class="flex flex-wrap gap-3 sm:gap-4">
+                        <a href="/user/shop" class="bg-primary hover:bg-primary-dark text-white px-6 sm:px-8 py-3 sm:py-4 rounded-md font-semibold transition duration-300 inline-block shadow-lg text-sm sm:text-base">
                             Shop Collection
                         </a>
                     </div>
@@ -47,40 +56,40 @@
             </div>
         </div>
         <!-- Decorative Element -->
-        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-t from-gray-50 to-transparent"></div>
     </section>
 
     <!-- Flash Sale Section -->
-    <section class="container mx-auto my-16 px-4">
-        <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+    <section class="container mx-auto my-12 sm:my-16 px-2 sm:px-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between mb-8 sm:mb-10 gap-3 sm:gap-4">
             <div class="flex items-center">
-                <div class="w-1.5 h-12 bg-primary rounded-full mr-4"></div>
-                <h2 class="text-3xl font-bold text-gray-800">Flash Sale</h2>
+                <div class="w-1 h-8 sm:h-12 bg-primary rounded-full mr-3 sm:mr-4"></div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Flash Sale</h2>
             </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
             <% products.forEach(product => { %>
                 <div class="group">
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 card-hover border border-gray-100">
                         <a href="/user/productView/<%=product._id%>" class="block relative overflow-hidden">
-                            <div class="absolute top-3 right-3 bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-full z-10">SALE</div>
-                            <img src="<%=product.mainImage%>" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105" alt="<%= product.name %>">
+                            <div class="absolute top-2 sm:top-3 right-2 sm:right-3 bg-primary text-white text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full z-10">SALE</div>
+                            <img src="<%=product.mainImage%>" class="w-full h-48 sm:h-64 object-cover transition-transform duration-500 group-hover:scale-105" alt="<%= product.name %>">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </a>
-                        <div class="p-5">
-                            <h5 class="text-lg font-semibold text-gray-800 mb-2 truncate"><%= product.name %></h5>
+                        <div class="p-4 sm:p-5">
+                            <h5 class="text-base sm:text-lg font-semibold text-gray-800 mb-2 truncate"><%= product.name %></h5>
                             <div>
                                 <% if (product.maxDiscount > 0) { %>
-                                <span class="text-sm line-through text-gray-400">₹<%= product.variantPrice.toFixed(2) %></span>
-                                <span class="text-xl font-bold text-primary ml-2">₹<%= product.discountedPrice.toFixed(2) %></span>
-                                <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">(<%= product.maxDiscount %>% off)</span>
+                                <span class="text-xs sm:text-sm line-through text-gray-400">₹<%= product.variantPrice.toFixed(2) %></span>
+                                <span class="text-lg sm:text-xl font-bold text-primary ml-1 sm:ml-2">₹<%= product.discountedPrice.toFixed(2) %></span>
+                                <span class="text-xs sm:text-sm bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded ml-1 sm:ml-2 font-medium">(<%= product.maxDiscount %>% off)</span>
                                 <% } else { %>
-                                <span class="text-xl font-bold text-primary">₹<%= product.variantPrice.toFixed(2) %></span>
+                                <span class="text-lg sm:text-xl font-bold text-primary">₹<%= product.variantPrice.toFixed(2) %></span>
                                 <% } %>
                             </div>
-                            <div class="mt-4 flex justify-between items-center">
+                            <div class="mt-3 sm:mt-4 flex justify-between items-center">
                                 <div class="flex items-center text-amber-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 sm:h-4 w-3 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
                                     <span class="text-xs text-gray-500 ml-1">5.0</span>
@@ -91,10 +100,10 @@
                 </div>
             <% }); %>
         </div>
-        <div class="text-center mt-10">
-            <a href="/user/shop?sale=true" class="inline-flex items-center text-primary hover:text-primary-dark font-medium transition-colors">
+        <div class="text-center mt-8 sm:mt-10">
+            <a href="/user/shop?sale=true" class="inline-flex items-center text-primary hover:text-primary-dark font-medium transition-colors text-xs sm:text-sm">
                 View All Sale Items
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 sm:h-5 w-4 sm:w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
             </a>
@@ -102,96 +111,95 @@
     </section>
 
     <!-- Categories Section -->
-<section class="container mx-auto my-20 px-4">
-    <div class="text-center mb-12">
-        <span class="text-primary font-medium">COLLECTIONS</span>
-        <h2 class="text-3xl font-bold text-gray-800 mt-2">Shop by Category</h2>
-        <div class="w-24 h-1 bg-primary mx-auto mt-4 rounded-full"></div>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        
-       <% categories.forEach(category => { %>
-    <div class="relative group overflow-hidden rounded-xl shadow-md">
-        <a href="/user/shop?category=<%= category.name %>">
-            <% 
-            // Find a product for this specific category
-            let categoryProduct = products.find(p => p.category && p.category._id && p.category._id.toString() === category._id.toString());
-            // Use the product's image or a default if none found
-            let mainImage = categoryProduct ? categoryProduct.mainImage : '/images/default-category.jpg';
-            %>
-            <img src="<%= mainImage %>"
-                 class="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-110" 
-                 alt="<%= category.name %>">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-end p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                <h5 class="text-xl font-bold text-white mb-2"><%= category.name %></h5>
-                <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">Shop Now</span>
-            </div>
-        </a>
-    </div>
-<% }); %>
-    </div>
-</section>
+    <section class="container mx-auto my-12 sm:my-20 px-2 sm:px-4">
+        <div class="text-center mb-8 sm:mb-12">
+            <span class="text-primary font-medium text-sm sm:text-base">COLLECTIONS</span>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1 sm:mt-2">Shop by Category</h2>
+            <div class="w-16 sm:w-24 h-1 bg-primary mx-auto mt-3 sm:mt-4 rounded-full"></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
+            <% categories.forEach(category => { %>
+                <div class="relative group overflow-hidden rounded-xl shadow-md">
+                    <a href="/user/shop?category=<%= category.name %>">
+                        <% 
+                        // Find a product for this specific category
+                        let categoryProduct = products.find(p => p.category && p.category._id && p.category._id.toString() === category._id.toString());
+                        // Use the product's image or a default if none found
+                        let mainImage = categoryProduct ? categoryProduct.mainImage : '/images/default-category.jpg';
+                        %>
+                        <img src="<%= mainImage %>"
+                             class="w-full h-56 sm:h-72 object-cover transition-transform duration-700 group-hover:scale-110" 
+                             alt="<%= category.name %>">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-end p-4 sm:p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <h5 class="text-lg sm:text-xl font-bold text-white mb-1 sm:mb-2"><%= category.name %></h5>
+                            <span class="px-3 sm:px-4 py-1 sm:py-2 bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">Shop Now</span>
+                        </div>
+                    </a>
+                </div>
+            <% }); %>
+        </div>
+    </section>
 
     <!-- New Arrivals Section -->
-    <section class="py-20 bg-gray-50">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+    <section class="py-12 sm:py-20 bg-gray-50">
+        <div class="container mx-auto px-2 sm:px-4">
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-8 sm:mb-10 gap-3 sm:gap-4">
                 <div class="flex items-center">
-                    <div class="w-1.5 h-12 bg-primary rounded-full mr-4"></div>
-                    <h2 class="text-3xl font-bold text-gray-800">New Arrivals</h2>
+                    <div class="w-1 h-8 sm:h-12 bg-primary rounded-full mr-3 sm:mr-4"></div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">New Arrivals</h2>
                 </div>
-                <a href="/user/shop?sort=newest" class="text-primary hover:text-primary-dark font-medium flex items-center group">
+                <a href="/user/shop?sort=newest" class="text-primary hover:text-primary-dark font-medium flex items-center group text-xs sm:text-sm">
                     View All
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 sm:h-5 w-4 sm:w-5 ml-1 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                 </a>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
                 <% products.forEach(product => { %>
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 group">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 card-hover border border-gray-100 group">
                         <a href="/user/productView/<%=product._id%>" class="block relative">
-                            <div class="absolute top-3 left-3 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full z-10">NEW</div>
-                            <img src="<%= product.mainImage %>" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105" alt="<%= product.name %>">
+                            <div class="absolute top-2 sm:top-3 left-2 sm:left-3 bg-emerald-500 text-white text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full z-10">NEW</div>
+                            <img src="<%= product.mainImage %>" class="w-full h-48 sm:h-64 object-cover transition-transform duration-500 group-hover:scale-105" alt="<%= product.name %>">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </a>
-                        <div class="p-5">
-                            <h5 class="text-lg font-semibold text-gray-800 mb-2 truncate"><%= product.name %></h5>
+                        <div class="p-4 sm:p-5">
+                            <h5 class="text-base sm:text-lg font-semibold text-gray-800 mb-2 truncate"><%= product.name %></h5>
                             <div class="flex items-center mb-2">
                                 <div class="flex text-amber-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 sm:h-4 w-3 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 sm:h-4 w-3 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 sm:h-4 w-3 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 sm:h-4 w-3 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 sm:h-4 w-3 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
                                 </div>
                                 <span class="text-xs text-gray-500 ml-1">(5.0)</span>
                             </div>
                             <div>
-                               <% if (product.maxDiscount > 0) { %>
-                            <span class="text-sm line-through text-gray-400">₹<%= product.variantPrice.toFixed(2) %></span>
-                            <span class="text-xl font-bold text-primary ml-2">₹<%= product.discountedPrice.toFixed(2) %></span>
-                            <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded ml-2 font-medium">
-                                (<%= product.maxDiscount %>% off)
-                            </span>
-                            <% } else { %>
-                            <span class="text-xl font-bold text-primary">₹<%= product.variantPrice.toFixed(2) %></span>
-                            <% } %>
+                                <% if (product.maxDiscount > 0) { %>
+                                <span class="text-xs sm:text-sm line-through text-gray-400">₹<%= product.variantPrice.toFixed(2) %></span>
+                                <span class="text-lg sm:text-xl font-bold text-primary ml-1 sm:ml-2">₹<%= product.discountedPrice.toFixed(2) %></span>
+                                <span class="text-xs sm:text-sm bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded ml-1 sm:ml-2 font-medium">
+                                    (<%= product.maxDiscount %>% off)
+                                </span>
+                                <% } else { %>
+                                <span class="text-lg sm:text-xl font-bold text-primary">₹<%= product.variantPrice.toFixed(2) %></span>
+                                <% } %>
                             </div>
-                            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between">
-                                <a href="/user/productView/<%=product._id%>" class="text-primary hover:text-primary-dark font-medium text-sm flex items-center">
+                            <div class="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex justify-between">
+                                <a href="/user/productView/<%=product._id%>" class="text-primary hover:text-primary-dark font-medium text-xs sm:text-sm flex items-center">
                                     View Details
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 sm:h-4 w-3 sm:w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
                                 </a>
@@ -204,47 +212,46 @@
     </section>
 
     <!-- Trust Badges Section -->
-    <section class="container mx-auto py-16 px-4">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <section class="container mx-auto py-12 sm:py-16 px-2 sm:px-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-8 text-center">
+            <div class="flex flex-col items-center p-4 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 sm:h-8 w-6 sm:w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h3 class="font-semibold text-lg mb-2 text-gray-800">Fast Delivery</h3>
-                <p class="text-gray-600 text-sm">Free shipping on orders over ₹999</p>
+                <h3 class="font-semibold text-base sm:text-lg mb-1 sm:mb-2 text-gray-800">Fast Delivery</h3>
+                <p class="text-gray-600 text-xs sm:text-sm">Free shipping on orders over ₹999</p>
             </div>
-            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex flex-col items-center p-4 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 sm:h-8 w-6 sm:w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                 </div>
-                <h3 class="font-semibold text-lg mb-2 text-gray-800">Secure Payment</h3>
-                <p class="text-gray-600 text-sm">100% secure payment</p>
+                <h3 class="font-semibold text-base sm:text-lg mb-1 sm:mb-2 text-gray-800">Secure Payment</h3>
+                <p class="text-gray-600 text-xs sm:text-sm">100% secure payment</p>
             </div>
-            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex flex-col items-center p-4 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 sm:h-8 w-6 sm:w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
                 </div>
-                <h3 class="font-semibold text-lg mb-2 text-gray-800">Money-Back Guarantee</h3>
-                <p class="text-gray-600 text-sm">30-day return policy</p>
+                <h3 class="font-semibold text-base sm:text-lg mb-1 sm:mb-2 text-gray-800">Money-Back Guarantee</h3>
+                <p class="text-gray-600 text-xs sm:text-sm">30-day return policy</p>
             </div>
-            <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex flex-col items-center p-4 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 sm:h-8 w-6 sm:w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h3 class="font-semibold text-lg mb-2 text-gray-800">24/7 Support</h3>
-                <p class="text-gray-600 text-sm">Dedicated support</p>
+                <h3 class="font-semibold text-base sm:text-lg mb-1 sm:mb-2 text-gray-800">24/7 Support</h3>
+                <p class="text-gray-600 text-xs sm:text-sm">Dedicated support</p>
             </div>
         </div>
     </section>
-
 </body>
 </html>
 

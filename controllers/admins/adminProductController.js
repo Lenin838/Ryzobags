@@ -81,6 +81,7 @@ const productController = {
       res.status(500).send('Server Error');
     }
   },
+
   addProduct: async (req, res) => {
     try {
       console.log('Add product request received');
@@ -166,7 +167,8 @@ const productController = {
       });
     }
   },
-editProduct: async (req, res) => {
+
+  editProduct: async (req, res) => {
     try {
       const product = await Product.findById(req.params.id);
       if (!product) {
@@ -361,7 +363,6 @@ editProduct: async (req, res) => {
       });
     }
   },
-
 
   toggleProductListing: async (req, res) => {
     try {

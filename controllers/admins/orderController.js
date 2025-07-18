@@ -92,6 +92,7 @@ const adminOrderController = {
         });
       }
     },
+
     viewOrder: async (req, res) => {
       try {
         const { orderId } = req.params;
@@ -117,12 +118,13 @@ const adminOrderController = {
         res.redirect('/admin/orders');
       }
     },
+
     updateOrderStatus: async (req, res) => {
       try {
         const { orderId } = req.params;
-        const { status } = req.body;
+        const { status, itemId } = req.body;
 
-        const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'return request', 'returned',"partially returned", 'failed'];
+        const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'return request', 'returned', 'partially returned', 'failed'];
         if (!validStatuses.includes(status)) {
           return res.status(400).json({ message: 'Invalid status' });
         }
@@ -134,11 +136,16 @@ const adminOrderController = {
 
         const previousStatus = order.status;
 
-        if (status === 'shipped' && previousStatus !== 'shipped') {
-          for (const item of order.items) {
+        if (itemId) {
+          const item = order.items.id(itemId);
+          if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+          }
+
+          if (status === 'shipped' && item.status !== 'shipped') {
             const product = item.productId;
             if (!product) {
-              return res.status(404).json({ message: `Product not found for item` });
+              return res.status(404).json({ message: 'Product not found for item' });
             }
             const variant = product.variants.find((v) => v.size === item.size);
             if (!variant) {
@@ -150,93 +157,186 @@ const adminOrderController = {
               });
             }
           }
-        }
-        
-        order.status = status;
-        
-        order.items.forEach((item) => {
-          if (['pending', 'processing', 'shipped'].includes(status)) {
-            if (item.status !== 'cancelled' && item.status !== 'returned') {
-              item.status = status;
-            }
-          } else if (status === 'delivered') {
-            if (item.status !== 'cancelled' && item.status !== 'returned') {
-              item.status = 'delivered';
-            }
+
+          item.status = status;
+          if (status === 'delivered') {
             order.deliveredDate = order.deliveredDate || new Date();
-          } else if (status === 'cancelled') {
-            item.status = 'cancelled';
-          } else if (status === 'return request' || status === 'returned') {
-            item.status = status;
           }
-        });
 
-        await order.save();
-
-        if (status === 'shipped' && previousStatus !== 'shipped') {
-          for (const item of order.items) {
-            if (item.status !== 'cancelled' && item.status !== 'returned') {
-              await Product.findByIdAndUpdate(item.productId, {
-                $inc: { 'variants.$[variant].quantity': -item.quantity },
-              }, {
-                arrayFilters: [{ 'variant.size': item.size }],
-              });
-            }
-          }
-        } else if (status === 'cancelled' && previousStatus !== 'delivered' && previousStatus !== 'returned') {
-          for (const item of order.items) {
+          if (status === 'shipped' && item.status !== 'shipped') {
+            await Product.findByIdAndUpdate(item.productId, {
+              $inc: { 'variants.$[variant].quantity': -item.quantity },
+            }, {
+              arrayFilters: [{ 'variant.size': item.size }],
+            });
+          } else if (status === 'cancelled' && item.status !== 'delivered' && item.status !== 'returned') {
             await Product.findByIdAndUpdate(item.productId, {
               $inc: { 'variants.$[variant].quantity': item.quantity },
             }, {
               arrayFilters: [{ 'variant.size': item.size }],
             });
-          }
-          const lastTx = await WalletTransaction.findOne({ userId: order.userId })
-            .sort({ createdAt: -1 })
-            .lean();
-          const currentBalance = lastTx ? lastTx.wallet.balance : 0;
 
-          const newTransaction = new WalletTransaction({
-            userId: order.userId,
-            amount: order.amountPaid || order.totalAmount,
-            type: 'credit',
-            description: `Refund for cancelled order ${orderId}`,
-            wallet: {
-              balance: currentBalance + (order.amountPaid || order.totalAmount),
-            },
-            createdAt: new Date(),
-          });
-          await newTransaction.save();
+            const itemTotal = item.quantity * (item.itemSalePrice || 0);
+            const lastTx = await WalletTransaction.findOne({ userId: order.userId })
+              .sort({ createdAt: -1 })
+              .lean();
+            const currentBalance = lastTx ? lastTx.wallet.balance : 0;
 
-          try {
-            const user = await User.findById(order.userId);
-            await transporter.sendMail({
-              from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
-              to: user.email,
-              subject: 'Order Cancellation Refund - RyzoBags',
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h2 style="color: #dc2626;">Order Cancelled</h2>
-                  <p>Your order <strong>${orderId}</strong> has been cancelled, and a refund of <strong>$${order.amountPaid || order.totalAmount}</strong> has been credited to your wallet.</p>
-                  <p>Current wallet balance: <strong>$${newTransaction.wallet.balance}</strong></p>
-                  <p style="margin-top: 30px; color: #6b7280;">
-                    Best regards,<br>
-                    RyzoBags Team
-                  </p>
-                </div>
-              `,
+            const newTransaction = new WalletTransaction({
+              userId: order.userId,
+              amount: itemTotal,
+              type: 'credit',
+              description: `Refund for cancelled item in order ${orderId}`,
+              wallet: {
+                balance: currentBalance + itemTotal,
+              },
+              createdAt: new Date(),
             });
-          } catch (emailError) {
-            console.error('Failed to send cancellation email:', emailError);
+            await newTransaction.save();
+
+            try {
+              const user = await User.findById(order.userId);
+              await transporter.sendMail({
+                from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+                to: user.email,
+                subject: 'Item Cancellation Refund - RyzoBags',
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #dc2626;">Item Cancelled</h2>
+                    <p>An item in your order <strong>${orderId}</strong> has been cancelled, and a refund of <strong>$${itemTotal}</strong> has been credited to your wallet.</p>
+                    <p>Current wallet balance: <strong>$${newTransaction.wallet.balance}</strong></p>
+                    <p style="margin-top: 30px; color: #6b7280;">
+                      Best regards,<br>
+                      RyzoBags Team
+                    </p>
+                  </div>
+                `,
+              });
+            } catch (emailError) {
+              console.error('Failed to send cancellation email:', emailError);
+            }
+          }
+
+          const allItemsCancelled = order.items.every(i => i.status === 'cancelled');
+          const allItemsDelivered = order.items.every(i => i.status === 'delivered');
+          const allItemsReturned = order.items.every(i => i.status === 'returned');
+          const hasMixedStatuses = new Set(order.items.map(i => i.status)).size > 1;
+
+          if (allItemsCancelled) {
+            order.status = 'cancelled';
+          } else if (allItemsDelivered) {
+            order.status = 'delivered';
+          } else if (allItemsReturned) {
+            order.status = 'returned';
+          } else if (hasMixedStatuses) {
+            order.status = 'delivered';
+          }
+
+        } else {
+          if (status === 'shipped' && previousStatus !== 'shipped') {
+            for (const item of order.items) {
+              const product = item.productId;
+              if (!product) {
+                return res.status(404).json({ message: `Product not found for item` });
+              }
+              const variant = product.variants.find((v) => v.size === item.size);
+              if (!variant) {
+                return res.status(404).json({ message: `Variant ${item.size} not found for ${product.name}` });
+              }
+              if (variant.quantity < item.quantity) {
+                return res.status(400).json({
+                  message: `Insufficient stock for ${product.name} (Size: ${item.size}). Available: ${variant.quantity}, Required: ${item.quantity}`,
+                });
+              }
+            }
+          }
+          
+          order.status = status;
+          
+          order.items.forEach((item) => {
+            if (['pending', 'processing', 'shipped'].includes(status)) {
+              if (item.status !== 'cancelled' && item.status !== 'returned') {
+                item.status = status;
+              }
+            } else if (status === 'delivered') {
+              if (item.status !== 'cancelled' && item.status !== 'returned') {
+                item.status = 'delivered';
+              }
+              order.deliveredDate = order.deliveredDate || new Date();
+            } else if (status === 'cancelled') {
+              item.status = 'cancelled';
+            } else if (status === 'return request' || status === 'returned') {
+              item.status = status;
+            }
+          });
+
+          if (status === 'shipped' && previousStatus !== 'shipped') {
+            for (const item of order.items) {
+              if (item.status !== 'cancelled' && item.status !== 'returned') {
+                await Product.findByIdAndUpdate(item.productId, {
+                  $inc: { 'variants.$[variant].quantity': -item.quantity },
+                }, {
+                  arrayFilters: [{ 'variant.size': item.size }],
+                });
+              }
+            }
+          } else if (status === 'cancelled' && previousStatus !== 'delivered' && previousStatus !== 'returned') {
+            for (const item of order.items) {
+              await Product.findByIdAndUpdate(item.productId, {
+                $inc: { 'variants.$[variant].quantity': item.quantity },
+              }, {
+                arrayFilters: [{ 'variant.size': item.size }],
+              });
+            }
+            const lastTx = await WalletTransaction.findOne({ userId: order.userId })
+              .sort({ createdAt: -1 })
+              .lean();
+            const currentBalance = lastTx ? lastTx.wallet.balance : 0;
+
+            const newTransaction = new WalletTransaction({
+              userId: order.userId,
+              amount: order.amountPaid || order.totalAmount,
+              type: 'credit',
+              description: `Refund for cancelled order ${orderId}`,
+              wallet: {
+                balance: currentBalance + (order.amountPaid || order.totalAmount),
+              },
+              createdAt: new Date(),
+            });
+            await newTransaction.save();
+
+            try {
+              const user = await User.findById(order.userId);
+              await transporter.sendMail({
+                from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+                to: user.email,
+                subject: 'Order Cancellation Refund - RyzoBags',
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #dc2626;">Order Cancelled</h2>
+                    <p>Your order <strong>${orderId}</strong> has been cancelled, and a refund of <strong>$${order.amountPaid || order.totalAmount}</strong> has been credited to your wallet.</p>
+                    <p>Current wallet balance: <strong>$${newTransaction.wallet.balance}</strong></p>
+                    <p style="margin-top: 30px; color: #6b7280;">
+                      Best regards,<br>
+                      RyzoBags Team
+                    </p>
+                  </div>
+                `,
+              });
+            } catch (emailError) {
+              console.error('Failed to send cancellation email:', emailError);
+            }
           }
         }
 
-        return res.json({ message: `Order status updated to ${status}` });
+        await order.save();
+        return res.json({ message: `Order status updated to ${status}`, orderStatus: order.status });
       } catch (err) {
         console.error('Error in updateOrderStatus:', err);
         return res.status(500).json({ message: 'Error updating order status' });
       }
     },
+
     verifyReturnRequest: async (req, res) => {
     try {
       const { orderId } = req.params;
@@ -476,7 +576,7 @@ const adminOrderController = {
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
       });
     }
-  },
+    },
 };
 
 module.exports = adminOrderController;

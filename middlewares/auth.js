@@ -5,7 +5,7 @@ const isAuthenticated = async(req, res, next) => {
     
     if (req.session.user) {
         const userId = req.session.user._id;
-        console.log("isauthenticates",userId) // ✅ Attach session user to request
+        console.log("isauthenticates",userId)
         const userdetails= await user.findById(userId)
         console.log("isauthenticates",userdetails)
         if(userdetails.isActive===false){

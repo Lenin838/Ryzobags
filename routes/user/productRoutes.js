@@ -16,6 +16,7 @@ userProductRouter.delete('/removeFromWishlist/:id', isAuthenticated, productCont
 userProductRouter.put('/updateCartQuantity', isAuthenticated, productController.updateCartQuantity);
 userProductRouter.delete('/deleteCart/:productId', isAuthenticated, productController.deleteCartItem);
 userProductRouter.get('/checkout', isAuthenticated, productController.loadCheckout);
+userProductRouter.post('/checkout', isAuthenticated, productController.loadCheckout);
 userProductRouter.post('/orderPlaced', isAuthenticated, productController.placeOrder);
 userProductRouter.post('/verify-payment', isAuthenticated, productController.verifyPayment);
 userProductRouter.post('/paymentConfirm', isAuthenticated, productController.paymentConfirm);

@@ -8,15 +8,27 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    @media (max-width: 639px) {
+      .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .return-modal {
+        width: 95%;
+        max-width: 20rem;
+      }
+    }
+  </style>
 </head>
 <body class="bg-gray-50">
   <div class="flex min-h-screen">
     <%- include("partials/userSidebar", { activeTab: 'orders' }) %>
-    <div class="flex-1 ml-0 sm:ml-64 pt-16">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="flex-1 ml-0 lg:ml-64 pt-16">
+      <div class="max-w-full sm:max-w-4xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6">
         <% if (success && success.length) { %>
-          <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-            <p><%= success %></p>
+          <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
+            <p class="text-xs sm:text-sm"><%= success %></p>
           </div>
           <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -25,8 +37,8 @@
           </script>
         <% } %>
         <% if (error && error.length) { %>
-          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-            <p><%= error %></p>
+          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
+            <p class="text-xs sm:text-sm"><%= error %></p>
           </div>
           <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -35,22 +47,22 @@
           </script>
         <% } %>
         
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h5 class="text-lg font-semibold mb-4">Order Details - <%= order.orderId %></h5>
-          <p class="text-sm text-gray-500">Date: <%= new Date(order.orderDate).toLocaleDateString() %></p>
-          <p class="text-sm text-gray-500">Time: <%= new Date(order.orderDate).toLocaleTimeString() %></p>
-          <p class="text-sm text-gray-500">Payment type: <%= order.paymentMethod %></p>
-          <p class="text-sm text-gray-500">Status: 
-            <span class="px-2 py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
+        <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Order Details - <%= order.orderId %></h5>
+          <p class="text-xs sm:text-sm text-gray-500">Date: <%= new Date(order.orderDate).toLocaleDateString() %></p>
+          <p class="text-xs sm:text-sm text-gray-500">Time: <%= new Date(order.orderDate).toLocaleTimeString() %></p>
+          <p class="text-xs sm:text-sm text-gray-500">Payment type: <%= order.paymentMethod %></p>
+          <p class="text-xs sm:text-sm text-gray-500">Status: 
+            <span class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
               <%= order.status %>
             </span>
           </p>
           
           <!-- Shipping Address -->
-          <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h6 class="text-md font-semibold mb-2">Shipping Address</h6>
+          <div class="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+            <h6 class="text-sm sm:text-md font-semibold mb-1 sm:mb-2">Shipping Address</h6>
             <% if (selectedAddress) { %>
-              <p class="text-sm text-gray-700">
+              <p class="text-xs sm:text-sm text-gray-700">
                 <strong><%= selectedAddress.name || 'N/A' %></strong><br>
                 <%= selectedAddress.landMark ? selectedAddress.landMark : '' %><br>
                 <%= selectedAddress.city || 'N/A' %>, <%= selectedAddress.state || 'N/A' %> <%= selectedAddress.pincode || 'N/A' %><br>
@@ -62,43 +74,38 @@
                   <br><span>Alt Phone: <%= selectedAddress.altPhone %></span>
                 <% } %>
                 <% if (selectedAddress.addressType) { %>
-                  <br><span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-1">
+                  <br><span class="inline-block bg-blue-100 text-blue-800 text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded mt-1">
                     <%= selectedAddress.addressType %>
                   </span>
                 <% } %>
               </p>
             <% } else { %>
-              <p class="text-sm text-gray-500 italic">No shipping address provided for this order.</p>
+              <p class="text-xs sm:text-sm text-gray-500 italic">No shipping address provided for this order.</p>
             <% } %>
           </div>
 
           <!-- Order Summary -->
-          <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div class="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
             <% 
               const activeItems = order.items.filter(item => item.status !== 'cancelled');
-              const cancelledItems = order.items.filter(item => item.status === 'cancelled');
-              const activeItemsTotal = activeItems.reduce((sum, item) => sum + (typeof item.itemSalePrice === 'number' ? item.itemSalePrice * item.quantity : 0), 0);
-              const cancelledItemsTotal = cancelledItems.reduce((sum, item) => sum + (typeof item.itemSalePrice === 'number' ? item.itemSalePrice * item.quantity : 0), 0);
+              // const activeItemsTotal = activeItems.reduce((sum, item) => sum + (typeof item.itemSalePrice === 'number' ? item.itemSalePrice * item.quantity : 0), 0);
             %>
             
             <% if (activeItems.length > 0) { %>
-              <p class="text-sm text-gray-700">Active Items Subtotal: ₹<%= activeItemsTotal.toFixed(2) %></p>
+              <p class="text-xs sm:text-sm text-gray-700">Active Items Subtotal: ₹<%= activeItemsTotal.toFixed(2) %></p>
             <% } %>
             
-            <% if (cancelledItems.length > 0) { %>
-              <p class="text-sm text-red-600">Cancelled Items Total: ₹<%= cancelledItemsTotal.toFixed(2) %></p>
-            <% } %>
             
             <% if (order.discount && order.discount > 0) { %>
-              <p class="text-sm text-gray-700">Discount: -₹<%= order.discount.toFixed(2) %></p>
+              <p class="text-xs sm:text-sm text-gray-700">Discount: -₹<%= order.discount.toFixed(2) %></p>
             <% } %>
             
-            <p class="text-lg font-semibold text-gray-900 border-t pt-2 mt-2">
+            <p class="text-base sm:text-lg font-semibold text-gray-900 border-t pt-1 sm:pt-2 mt-1 sm:mt-2">
               Current Total: ₹<%= (activeItemsTotal - (order.discount || 0)).toFixed(2) %>
             </p>
             
             <% if (order.status === 'cancelled') { %>
-              <p class="text-sm text-red-600 mt-2">
+              <p class="text-xs sm:text-sm text-red-600 mt-1 sm:mt-2">
                 <strong>Order Status:</strong> Cancelled
                 <% if (order.cancelReason) { %>
                   <br><strong>Reason:</strong> <%= order.cancelReason %>
@@ -108,57 +115,53 @@
           </div>
 
           <!-- Order Actions -->
-          <div class="mt-4 flex flex-wrap gap-2">
+          <div class="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3">
             <% if (order.status.toLowerCase() === 'pending' || order.status.toLowerCase() === 'processing') { %>
               <% if (activeItems.length > 0) { %>
-                <button onclick="cancelEntireOrder('<%= order.orderId %>')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                <button onclick="cancelEntireOrder('<%= order.orderId %>')" class="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm">
                   Cancel Entire Order
                 </button>
               <% } %>
             <% } %>
             
             <% if (['delivered'].includes(order.status.toLowerCase()) && activeItems.length > 0) { %>
-              <button onclick="returnEntireOrder('<%= order._id %>')" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm">
+              <button onclick="returnEntireOrder('<%= order._id %>')" class="bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm">
                 Return Entire Order
               </button>
             <% } %>
             
             <% if (order.status.toLowerCase() === 'delivered','partially returned') { %>
-              <a href="/user/ordersDetails/<%= order._id %>/invoice" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm">
+              <a href="/user/ordersDetails/<%= order._id %>/invoice" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm">
                 Download Invoice
               </a>
             <% } %>
           </div>
 
           <!-- Items Table -->
-          <h6 class="text-md font-semibold mt-6 mb-2">Order Items</h6>
-          <div class="overflow-x-auto">
+          <h6 class="text-sm sm:text-md font-semibold mt-4 sm:mt-6 mb-1 sm:mb-2">Order Items</h6>
+          <div class="table-container">
             <table class="w-full">
               <thead class="bg-gray-100">
                 <tr>
-                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Original Price</th>
-                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offer Price</th>
-                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Product</th>
+                  <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                  <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
                 <% order.items.forEach(item => { %>
                   <tr class="<%= item.status === 'cancelled' ? 'bg-red-50 opacity-75' : '' %>">
-                    <td class="py-3 px-4 text-sm text-gray-500">
+                    <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
                       <%= item.productId ? item.productId.name : 'Unknown Product' %>
                     </td>
-                    <td class="py-3 px-4 text-sm text-gray-500"><%= item.quantity %></td>
-                    <td class="py-3 px-4 text-sm text-gray-500">
+                    <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500"><%= item.quantity %></td>
+                    <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
                       ₹<%= typeof item.itemSalePrice === 'number' ? item.itemSalePrice.toFixed(2) : 'N/A' %>
                     </td>
-                    <td class="py-3 px-4 text-sm text-gray-500">
-                      ₹<%= typeof item.itemSalePrice === 'number' ? item.itemSalePrice.toFixed(2) : 'N/A' %>
-                    </td>
-                    <td class="py-3 px-4 text-sm text-gray-500">
+                    <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
                       <% if (item.status === 'cancelled') { %>
                         <span class="line-through text-red-500">
                           ₹<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
@@ -167,33 +170,33 @@
                         ₹<%= typeof item.itemSalePrice === 'number' ? (item.itemSalePrice * item.quantity).toFixed(2) : 'N/A' %>
                       <% } %>
                     </td>
-                    <td class="py-3 px-4 text-sm">
+                    <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
                       <% if (item.status === 'cancelled') { %>
-                        <span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                        <span class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs bg-red-100 text-red-800">
                           Cancelled
                         </span>
                         <% if (item.cancelReason) { %>
-                          <p class="text-xs text-red-600 mt-1">Reason: <%= item.cancelReason %></p>
+                          <p class="text-xs text-red-600 mt-0.5 sm:mt-1">Reason: <%= item.cancelReason %></p>
                         <% } %>
                       <% } else if (item.itemStatus === 'return request' || item.status === 'return request') { %>
-                        <span class="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
+                        <span class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs bg-orange-100 text-orange-800">
                           Return Requested
                         </span>
                         <% if (item.reason) { %>
-                          <p class="text-xs text-orange-600 mt-1">Reason: <%= item.reason %></p>
+                          <p class="text-xs text-orange-600 mt-0.5 sm:mt-1">Reason: <%= item.reason %></p>
                         <% } %>
                       <% } else { %>
-                        <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                        <span class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs bg-green-100 text-green-800">
                           <%= item.itemStatus || item.status || 'Active' %>
                         </span>
                       <% } %>
                     </td>
-                    <td class="py-3 px-4 text-sm">
-                      <div class="flex flex-col gap-1">
+                    <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
+                      <div class="flex flex-col gap-1 sm:gap-2">
                         <% if ((order.status.toLowerCase() === 'pending' || order.status.toLowerCase() === 'processing') && item.status !== 'cancelled') { %>
                           <button 
                             onclick="cancelItem('<%= order.orderId %>', '<%= item._id %>', '<%= item.productId ? item.productId.name : 'Unknown Product' %>')" 
-                            class="text-red-600 hover:text-red-800 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded"
+                            class="text-red-600 hover:text-red-800 text-xs bg-red-50 hover:bg-red-100 px-2 sm:px-2 py-1 rounded"
                           >
                             Cancel Item
                           </button>
@@ -208,7 +211,7 @@
                         <% if (canReturnItem) { %>
                           <button 
                             onclick="returnItem('<%= order._id %>', '<%= item.productId ? (item.productId._id || item.productId).toString() : '' %>', '<%= item.productId ? item.productId.name : 'Unknown Product' %>')" 
-                            class="text-orange-600 hover:text-orange-800 text-xs bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded"
+                            class="text-orange-600 hover:text-orange-800 text-xs bg-orange-50 hover:bg-orange-100 px-2 sm:px-2 py-1 rounded"
                             data-order-id="<%= order._id %>"
                             data-product-id="<%= item.productId ? (item.productId._id || item.productId).toString() : '' %>"
                             data-product-name="<%= item.productId ? item.productId.name : 'Unknown Product' %>"
@@ -239,11 +242,11 @@
   </div>
 
   <div id="returnModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-      <div class="mt-3">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Return Item</h3>
-        <p class="text-sm text-gray-600 mb-4">Why do you want to return this item?</p>
-        <select id="returnReason" class="w-full p-2 border border-gray-300 rounded-md mb-4">
+    <div class="return-modal relative top-16 sm:top-20 mx-auto p-4 sm:p-5 border w-11/12 sm:w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-2 sm:mt-3">
+        <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">Return Item</h3>
+        <p class="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Why do you want to return this item?</p>
+        <select id="returnReason" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-md mb-3 sm:mb-4 text-xs sm:text-sm">
           <option value="">Select a reason</option>
           <option value="damaged">Item was damaged</option>
           <option value="wrong_item">Wrong item received</option>
@@ -254,12 +257,12 @@
           <option value="changed_mind">Changed my mind</option>
           <option value="other">Other reason</option>
         </select>
-        <textarea id="returnComment" placeholder="Additional comments (optional)" class="w-full p-2 border border-gray-300 rounded-md mb-4 h-20"></textarea>
-        <div class="flex justify-end gap-2">
-          <button onclick="closeReturnModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+        <textarea id="returnComment" placeholder="Additional comments (optional)" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-md mb-3 sm:mb-4 h-16 sm:h-20 text-xs sm:text-sm"></textarea>
+        <div class="flex justify-end gap-2 sm:gap-3">
+          <button onclick="closeReturnModal()" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 text-xs sm:text-sm">
             Cancel
           </button>
-          <button onclick="submitReturn()" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+          <button onclick="submitReturn()" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-xs sm:text-sm">
             Submit Return Request
           </button>
         </div>

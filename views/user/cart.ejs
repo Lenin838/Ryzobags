@@ -9,45 +9,66 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Ensure table columns don't collapse too much on mobile */
+        @media (max-width: 639px) {
+            .cart-table th, .cart-table td {
+                font-size: 0.75rem; /* Smaller text on mobile */
+                padding: 0.5rem; /* Reduced padding */
+            }
+            .cart-table .product-col {
+                min-width: 200px; /* Ensure product column is wide enough */
+            }
+            .cart-table .action-col {
+                min-width: 60px; /* Ensure action column fits */
+            }
+            .cart-table img {
+                width: 60px; /* Smaller image on mobile */
+                height: 60px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen">
     <!-- Breadcrumb -->
-    <div class="bg-white py-2 shadow-sm">
-        <div class="container mx-auto px-4">
-            <div class="text-sm text-gray-500">
+    <div class="bg-white py-2 sm:py-3 shadow-sm">
+        <div class="container mx-auto px-2 sm:px-4">
+            <div class="text-xs sm:text-sm text-gray-500">
                 <a href="/" class="hover:text-blue-600">Home</a>
-                <span class="mx-2">></span>
+                <span class="mx-1 sm:mx-2">></span>
                 <a href="#" class="hover:text-blue-600">Shop</a>
-                <span class="mx-2">></span>
+                <span class="mx-1 sm:mx-2">></span>
                 <span class="text-gray-800 font-medium">Your Cart</span>
             </div>
         </div>
     </div>
 
     <!-- Debug Panel (for troubleshooting) -->
-    <div id="debugPanel" class="container mx-auto px-4 mt-4 bg-yellow-100 p-4 rounded hidden">
-        <h3 class="font-bold">Debug Panel</h3>
+    <div id="debugPanel" class="container mx-auto px-2 sm:px-4 mt-3 sm:mt-4 bg-yellow-100 p-3 sm:p-4 rounded hidden">
+        <h3 class="font-bold text-sm sm:text-base">Debug Panel</h3>
         <pre id="debugLog" class="bg-white p-2 rounded mt-2 text-xs overflow-auto max-h-40"></pre>
-        <button onclick="clearDebug()" class="bg-blue-500 text-white px-2 py-1 rounded text-xs mt-2">Clear</button>
-        <button onclick="toggleDebug()" class="bg-red-500 text-white px-2 py-1 rounded text-xs mt-2">Hide</button>
+        <div class="flex space-x-2 mt-2">
+            <button onclick="clearDebug()" class="bg-blue-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Clear</button>
+            <button onclick="toggleDebug()" class="bg-red-500 text-white px-2 py-1 rounded text-xs sm:text-sm">Hide</button>
+        </div>
     </div>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
-        <div class="flex flex-col md:flex-row gap-6">
+    <main class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div class="flex flex-col md:flex-row gap-4 sm:gap-6">
             <!-- Cart Items -->
-            <div class="md:w-3/4 bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold mb-6">Shopping Cart</h2>
+            <div class="md:w-3/4 bg-white rounded-lg shadow-md p-4 sm:p-6">
+                <h2 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Shopping Cart</h2>
                 
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full cart-table">
                         <thead>
                             <tr class="border-b">
-                                <th class="pb-4 text-left">Product</th>
-                                <th class="pb-4 text-center">Price</th>
-                                <th class="pb-4 text-center">Quantity</th>
-                                <th class="pb-4 text-center">Subtotal</th>
-                                <th class="pb-4 text-center">Action</th>
+                                <th class="pb-3 sm:pb-4 text-left product-col">Product</th>
+                                <th class="pb-3 sm:pb-4 text-center">Price</th>
+                                <th class="pb-3 sm:pb-4 text-center">Quantity</th>
+                                <th class="pb-3 sm:pb-4 text-center">Subtotal</th>
+                                <th class="pb-3 sm:pb-4 text-center action-col">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,28 +82,28 @@
                                     const subtotal = regularPrice * item.quantity;
                                     %>
                                     <tr class="border-b hover:bg-gray-50" data-item-id="<%= item.productId._id %>">
-                                        <td class="py-4">
+                                        <td class="py-3 sm:py-4 product-col">
                                             <div class="flex items-center">
-                                                <img src="<%= item.productId.mainImage %>" alt="Product" class="w-20 h-20 object-cover rounded mr-4">
+                                                <img src="<%= item.productId.mainImage %>" alt="Product" class="w-16 sm:w-20 h-16 sm:h-20 object-cover rounded mr-3 sm:mr-4">
                                                 <div>
-                                                    <h3 class="font-medium"><%= item.productId.name %></h3>
+                                                    <h3 class="font-medium text-sm sm:text-base"><%= item.productId.name %></h3>
                                                     <% if (item.size) { %>
-                                                        <p class="text-sm text-gray-600">Size: <%= item.size %></p>
+                                                        <p class="text-xs sm:text-sm text-gray-600">Size: <%= item.size %></p>
                                                     <% } %>
-                                                    <p class="text-sm text-gray-600">Stock: <%= stock %></p>
+                                                    <p class="text-xs sm:text-sm text-gray-600">Stock: <%= stock %></p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="py-4 text-center">
+                                        <td class="py-3 sm:py-4 text-center">
                                             <div>
-                                                <p class="font-medium">₹<%= item.finalPrice %></p>
-                                                <p class="text-sm text-gray-500">₹<%= item.finalPrice %> / item</p>
+                                                <p class="font-medium text-sm sm:text-base">₹<%= item.finalPrice %></p>
+                                                <p class="text-xs sm:text-sm text-gray-500">₹<%= item.finalPrice %> / item</p>
                                             </div>
                                         </td>
-                                        <td class="py-4 text-center">
+                                        <td class="py-3 sm:py-4 text-center">
                                             <div class="flex items-center justify-center">
                                                 <button 
-                                                    class="quantity-btn quantity-decrease w-8 h-8 rounded-l border border-gray-300 bg-gray-100 hover:bg-gray-200"
+                                                    class="quantity-btn quantity-decrease w-7 sm:w-8 h-7 sm:h-8 rounded-l border border-gray-300 bg-gray-100 hover:bg-gray-200 text-xs sm:text-sm"
                                                     data-product-id="<%= item.productId._id %>"
                                                     data-size="<%= item.size %>"
                                                     data-price="<%= item.finalPrice %>"
@@ -94,11 +115,11 @@
                                                 <input 
                                                     type="text" 
                                                     id="cartProductQuantity<%= index %>" 
-                                                    class="w-12 h-8 border-t border-b border-gray-300 text-center" 
+                                                    class="w-10 sm:w-12 h-7 sm:h-8 border-t border-b border-gray-300 text-center text-xs sm:text-sm" 
                                                     value="<%= item.quantity %>" 
                                                     readonly>
                                                 <button 
-                                                    class="quantity-btn quantity-increase w-8 h-8 rounded-r border border-gray-300 bg-gray-100 hover:bg-gray-200"
+                                                    class="quantity-btn quantity-increase w-7 sm:w-8 h-7 sm:h-8 rounded-r border border-gray-300 bg-gray-100 hover:bg-gray-200 text-xs sm:text-sm"
                                                     data-product-id="<%= item.productId._id %>"
                                                     data-size="<%= item.size %>"
                                                     data-price="<%= item.finalPrice %>"
@@ -109,11 +130,11 @@
                                                 </button>
                                             </div>
                                         </td>
-                                        <td class="py-4 text-center font-medium">
+                                        <td class="py-3 sm:py-4 text-center font-medium text-sm sm:text-base">
                                             ₹<span id="subTotal<%= index %>"><%= item.itemTotal %></span>   
                                         </td>
-                                        <td class="py-4 text-center">
-                                            <button class="remove-btn text-red-500 hover:text-red-700" data-product-id="<%= item.productId._id %>">
+                                        <td class="py-3 sm:py-4 text-center action-col">
+                                            <button class="remove-btn text-red-500 hover:text-red-700 text-sm sm:text-base" data-product-id="<%= item.productId._id %>">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </td>
@@ -121,12 +142,12 @@
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="5" class="py-8 text-center">
+                                    <td colspan="5" class="py-6 sm:py-8 text-center">
                                         <div class="flex flex-col items-center">
-                                            <img src="/api/placeholder/120/120" alt="Empty Cart" class="w-24 h-24 mb-4">
-                                            <p class="text-lg font-medium text-gray-600 mb-2">Your cart is empty</p>
-                                            <p class="text-sm text-gray-500 mb-4">Add items to your cart to continue shopping</p>
-                                            <a href="/user/shop" class="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700">Continue Shopping</a>
+                                            <img src="/api/placeholder/100/100" alt="Empty Cart" class="w-20 sm:w-24 h-20 sm:h-24 mb-3 sm:mb-4">
+                                            <p class="text-base sm:text-lg font-medium text-gray-600 mb-2">Your cart is empty</p>
+                                            <p class="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Add items to your cart to continue shopping</p>
+                                            <a href="/user/shop" class="bg-blue-600 text-white py-2 px-4 sm:px-6 rounded-md hover:bg-blue-700 text-xs sm:text-sm">Continue Shopping</a>
                                         </div>
                                     </td>
                                 </tr>
@@ -150,62 +171,54 @@
                 });
             }
             %>
-            <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold mb-4">PRICE DETAILS</h2>
-            <div class="border-t pt-4">
-
-                <!-- Original Price -->
-                <div class="flex justify-between py-2 text-sm text-gray-500 line-through">
-                <span>Original Price (<%= itemCount %> items)</span>
-                <span>₹<%= originalAmount %></span>
+            <div class="md:w-1/4 bg-white rounded-lg shadow-md p-4 sm:p-6">
+                <h2 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">PRICE DETAILS</h2>
+                <div class="border-t pt-3 sm:pt-4">
+                    <!-- Original Price -->
+                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm text-gray-500 line-through">
+                        <span>Original Price (<%= itemCount %> items)</span>
+                        <span>₹<%= originalAmount %></span>
+                    </div>
+                    <!-- Final Price -->
+                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
+                        <span class="text-gray-600">Price (<%= itemCount %> items)</span>
+                        <span>₹<span id="subtotalAmount"><%=totalAmoount %></span></span>
+                    </div>
+                    <!-- Discount -->
+                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
+                        <span class="text-gray-600">Discount</span>
+                        <span class="text-green-600">- ₹<%= totalSavings %></span>
+                    </div>
+                    <!-- Delivery -->
+                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
+                        <span class="text-gray-600">Delivery Charges</span>
+                        <span class="text-green-600">FREE</span>
+                    </div>
+                    <!-- Final Total -->
+                    <div class="flex justify-between py-3 sm:py-4 border-t border-dashed font-bold text-sm sm:text-base">
+                        <span>Total Amount</span>
+                        <span>₹<span id="total"><%= totalAmount %></span></span>
+                    </div>
+                    <!-- Savings Message -->
+                    <div class="text-green-600 text-xs sm:text-sm mb-3 sm:mb-4">
+                        You'll save ₹<%= totalSavings %> on this order
+                    </div>
                 </div>
-
-                <!-- Final Price -->
-                <div class="flex justify-between py-2">
-                <span class="text-gray-600">Price (<%= itemCount %> items)</span>
-                <span>₹<span id="subtotalAmount"><%=totalAmoount %></span></span>
-                </div>
-
-                <!-- Discount -->
-                <div class="flex justify-between py-2">
-                <span class="text-gray-600">Discount</span>
-                <span class="text-green-600">- ₹<%= totalSavings %></span>
-                </div>
-
-                <!-- Delivery -->
-                <div class="flex justify-between py-2">
-                <span class="text-gray-600">Delivery Charges</span>
-                <span class="text-green-600">FREE</span>
-                </div>
-
-                <!-- Final Total -->
-                <div class="flex justify-between py-4 border-t border-dashed font-bold">
-                <span>Total Amount</span>
-                <span>₹<span id="total"><%= totalAmount %></span></span>
-                </div>
-
-                <!-- Savings Message -->
-                <div class="text-green-600 text-sm mb-4">
-                You'll save ₹<%= totalSavings %> on this order
-                </div>
-
-            </div>
-
-            <% if (!hasOutOfStock) { %>
-                <button onclick="window.location.href='/user/checkout'" 
-                        class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-md font-medium checkout-btn">
-                PLACE ORDER
-                </button>
-            <% } else { %>
-                <div class="text-red-600 text-center font-medium mt-4 p-3 bg-red-50 rounded-md">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                Some items in your cart are out of stock. Please remove them or update quantities to continue.
-                </div>
-                <button disabled 
-                        class="w-full bg-gray-400 text-white py-3 rounded-md font-medium cursor-not-allowed mt-3">
-                PLACE ORDER (UNAVAILABLE)
-                </button>
-            <% } %>
+                <% if (!hasOutOfStock) { %>
+                    <button onclick="window.location.href='/user/checkout'" 
+                            class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 sm:py-3 rounded-md font-medium checkout-btn text-xs sm:text-sm">
+                        Proceed to Checkout
+                    </button>
+                <% } else { %>
+                    <div class="text-red-600 text-center font-medium mt-3 sm:mt-4 p-2 sm:p-3 bg-red-50 rounded-md text-xs sm:text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Some items in your cart are out of stock. Please remove them or update quantities to continue.
+                    </div>
+                    <button disabled 
+                            class="w-full bg-gray-400 text-white py-2 sm:py-3 rounded-md font-medium cursor-not-allowed mt-2 sm:mt-3 text-xs sm:text-sm">
+                        PLACE ORDER (UNAVAILABLE)
+                    </button>
+                <% } %>
             </div>
         </div>
     </main>

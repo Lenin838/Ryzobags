@@ -35,7 +35,7 @@ const categoryController = {
         }
     },
 
-     getAddCategory: async (req, res) => {
+    getAddCategory: async (req, res) => {
         res.render('admin/layout', {
             body: 'addCategory'
         });
@@ -72,6 +72,7 @@ const categoryController = {
             res.redirect('/admin/categories/add');
         }
     },
+
     getEditCategory: async (req, res) => {
         try {
             const category = await Category.findById(req.params.id);
@@ -117,8 +118,6 @@ const categoryController = {
             res.redirect(`/admin/categories/edit/${req.params.id}`);
         }
     },
-      
-      
 
     unlistCategory: async (req, res) => {
         try {

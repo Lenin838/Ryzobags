@@ -7,68 +7,80 @@
   <title><%= address._id ? 'Edit Address' : 'Add Address' %></title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* Smooth sidebar transition */
+    #sidebar {
+      transition: transform 0.3s ease-in-out;
+    }
+    @media (max-width: 639px) {
+      #sidebar.hidden {
+        transform: translateX(-100%);
+      }
+      .main-content {
+        min-height: calc(100vh - 4rem); /* Adjust for header height on mobile */
+      }
+    }
+  </style>
 </head>
-<body class="bg-gray-50">
-  <div class="flex min-h-screen">
-    <%- include("partials/userSidebar", { activeTab: 'addresses' }) %>
-    <div class="flex-1 ml-0 sm:ml-64 pt-16">
-      <div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <% if (success && success.length) { %>
-          <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-            <p><%= success %></p>
-          </div>
-        <% } %>
-        <% if (error && error.length) { %>
-          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-            <p><%= error %></p>
-          </div>
-        <% } %>
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h5 class="text-lg font-semibold mb-4"><%= address._id ? 'Edit Address' : 'Add Address' %></h5>
-          <form action="<%= action %>" method="POST" id="addressForm">
-            <div class="mb-4">
-              <label for="name" class="block text-sm font-medium text-gray-700">Name *</label>
-              <input type="text" id="name" name="name" value="<%= address.name || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <p class="text-red-500 text-xs mt-1 hidden" id="nameError">Name is required (3-50 characters)</p>
-            </div>
-            <div class="mb-4">
-              <label for="landMark" class="block text-sm font-medium text-gray-700">Landmark</label>
-              <input type="text" id="landMark" name="landMark" value="<%= address.landMark || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div class="mb-4">
-              <label for="city" class="block text-sm font-medium text-gray-700">City *</label>
-              <input type="text" id="city" name="city" value="<%= address.city || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <p class="text-red-500 text-xs mt-1 hidden" id="cityError">City is required (2-50 characters)</p>
-            </div>
-            <div class="mb-4">
-              <label for="state" class="block text-sm font-medium text-gray-700">State *</label>
-              <input type="text" id="state" name="state" value="<%= address.state || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <p class="text-red-500 text-xs mt-1 hidden" id="stateError">State is required (2-50 characters)</p>
-            </div>
-            <div class="mb-4">
-              <label for="pincode" class="block text-sm font-medium text-gray-700">Pincode *</label>
-              <input type="text" id="pincode" name="pincode" value="<%= address.pincode || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <p class="text-red-500 text-xs mt-1 hidden" id="pincodeError">Pincode must be 6 digits</p>
-            </div>
-            <div class="mb-4">
-              <label for="phone" class="block text-sm font-medium text-gray-700">Phone *</label>
-              <input type="tel" id="phone" name="phone" value="<%= address.phone || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <p class="text-red-500 text-xs mt-1 hidden" id="phoneError">Phone must be 10 digits</p>
-            </div>
-            <div class="mb-4">
-              <label for="addressType" class="block text-sm font-medium text-gray-700">Address Type</label>
-              <select id="addressType" name="addressType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                <option value="Home" <%= address.addressType === 'Home' ? 'selected' : '' %>>Home</option>
-                <option value="Work" <%= address.addressType === 'Work' ? 'selected' : '' %>>Work</option>
-                <option value="Other" <%= address.addressType === 'Other' ? 'selected' : '' %>>Other</option>
-              </select>
-            </div>
-            <div class="flex justify-end">
-              <a href="/user/profile?tab=addresses" class="mr-4 text-gray-600 hover:text-gray-800">Cancel</a>
-              <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Save Address</button>
-            </div>
-          </form>
+<body class="bg-gray-50 min-h-screen flex flex-col sm:flex-row">
+  <%- include("partials/userSidebar", { activeTab: 'addresses' }) %>
+  <div class="flex-1 ml-0 sm:ml-64 pt-16 main-content">
+    <div class="w-full max-w-full sm:max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <% if (success && success.length) { %>
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
+          <p class="text-xs sm:text-sm"><%= success %></p>
         </div>
+      <% } %>
+      <% if (error && error.length) { %>
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
+          <p class="text-xs sm:text-sm"><%= error %></p>
+        </div>
+      <% } %>
+      <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+        <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4"><%= address._id ? 'Edit Address' : 'Add Address' %></h5>
+        <form action="<%= action %>" method="POST" id="addressForm" class="space-y-3 sm:space-y-4">
+          <div>
+            <label for="name" class="block text-xs sm:text-sm font-medium text-gray-700">Name *</label>
+            <input type="text" id="name" name="name" value="<%= address.name || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <p class="text-red-500 text-xs mt-1 hidden" id="nameError">Name is required (3-50 characters)</p>
+          </div>
+          <div>
+            <label for="landMark" class="block text-xs sm:text-sm font-medium text-gray-700">Landmark</label>
+            <input type="text" id="landMark" name="landMark" value="<%= address.landMark || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+          </div>
+          <div>
+            <label for="city" class="block text-xs sm:text-sm font-medium text-gray-700">City *</label>
+            <input type="text" id="city" name="city" value="<%= address.city || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <p class="text-red-500 text-xs mt-1 hidden" id="cityError">City is required (2-50 characters)</p>
+          </div>
+          <div>
+            <label for="state" class="block text-xs sm:text-sm font-medium text-gray-700">State *</label>
+            <input type="text" id="state" name="state" value="<%= address.state || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <p class="text-red-500 text-xs mt-1 hidden" id="stateError">State is required (2-50 characters)</p>
+          </div>
+          <div>
+            <label for="pincode" class="block text-xs sm:text-sm font-medium text-gray-700">Pincode *</label>
+            <input type="text" id="pincode" name="pincode" value="<%= address.pincode || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <p class="text-red-500 text-xs mt-1 hidden" id="pincodeError">Pincode must be 6 digits</p>
+          </div>
+          <div>
+            <label for="phone" class="block text-xs sm:text-sm font-medium text-gray-700">Phone *</label>
+            <input type="tel" id="phone" name="phone" value="<%= address.phone || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <p class="text-red-500 text-xs mt-1 hidden" id="phoneError">Phone must be 10 digits</p>
+          </div>
+          <div>
+            <label for="addressType" class="block text-xs sm:text-sm font-medium text-gray-700">Address Type</label>
+            <select id="addressType" name="addressType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+              <option value="Home" <%= address.addressType === 'Home' ? 'selected' : '' %>>Home</option>
+              <option value="Work" <%= address.addressType === 'Work' ? 'selected' : '' %>>Work</option>
+              <option value="Other" <%= address.addressType === 'Other' ? 'selected' : '' %>>Other</option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-3 sm:space-x-4">
+            <a href="/user/profile?tab=addresses" class="text-gray-600 hover:text-gray-800 text-xs sm:text-sm">Cancel</a>
+            <button type="submit" class="bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded hover:bg-indigo-700 text-xs sm:text-sm">Save Address</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

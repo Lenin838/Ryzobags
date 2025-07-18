@@ -9,8 +9,10 @@ const adminOrderRouter = require('../../routes/admin/adminOrderRoutes');
 const adminInventoryRouter = require('../../routes/admin/adminInventory');
 const couponRouter = require('../../routes/admin/couponRoutes');
 const salesRouter = require('../../routes/admin/salesReportRoutes');
+const dashboardRouter = require('../../routes/admin/adminDashboardRoutes');
 
 
+adminRouter.use('/',dashboardRouter);
 adminRouter.use('/',salesRouter);
 adminRouter.use('/',couponRouter);
 adminRouter.use('/',adminInventoryRouter);
@@ -25,7 +27,7 @@ adminRouter.post("/login" ,isAdminLoggedOut, adminController.verifyLogin);
 
 adminRouter.use(isAdminLoggedIn);
 adminRouter.get("/logout",adminController.adminLogout);
-adminRouter.get('/dashboard',adminController.loadHome);
+// adminRouter.get('/dashboard',adminController.loadHome);
 adminRouter.get('/users-management',adminController.getUsers);
 adminRouter.post('/block-user/:id',adminController.blockUser);
 adminRouter.post('/unblock-user/:id',adminController.unblockUser);

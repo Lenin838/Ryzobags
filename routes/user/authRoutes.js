@@ -13,7 +13,6 @@ userRouter.use('/',orderRouter);
 userRouter.use('/',profileRouter);
 userRouter.use('/', userProductRouter);
 
-// Google Auth Routes
 userRouter.get("/google", 
   userController.initiateGoogleAuth,
   passport.authenticate("google", { scope: ["profile", "email"] })

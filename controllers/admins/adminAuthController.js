@@ -62,20 +62,6 @@ const adminController = {
     }
   },
 
-  loadHome: async (req, res) => {
-    try {
-      if (!req.session.admin) return res.redirect('/admin/login');
-
-      res.render('admin/layout', {
-        body: 'dashboard',
-        admin: req.session.admin,
-      });
-    } catch (error) {
-      console.error('Dashboard load error:', error.message);
-      res.status(500).render('error', { message: 'Failed to load dashboard' });
-    }
-  },
-
   getUsers: async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;

@@ -44,8 +44,8 @@
       <% } %>
     </div>
 
-    <!-- Update Status -->
-    <% if (!['delivered', 'cancelled', 'returned','partially returned', 'failed'].includes(order.status)) { %>
+    <!-- Update Order Status -->
+    <% if (!['delivered', 'cancelled', 'returned', 'partially returned', 'failed'].includes(order.status)) { %>
       <div class="bg-white shadow rounded-lg p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Update Order Status</h2>
         <div class="flex flex-col sm:flex-row gap-4">
@@ -59,7 +59,7 @@
             <option value="returned" <%= order.status === 'returned' ? 'selected' : '' %>>Returned</option>
             <option value="failed" <%= order.status === 'failed' ? 'selected' : '' %>>Failed</option>
           </select>
-          <button id="update-status-btn" class="bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">Update Status</button>
+          <button id="update-status-btn" class="bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">Update Order Status</button>
         </div>
       </div>
     <% } else { %>
@@ -95,6 +95,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Update Status</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -116,7 +117,26 @@
                 ₹<%= (item.quantity * (item.itemSalePrice || 0)).toFixed(2) %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <%= item.status %>
+                <span id="item-status-<%= item._id %>"><%= item.status %></span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <% if (!['delivered', 'cancelled', 'returned', 'failed'].includes(item.status)) { %>
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <select id="item-status-select-<%= item._id %>" class="p-1 border rounded w-full sm:w-32">
+                      <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                      <option value="processing" <%= item.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                      <option value="shipped" <%= item.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                      <option value="delivered" <%= item.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                      <option value="cancelled" <%= item.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                      <option value="return request" <%= item.status === 'return request' ? 'selected' : '' %>>Return Request</option>
+                      <option value="returned" <%= item.status === 'returned' ? 'selected' : '' %>>Returned</option>
+                      <option value="failed" <%= item.status === 'failed' ? 'selected' : '' %>>Failed</option>
+                    </select>
+                    <button onclick="updateItemStatus('<%= order.orderId %>', '<%= item._id %>')" class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700 text-xs">Update</button>
+                  </div>
+                <% } else { %>
+                  <span class="text-gray-500">Final Status</span>
+                <% } %>
               </td>
             </tr>
           <% }) %>
@@ -139,6 +159,42 @@
       setTimeout(() => {
         alertContainer.innerHTML = '';
       }, 5000);
+    }
+
+    // Update Item Status
+    async function updateItemStatus(orderId, itemId) {
+      const status = document.getElementById(`item-status-select-${itemId}`).value;
+      const csrfToken = '<%= csrfToken %>';
+
+      try {
+        const response = await fetch(`/admin/orders/update-status/${orderId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CSRF-Token': csrfToken,
+          },
+          body: JSON.stringify({ status, itemId }),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          document.getElementById(`item-status-${itemId}`).textContent = status;
+          document.getElementById('order-status').textContent = result.orderStatus || status;
+          showAlert(result.message || 'Item status updated successfully', 'success');
+          
+          // If item status is now final, reload page to update UI
+          if (['delivered', 'cancelled', 'returned', 'failed'].includes(status)) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
+        } else {
+          showAlert(result.message || 'Error updating item status', 'error');
+        }
+      } catch (err) {
+        console.error('Error updating item status:', err);
+        showAlert('Server error occurred', 'error');
+      }
     }
 
     // Update Order Status
@@ -174,7 +230,7 @@
           if (status !== 'delivered' && status !== 'return request' && returnSection) {
             returnSection.remove();
           } else if ((status === 'delivered' || status === 'return request') && !returnSection) {
-            window.location.reload(); // Reload to show return section
+            window.location.reload();
           }
         } else {
           showAlert(result.message || 'Error updating order status', 'error');
@@ -198,8 +254,7 @@
             'Content-Type': 'application/json',
             'CSRF-Token': csrfToken,
           },
-          body: JSON.stringify({ 
-          action}),
+          body: JSON.stringify({ action }),
         });
 
         const result = await response.json();

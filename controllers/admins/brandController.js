@@ -64,9 +64,8 @@ const brandController = {
           req.flash('error', 'Internal server error');
           res.redirect('/admin/brands/add');
         }
-      },
+    },
       
-
     getEditBrand: async (req,res) => {
         try {
             const brand = await Brand.findById(req.params.id);
@@ -108,9 +107,8 @@ const brandController = {
           req.flash('error', 'Internal server error');
           res.redirect(`/admin/brands/edit/${req.params.id}`);
         }
-      },
+    },
       
-
     unlistedBrand: async (req,res) => {
         try {
             await Brand.findByIdAndUpdate(req.params.id,{isActive:false});

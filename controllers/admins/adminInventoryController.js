@@ -27,7 +27,6 @@ const adminInventoryController = {
       const totalProducts = await Product.countDocuments(query);
       const totalPages = Math.ceil(totalProducts / limit);
 
-      // Add low stock flag
       products.forEach((product) => {
         product.variants.forEach((variant) => {
           variant.isLowStock = variant.quantity <= lowStockThreshold;

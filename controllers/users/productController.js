@@ -36,171 +36,206 @@ const restoreOrderStock = async (order) => {
 
 const productController = {
     loadShopPage: async (req, res) => {
-    try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = 6;
-      const skip = (page - 1) * limit;
-  
-      const searchQuery = req.query.search?.trim() || "";
-      const filter = { isDeleted: false, isListed: true };
-  
-      if (searchQuery) {
-        const sanitizedQuery = searchQuery.replace(/[$^<>{}[\]\\/]/g, ""); 
-        filter.$or = [
-          { name: { $regex: sanitizedQuery, $options: "i" } },
-          { description: { $regex: sanitizedQuery, $options: "i" } },
-        ];
-      }
-  
-      if (req.query.category) {
-        const selectedCategoryNames = Array.isArray(req.query.category)
-          ? req.query.category
-          : [req.query.category];
-        if (selectedCategoryNames.length > 0) {
-          const categoryDocs = await Category.find({
-            name: { $in: selectedCategoryNames },
-            isActive: true,
-          });
-          const selectedCategories = categoryDocs.map((category) => category._id);
-          if (selectedCategories.length > 0) {
-            filter.category = { $in: selectedCategories };
-          }
-        }
-      }
-  
-      if (req.query.brand) {
-        const selectedBrandNames = Array.isArray(req.query.brand)
-          ? req.query.brand
-          : [req.query.brand];
-        if (selectedBrandNames.length > 0) {
-          const brandDocs = await Brand.find({
-            name: { $in: selectedBrandNames },
-            isActive: true,
-          });
-          const selectedBrands = brandDocs.map((brand) => brand._id);
-          if (selectedBrands.length > 0) {
-            filter.brand = { $in: selectedBrands };
-          }
-        }
-      }
-  
-      if (req.query.minPrice || req.query.maxPrice) {
-        const priceFilter = {};
-        const minPrice = parseFloat(req.query.minPrice);
-        const maxPrice = parseFloat(req.query.maxPrice);
-        if (!isNaN(minPrice)) priceFilter.$gte = minPrice;
-        if (!isNaN(maxPrice)) priceFilter.$lte = maxPrice;
-        if (Object.keys(priceFilter).length > 0) {
-          filter["variants.discountedPrice"] = priceFilter;
-        }
-      }
-  
-      const sortOption = req.query.sort || "";
-      let sortConfig = {};
-      switch (sortOption) {
-        case "priceLowToHigh":
-          sortConfig = { "variants.0.regularPrice": 1 };
-        break;
-        case "priceHighToLow":
-          sortConfig = { "variants.0.regularPrice": -1 };
-        break;
-        case "nameAToZ":
-          sortConfig = { name: 1 };
-        break;
-        case "nameZToA":
-          sortConfig = { name: -1 };
-        break;
-        default:
-          sortConfig = { createdAt: -1 };
-      }
-  
-      const products = await Product.find(filter)
-        .populate("category brand")
-        .sort(sortConfig)
-        .skip(skip)
-        .limit(limit);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 6;
+    const skip = (page - 1) * limit;
 
-      const userId = req.session.user._id;        
+    const searchQuery = req.query.search?.trim() || "";
+    const filter = { isDeleted: false, isListed: true };
 
-      const wishlist = await Wishlist.findOne({userId})
-        .populate("products");
+    if (searchQuery) {
+      const sanitizedQuery = searchQuery.replace(/[$^<>{}[\]\\/]/g, ""); 
+      filter.$or = [
+        { name: { $regex: sanitizedQuery, $options: "i" } },
+        { description: { $regex: sanitizedQuery, $options: "i" } },
+      ];
+    }
+
+    if (req.query.category) {
+      const selectedCategoryNames = Array.isArray(req.query.category)
+        ? req.query.category
+        : [req.query.category];
+      if (selectedCategoryNames.length > 0) {
+        const categoryDocs = await Category.find({
+          name: { $in: selectedCategoryNames },
+          isActive: true,
+        });
+        const selectedCategories = categoryDocs.map((category) => category._id);
+        if (selectedCategories.length > 0) {
+          filter.category = { $in: selectedCategories };
+        }
+      }
+    }
+
+    if (req.query.brand) {
+      const selectedBrandNames = Array.isArray(req.query.brand)
+        ? req.query.brand
+        : [req.query.brand];
+      if (selectedBrandNames.length > 0) {
+        const brandDocs = await Brand.find({
+          name: { $in: selectedBrandNames },
+          isActive: true,
+        });
+        const selectedBrands = brandDocs.map((brand) => brand._id);
+        if (selectedBrands.length > 0) {
+          filter.brand = { $in: selectedBrands };
+        }
+      }
+    }
+
+    const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : null;
+    const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : null;
+    const hasPriceFilter = (minPrice !== null && !isNaN(minPrice)) || (maxPrice !== null && !isNaN(maxPrice));
+
+    console.log(`Price filter: ${minPrice} - ${maxPrice}, Has filter: ${hasPriceFilter}`);
+
+    if (hasPriceFilter) {
+      const priceFilter = {};
+      if (minPrice !== null && !isNaN(minPrice)) priceFilter.$gte = minPrice;
+      if (maxPrice !== null && !isNaN(maxPrice)) priceFilter.$lte = maxPrice;
       
-      const newList = wishlist && wishlist.products 
-        ? wishlist.products.map((product) => product.productId.toString())
-        : [];
-      
-      console.log("Wishlist ", newList);
-  
-      const validProducts = products
+      filter.$or = filter.$or || [];
+      filter.$or.push(
+        { "variants.discountedPrice": priceFilter },
+        { "variants.regularPrice": priceFilter }
+      );
+    }
+
+    const sortOption = req.query.sort || "";
+    let sortConfig = {};
+    switch (sortOption) {
+      case "priceLowToHigh":
+        sortConfig = { "variants.0.discountedPrice": 1 };
+        break;
+      case "priceHighToLow":
+        sortConfig = { "variants.0.discountedPrice": -1 };
+        break;
+      case "nameAToZ":
+        sortConfig = { name: 1 };
+        break;
+      case "nameZToA":
+        sortConfig = { name: -1 };
+        break;
+      default:
+        sortConfig = { createdAt: -1 };
+    }
+
+    const products = await Product.find(filter)
+      .populate("category brand")
+      .sort(sortConfig)
+      .skip(skip)
+      .limit(limit);
+
+    const totalProducts = await Product.countDocuments(filter);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    const userId = req.session.user._id;        
+    const wishlist = await Wishlist.findOne({userId}).populate("products");
+    
+    const newList = wishlist && wishlist.products 
+      ? wishlist.products.map((product) => product.productId.toString())
+      : [];
+
+    let validProducts = products
       .filter((product) => product.variants && product.variants.length > 0)
       .map((product) => {
-      const variants = product.variants.map((variant) => {
-      const basePrice = variant.regularPrice;
-      const productDiscount = product.offer?.discountPercentage || 0;
-      const categoryDiscount = product.category?.offer?.discountPercentage || 0;
-      const maxDiscount = Math.max(productDiscount, categoryDiscount);
+        const variants = product.variants.map((variant) => {
+          const basePrice = variant.regularPrice;
+          const productDiscount = product.offer?.discountPercentage || 0;
+          const categoryDiscount = product.category?.offer?.discountPercentage || 0;
+          const maxDiscount = Math.max(productDiscount, categoryDiscount);
 
-      const discountedPrice = Math.round(basePrice - basePrice * (maxDiscount / 100));
+          let discountedPrice = variant.discountedPrice;
+          if (!discountedPrice && maxDiscount > 0) {
+            discountedPrice = Math.round(basePrice - basePrice * (maxDiscount / 100));
+          } else if (!discountedPrice) {
+            discountedPrice = basePrice;
+          }
 
-      return {
-        ...variant.toObject(),
-        discountedPrice,
-      };
+          return {
+            ...variant.toObject(),
+            discountedPrice,
+          };
+        });
+
+        return {
+          ...product.toObject(),
+          variants,
+        };
+      });
+
+    if (hasPriceFilter) {
+      validProducts = validProducts.filter(product => {
+        return product.variants.some(variant => {
+          const price = variant.discountedPrice || variant.regularPrice;
+          const minCheck = minPrice === null || isNaN(minPrice) || price >= minPrice;
+          const maxCheck = maxPrice === null || isNaN(maxPrice) || price <= maxPrice;
+          return minCheck && maxCheck;
+        });
+      });
+    }
+
+    console.log(`=== DEBUG PRODUCTS ===`);
+    console.log(`Total products found: ${validProducts.length}`);
+    validProducts.forEach(product => {
+      const prices = product.variants.map(v => v.discountedPrice || v.regularPrice);
+      console.log(`Product: ${product.name}, ID: ${product._id}, Prices: ${prices}`);
+      
+      if (hasPriceFilter) {
+        const inRange = product.variants.some(variant => {
+          const price = variant.discountedPrice || variant.regularPrice;
+          const minCheck = minPrice === null || isNaN(minPrice) || price >= minPrice;
+          const maxCheck = maxPrice === null || isNaN(maxPrice) || price <= maxPrice;
+          return minCheck && maxCheck;
+        });
+        console.log(`  In range (${minPrice}-${maxPrice}): ${inRange}`);
+      }
     });
 
-    return {
-      ...product.toObject(),
-      variants,
-    };
-  });
+    const categories = await Category.find({ isActive: true });
+    const brands = await Brand.find({ isActive: true });
 
-  
-      const totalProducts = await Product.countDocuments(filter);
-      const totalPages = Math.ceil(totalProducts / limit);
-  
-      const categories = await Category.find({ isActive: true });
-      const brands = await Brand.find({ isActive: true });
-  
-      res.render("user/shopPage", {
-        products: validProducts,
-        wishlist: newList,
-        categories,
-        brands,
-        currentPage: page,
-        totalPages,
-        search: searchQuery,
-        selectedCategories: req.query.category
-          ? Array.isArray(req.query.category)
-            ? req.query.category
-            : [req.query.category]
-          : [],
-        selectedBrands: req.query.brand
-          ? Array.isArray(req.query.brand)
-            ? req.query.brand
-            : [req.query.brand]
-          : [],
-        sortOption,
-        minPrice: req.query.minPrice || "",
-        maxPrice: req.query.maxPrice || "",
-      });
-      } catch (error) {
-        console.error("Error loading shop page:", error);
-        res.render("user/shopPage", {
-          products: [],
-          wishlist: [],
-          categories: [],
-          brands: [],
-          currentPage: 1,
-          totalPages: 1,
-          search: "",
-          selectedCategories: [],
-          selectedBrands: [],
-          sortOption: "",
-          minPrice: "",
-          maxPrice: "",
-          error: "Failed to load shop page. Please try again later.",
-        });
-      }
+    res.render("user/shopPage", {
+      products: validProducts,
+      wishlist: newList,
+      categories,
+      brands,
+      currentPage: page,
+      totalPages,
+      search: searchQuery,
+      selectedCategories: req.query.category
+        ? Array.isArray(req.query.category)
+          ? req.query.category
+          : [req.query.category]
+        : [],
+      selectedBrands: req.query.brand
+        ? Array.isArray(req.query.brand)
+          ? req.query.brand
+          : [req.query.brand]
+        : [],
+      sortOption: req.query.sort || "",
+      minPrice: req.query.minPrice || "",
+      maxPrice: req.query.maxPrice || "",
+    });
+  } catch (error) {
+    console.error("Error loading shop page:", error);
+    res.render("user/shopPage", {
+      products: [],
+      wishlist: [],
+      categories: [],
+      brands: [],
+      currentPage: 1,
+      totalPages: 1,
+      search: "",
+      selectedCategories: [],
+      selectedBrands: [],
+      sortOption: "",
+      minPrice: "",
+      maxPrice: "",
+      error: "Failed to load shop page. Please try again later.",
+    });
+  }
     },
 
     loadProductView: async (req, res) => {
@@ -694,7 +729,7 @@ const productController = {
         }
 
         const initialLength = cart.items.length;
-        cart.items = cart.items.filter((item) => item.productId.toString() !== productId.toString());
+        cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
 
         if (cart.items.length === initialLength) {
           return res.status(404).json({ success: false, message: "Item not found in cart" });
@@ -830,147 +865,161 @@ const productController = {
     },
 
     loadCheckout: async (req, res) => {
-      try {
-        const userId = req.session.user?._id;
-        const email = req.session.user?.email;
+  try {
+    const userId = req.session.user?._id;
 
-        if (!userId || !email) {
-          return res.redirect("/user/login?message=Please log in to proceed to checkout.");
-        }
+    if (!userId) {
+      return res.redirect("/user/login?message=Please log in to proceed to checkout.");
+    }
 
-        const cart = await Cart.findOne({ userId }).populate({
-          path: "items.productId",
-          match: { isDeleted: false, isListed: true },
-          populate: [
-            { path: "category", model: "Category" },
-            { path: "brand", model: "Brand" },
-          ],
-        });
-        
-        if (!cart || !cart.items || cart.items.length <= 0) {
-          return res.redirect("/user/cart?message=Your cart is empty. Please add items before checkout.");
-        }
-
-        const user = await User.findOne({ email: email });
-        
-        const addressDoc = await Address.findOne({ userId });
-        const addresses = addressDoc && addressDoc.address 
-          ? addressDoc.address.filter((addr) => addr.status === "active")
-          : [];
-
-        const coupon = await Coupon.find({
-          isActive: true,
-          expiresAt: { $gt: new Date()},
-          userId: {$ne: userId},
-        });
-        
-        console.log("Available coupons:", coupon);
-        
-        const isReferredUser = !!user.referredBy;
-        const isReferrer = await User.exists({referredBy: user._id});
-        const referralCoupons = coupon.filter(c=> c.code.startsWith("RYZO"));
-        const normalCoupons = coupon.filter(c => !c.code.startsWith("RYZO"));
-
-        let finalCoupon = normalCoupons;
-        if(isReferredUser || isReferrer){
-          finalCoupon = [...normalCoupons,...referralCoupons];
-        }
-
-        let subtotal = 0;
-        let totalProductDiscount = 0;
-
-        const itemsWithStock = cart.items.map((item) => {
-          const product = item.productId;
-          const variant = product.variants.find((v) => v.size === item.size);
-
-          const basePrice = variant?.regularPrice || 0;
-          const productDiscount = product.offer?.discountPercentage || 0;
-          const categoryDiscount = product.category?.offer?.discountPercentage || 0;
-          const maxDiscount = Math.max(productDiscount, categoryDiscount);
-          const discountedPrice = Math.round(basePrice - (basePrice * maxDiscount / 100));
-          const discountAmount = basePrice - discountedPrice;
-
-          console.log("finalPrice.....:", discountedPrice);
-          const itemTotal = discountedPrice * item.quantity;
-          subtotal += itemTotal;
-          totalProductDiscount += discountAmount * item.quantity; 
-
-          return {
-            ...item.toObject(),
-            product,
-            variant: variant || null,
-            finalPrice: discountedPrice,
-            maxDiscount,
-            itemTotal,
-            hasStock: variant && variant.quantity >= item.quantity,
-            discountAmountPerItem: discountAmount
-          };
-        });
-
-        const outOfStockItems = itemsWithStock.filter((item) => !item.hasStock);
-        const hasOutOfStock = outOfStockItems.length > 0;
-
-        let couponDiscount = 0;
-        let grandTotal = subtotal;
-        
-        if (req.session.checkoutData && req.session.checkoutData.couponId) {
-          const couponDoc = await Coupon.findOne({ 
-            _id: req.session.checkoutData.couponId, 
-            isActive: true, 
-            expiresAt: { $gt: new Date() },
-            minCartAmount: { $lte: subtotal }
-          });
-
-          if (couponDoc) {
-            if (couponDoc.discountType === 'percentage') {
-              couponDiscount = Math.round((subtotal * couponDoc.discountAmount) / 100);
-              if (couponDoc.maxDiscount && couponDiscount > couponDoc.maxDiscount) {
-                couponDiscount = couponDoc.maxDiscount;
-              }
-            } else {
-              couponDiscount = Math.min(couponDoc.discountAmount, subtotal);
-            }
-            
-            grandTotal = subtotal - couponDiscount;
-            
-            req.session.checkoutData = {
-              ...req.session.checkoutData,
-              subtotal,
-              couponDiscount,
-              totalProductDiscount,
-              grandTotal
-            };
-          } else {
-            req.session.checkoutData = null;
-          }
-        }
-
-        if (!req.session.checkoutData) {
-          req.session.checkoutData = {
-            subtotal,
-            couponDiscount,
-            totalProductDiscount,
-            grandTotal,
-            couponId: null
-          };
-        }
-
-        res.render("user/checkout", {
-          cart: { ...cart.toObject(), items: itemsWithStock },
-          userAddress: addresses,
-          subtotal,
-          coupon: finalCoupon,
-          productDiscount: totalProductDiscount,
-          grandTotal,
-          couponDiscount,
-          user,
-          product: itemsWithStock,
-          hasOutOfStock
-        });
-      } catch (error) {
-        console.error("Checkout Error:", error.message);
-        res.redirect("/user/cart?message=An error occurred. Please try again.");
+    if (req.method === 'POST' && req.body.email) {
+      const email = req.body.email.trim();
+      
+      if (email) {
+        await User.findByIdAndUpdate(userId, { email: email });
+        req.session.user.email = email;
       }
+    }
+
+    const currentEmail = req.session.user?.email;
+
+    const cart = await Cart.findOne({ userId }).populate({
+      path: "items.productId",
+      match: { isDeleted: false, isListed: true },
+      populate: [
+        { path: "category", model: "Category" },
+        { path: "brand", model: "Brand" },
+      ],
+    });
+    
+    if (!cart || !cart.items || cart.items.length <= 0) {
+      return res.redirect("/user/cart?message=Your cart is empty. Please add items before checkout.");
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.redirect("/user/login?message=User not found. Please log in again.");
+    }
+    
+    const addressDoc = await Address.findOne({ userId });
+    const addresses = addressDoc && addressDoc.address 
+      ? addressDoc.address.filter((addr) => addr.status === "active")
+      : [];
+
+    const coupon = await Coupon.find({
+      isActive: true,
+      expiresAt: { $gt: new Date()},
+      userId: {$ne: userId},
+    });
+    
+    console.log("Available coupons:", coupon);
+    
+    const isReferredUser = !!user.referredBy;
+    const isReferrer = await User.exists({referredBy: user._id});
+    const referralCoupons = coupon.filter(c=> c.code.startsWith("RYZO"));
+    const normalCoupons = coupon.filter(c => !c.code.startsWith("RYZO"));
+
+    let finalCoupon = normalCoupons;
+    if(isReferredUser || isReferrer){
+      finalCoupon = [...normalCoupons,...referralCoupons];
+    }
+
+    let subtotal = 0;
+    let totalProductDiscount = 0;
+
+    const itemsWithStock = cart.items.map((item) => {
+      const product = item.productId;
+      const variant = product.variants.find((v) => v.size === item.size);
+
+      const basePrice = variant?.regularPrice || 0;
+      const productDiscount = product.offer?.discountPercentage || 0;
+      const categoryDiscount = product.category?.offer?.discountPercentage || 0;
+      const maxDiscount = Math.max(productDiscount, categoryDiscount);
+      const discountedPrice = Math.round(basePrice - (basePrice * maxDiscount / 100));
+      const discountAmount = basePrice - discountedPrice;
+
+      console.log("finalPrice.....:", discountedPrice);
+      const itemTotal = discountedPrice * item.quantity;
+      subtotal += itemTotal;
+      totalProductDiscount += discountAmount * item.quantity; 
+
+      return {
+        ...item.toObject(),
+        product,
+        variant: variant || null,
+        finalPrice: discountedPrice,
+        maxDiscount,
+        itemTotal,
+        hasStock: variant && variant.quantity >= item.quantity,
+        discountAmountPerItem: discountAmount
+      };
+    });
+
+    const outOfStockItems = itemsWithStock.filter((item) => !item.hasStock);
+    const hasOutOfStock = outOfStockItems.length > 0;
+
+    let couponDiscount = 0;
+    let grandTotal = subtotal;
+    
+    if (req.session.checkoutData && req.session.checkoutData.couponId) {
+      const couponDoc = await Coupon.findOne({ 
+        _id: req.session.checkoutData.couponId, 
+        isActive: true, 
+        expiresAt: { $gt: new Date() },
+        minCartAmount: { $lte: subtotal }
+      });
+
+      if (couponDoc) {
+        if (couponDoc.discountType === 'percentage') {
+          couponDiscount = Math.round((subtotal * couponDoc.discountAmount) / 100);
+          if (couponDoc.maxDiscount && couponDiscount > couponDoc.maxDiscount) {
+            couponDiscount = couponDoc.maxDiscount;
+          }
+        } else {
+          couponDiscount = Math.min(couponDoc.discountAmount, subtotal);
+        }
+        
+        grandTotal = subtotal - couponDiscount;
+        
+        req.session.checkoutData = {
+          ...req.session.checkoutData,
+          subtotal,
+          couponDiscount,
+          totalProductDiscount,
+          grandTotal
+        };
+      } else {
+        req.session.checkoutData = null;
+      }
+    }
+
+    if (!req.session.checkoutData) {
+      req.session.checkoutData = {
+        subtotal,
+        couponDiscount,
+        totalProductDiscount,
+        grandTotal,
+        couponId: null
+      };
+    }
+
+    res.render("user/checkout", {
+      cart: { ...cart.toObject(), items: itemsWithStock },
+      userAddress: addresses,
+      subtotal,
+      coupon: finalCoupon,
+      productDiscount: totalProductDiscount,
+      grandTotal,
+      couponDiscount,
+      user,
+      product: itemsWithStock,
+      hasOutOfStock
+    });
+  } catch (error) {
+    console.error("Checkout Error:", error.message);
+    res.redirect("/user/cart?message=An error occurred. Please try again.");
+  }
     },
 
     placeOrder: async (req, res) => {
@@ -1868,7 +1917,7 @@ const productController = {
         if(couponDoc.userId && couponDoc.userId.length > 0){
           const isUserAllowed = couponDoc.userId.includes(userId);
 
-          if(!isUserAllowed){
+          if(isUserAllowed){
             return res.status(400).json({success: false,
               message: "This coupon is not available for your account"
             });
@@ -1911,7 +1960,7 @@ const productController = {
         console.error("Error applying coupon:",err);
         res.status(500).json({success: false, message: "Failed to  apply coupon:"+err.message});
       }
-    }
+    },
 };
 
 module.exports = productController;

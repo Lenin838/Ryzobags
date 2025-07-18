@@ -1,24 +1,46 @@
 <%- include("partials/userHeader") %>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<div class="container mx-auto px-4">
-  <div class="max-w-7xl mx-auto">
-    <!-- Order Review Section -->
+<style>
+  /* Ensure table headers are not too cramped on mobile */
+  @media (max-width: 639px) {
+    .products-table th {
+      font-size: 0.65rem; /* Smaller font for headers on mobile */
+      padding: 0.5rem 0.75rem;
+    }
+    .products-table td {
+      font-size: 0.75rem;
+      padding: 0.75rem;
+    }
+    .products-table img {
+      width: 3rem;
+      height: 3rem;
+    }
+  }
+  /* Adjust sticky positioning for order summary on mobile */
+  @media (max-width: 639px) {
+    .order-summary {
+      position: static; /* Prevent sticky issues on mobile */
+    }
+  }
+</style>
+<div class="container mx-auto px-2 sm:px-4">
+  <div class="max-w-full sm:max-w-7xl mx-auto">
     <!-- Products Table Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-      <div class="mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800">Products</h2>
+    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-8">
+      <div class="mb-4 sm:mb-6">
+        <h2 class="text-lg sm:text-2xl font-semibold text-gray-800">Products</h2>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full min-w-full divide-y divide-gray-200">
+        <table class="w-full min-w-full divide-y divide-gray-200 products-table">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+              <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+              <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+              <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+              <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+              <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+              <th class="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -30,34 +52,34 @@
                     <% const variant = item.variant; %>
                     <% const price = item.finalPrice || 0; %>
                   <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <img class="h-16 w-16 object-cover rounded" src="<%= product.mainImage && product.mainImage.length > 0 ? product.mainImage : '/img/placeholder.jpg' %>" alt="<%= product.name %>" />
+                    <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                      <img class="h-12 w-12 sm:h-16 sm:w-16 object-cover rounded" src="<%= product.mainImage && product.mainImage.length > 0 ? product.mainImage : '/img/placeholder.jpg' %>" alt="<%= product.name %>" />
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <h5 class="text-sm font-medium text-gray-900"><%= product.name %></h5>
+                    <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                      <h5 class="text-xs sm:text-sm font-medium text-gray-900"><%= product.name %></h5>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                       <%= item.size %>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                       <%= item.quantity %>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                       ₹<%= price %>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                       ₹<%= price * item.quantity %>
                     </td>
                   </tr>
                   <% } else { %>
                     <tr>
-                      <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Invalid product data</td>
+                      <td colspan="6" class="px-2 sm:px-6 py-2 sm:py-4 text-center text-xs sm:text-sm text-gray-500">Invalid product data</td>
                     </tr>
                   <% } %>
                 <% } %>
               <% } else { %>
                 <tr>
-                  <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No products found</td>
+                  <td colspan="6" class="px-2 sm:px-6 py-2 sm:py-4 text-center text-xs sm:text-sm text-gray-500">No products found</td>
                 </tr>
               <% } %>
             </tbody>
@@ -65,50 +87,50 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-8">
       <!-- Address Section -->
-      <div class="lg:col-span-8">
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-6">Shipping Address</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="sm:col-span-8">
+        <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+          <h2 class="text-lg sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Shipping Address</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <% if (userAddress && userAddress.length > 0) { %>
               <% userAddress.forEach((address) => { %>
-                <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200">
-                  <div class="flex items-center mb-3">
+                <div class="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                  <div class="flex items-center mb-2 sm:mb-3">
                     <input class="form-radio h-4 w-4 text-blue-600 focus:ring-blue-500" type="radio"
                       id="addressRadio<%= address._id %>" name="selectedAddress"
                       value="<%= address._id %>" <%= address.isDefault ? 'checked' : '' %> >
-                    <label class="ml-2 text-sm font-medium text-gray-700"
+                    <label class="ml-2 text-xs sm:text-sm font-medium text-gray-700"
                       for="addressRadio<%= address._id %>">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span class="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         <%= address.addressType %>
                       </span>
                     </label>
                   </div>
-                  <div class="text-sm text-gray-600 space-y-1">
+                  <div class="text-xs sm:text-sm text-gray-600 space-y-1">
                     <p class="font-medium text-gray-800"><%= address.name %></p>
                     <p><%= address.city %>, <%= address.landMark %></p>
                     <p><%= address.state %>, <%= address.pincode %></p>
                     <p>Phone: <%= address.phone %></p>
                     <p>Alt Phone: <%= address.altPhone %></p>
                   </div>
-                  <div class="flex justify-between mt-4">
+                  <div class="flex justify-between mt-3 sm:mt-4">
                     <a href="/user/profile/address/edit/<%= address._id %>"
-                      class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">Edit</a>
+                      class="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">Edit</a>
                     <a href="/user/profile/address/delete/<%= address._id %>"
-                      class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline"
+                      class="text-xs sm:text-sm font-medium text-red-600 hover:text-red-800 hover:underline"
                       onclick="return confirm('Are you sure you want to delete this address?')">Delete</a>
                   </div>
                 </div>
               <% }) %>
               <% } else { %>
-                <div class="col-span-2 border border-gray-200 rounded-lg p-4 text-center text-gray-500">
+                <div class="col-span-2 border border-gray-200 rounded-lg p-3 sm:p-4 text-center text-xs sm:text-sm text-gray-500">
                   No address found
                 </div>
               <% } %>
-            <div class="col-span-2 mt-4">
+            <div class="col-span-2 mt-3 sm:mt-4">
               <a href="/user/profile/address/add">
-                <button class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <button class="w-full py-2 px-3 sm:px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                   Add New Address
                 </button>
               </a>
@@ -117,24 +139,24 @@
         </div>
 
         <!-- Payment Method Section -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-6">Payment Method</h2>
-          <div class="space-y-4">
-            <div class="flex items-center p-3 rounded-md hover:bg-gray-50 transition-colors">
-              <input class="form-radio h-5 w-5 text-blue-600 focus:ring-blue-500" type="radio" value="cod" name="payment_option" id="CashOnDelivery" checked>
-              <label class="ml-3 block text-sm font-medium text-gray-700" for="CashOnDelivery">
+        <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h2 class="text-lg sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Payment Method</h2>
+          <div class="space-y-3 sm:space-y-4">
+            <div class="flex items-center p-2 sm:p-3 rounded-md hover:bg-gray-50 transition-colors">
+              <input class="form-radio h-4 sm:h-5 w-4 sm:w-5 text-blue-600 focus:ring-blue-500" type="radio" value="cod" name="payment_option" id="CashOnDelivery" checked>
+              <label class="ml-2 sm:ml-3 block text-xs sm:text-sm font-medium text-gray-700" for="CashOnDelivery">
                 Cash on Delivery
               </label>
             </div>
-            <div class="flex items-center p-3 rounded-md hover:bg-gray-50 transition-colors">
-              <input class="form-radio h-5 w-5 text-blue-600 focus:ring-blue-500" type="radio" value="razorpay" name="payment_option" id="Razorpay">
-              <label class="ml-3 block text-sm font-medium text-gray-700" for="Razorpay">
+            <div class="flex items-center p-2 sm:p-3 rounded-md hover:bg-gray-50 transition-colors">
+              <input class="form-radio h-4 sm:h-5 w-4 sm:w-5 text-blue-600 focus:ring-blue-500" type="radio" value="razorpay" name="payment_option" id="Razorpay">
+              <label class="ml-2 sm:ml-3 block text-xs sm:text-sm font-medium text-gray-700" for="Razorpay">
                 Razorpay
               </label>
             </div>
-            <div class="flex items-center p-3 rounded-md hover:bg-gray-50 transition-colors">
-              <input class="form-radio h-5 w-5 text-blue-600 focus:ring-blue-500" type="radio" value="wallet" name="payment_option" id="wallet">
-              <label class="ml-3 block text-sm font-medium text-gray-700" for="wallet">
+            <div class="flex items-center p-2 sm:p-3 rounded-md hover:bg-gray-50 transition-colors">
+              <input class="form-radio h-4 sm:h-5 w-4 sm:w-5 text-blue-600 focus:ring-blue-500" type="radio" value="wallet" name="payment_option" id="wallet">
+              <label class="ml-2 sm:ml-3 block text-xs sm:text-sm font-medium text-gray-700" for="wallet">
                 Wallet
               </label>
             </div>
@@ -143,39 +165,39 @@
       </div>
 
       <!-- Order Summary Section -->
-      <div class="lg:col-span-4">
-        <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-6">Order Summary</h2>
+      <div class="sm:col-span-4">
+        <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 order-summary sticky top-4 sm:top-6">
+          <h2 class="text-lg sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Order Summary</h2>
           
           <!-- Coupon Input -->
-          <div class="mb-6">
+          <div class="mb-4 sm:mb-6">
             <div class="flex">
               <input type="text" id="inputCoupon" placeholder="Enter coupon code" 
-                class="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:ring-blue-500 focus:border-blue-500 text-sm" />
+                class="flex-grow px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-l-md focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm" />
               <button id="applyButton" type="button" onclick="applyCoupon('<%=grandTotal%>')"
-                class="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm">
+                class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-xs sm:text-sm">
                 Apply
               </button>
             </div>
           </div>
           
           <!-- Available Coupons -->
-          <div class="mb-6">
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Available Coupons</h3>
-            <div class="space-y-3 max-h-48 overflow-y-auto pr-1">
+          <div class="mb-4 sm:mb-6">
+            <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Available Coupons</h3>
+            <div class="space-y-2 sm:space-y-3 max-h-48 overflow-y-auto pr-1">
               <% if (locals.coupon) { %>
                 <% for (let i=0; i < coupon.length; i++) { %>
-                  <div class="border border-gray-200 rounded-lg p-3 flex justify-between items-center hover:border-blue-300 transition-colors">
+                  <div class="border border-gray-200 rounded-lg p-2 sm:p-3 flex justify-between items-center hover:border-blue-300 transition-colors">
                     <div>
                       <span class="text-xs font-semibold text-gray-800"><%= coupon[i].code %></span>
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-1 sm:space-x-2">
                       <button onclick="useCoupon('<%= coupon[i].code %>')" id="useButton_<%= coupon[i].code %>" 
-                        class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors use-button">
+                        class="px-2 sm:px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors use-button">
                         Use
                       </button>
                       <button onclick="cancelCoupon('<%= coupon[i].code %>')" id="cancelButton_<%= coupon[i].code %>" 
-                        class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                        class="px-2 sm:px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
                         style="display: none;">
                         Cancel
                       </button>
@@ -183,7 +205,7 @@
                   </div>
                 <% } %>
               <% } else { %>
-                <p class="text-sm text-gray-500">No coupons available</p>
+                <p class="text-xs sm:text-sm text-gray-500">No coupons available</p>
               <% } %>
             </div>
           </div>
@@ -203,35 +225,31 @@
           }
           %>
           
-          <div class="border-t border-gray-200 pt-4 space-y-3">
-            <div class="flex justify-between text-sm">
+          <div class="border-t border-gray-200 pt-3 sm:pt-4 space-y-2 sm:space-y-3">
+            <div class="flex justify-between text-xs sm:text-sm">
               <span class="text-gray-600">Subtotal</span>
               <span class="text-gray-800 font-medium">₹<%= subtotal %></span>
             </div>
-
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-600">coupon</span>
+            <div class="flex justify-between text-xs sm:text-sm">
+              <span class="text-gray-600">Coupon</span>
               <span class="text-gray-800 font-medium" id="couponDiscount">₹-<%= couponDiscount %></span>
             </div>
-
-            <div class="flex justify-between text-sm">
+            <div class="flex justify-between text-xs sm:text-sm">
               <span class="text-gray-600">Discount</span>
               <span class="text-gray-800 font-medium" id="productDiscount">₹<%= productDiscount %></span>
             </div>
-
-            <div class="flex justify-between text-base font-medium pt-2 border-t border-gray-200">
+            <div class="flex justify-between text-sm sm:text-base font-medium pt-2 border-t border-gray-200">
               <span class="text-gray-900">Total</span>
-              <span class="text-blue-600 text-xl" id="totalValue">
+              <span class="text-blue-600 text-base sm:text-xl" id="totalValue">
                 ₹<%= typeof grandTotal !== 'undefined' ? grandTotal : finalPrice*item.quantity %>
               </span>
             </div>
           </div>
-
           
-          <div class="mt-6">  
+          <div class="mt-4 sm:mt-6">  
             <input type="hidden" id="grandTotalInput" value="<%= grandTotal %>">       
             <button type="button" onclick="placeOrder('<%= user._id %>')" id="placeOrderButton"
-              class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+              class="w-full py-2 sm:py-3 px-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-xs sm:text-sm">
               Place Order
             </button>
           </div>
@@ -242,7 +260,6 @@
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
 
 <script>
 let appliedCoupon = null;
@@ -345,8 +362,6 @@ async function cancelCoupon(couponCode) {
   }
 }
 
-
-
 let paymentInProgress = false;
 
 async function handleRazorpayPayment(response, amount) {
@@ -405,17 +420,15 @@ async function handleRazorpayPayment(response, amount) {
           });
         }
       }
-
     };
 
     const rzp1 = new Razorpay(options);
     
     rzp1.on('payment.failed', function (responseError) {
-    console.error('Razorpay payment failed:', responseError.error);
-    paymentInProgress = false;
-    handlePaymentFailure(responseError.error, response.mongoOrderId);
-  });
-
+      console.error('Razorpay payment failed:', responseError.error);
+      paymentInProgress = false;
+      handlePaymentFailure(responseError.error, response.mongoOrderId);
+    });
     
     rzp1.open();
     
@@ -593,7 +606,7 @@ async function placeOrder(userId) {
       return;
     }
 
-    if (payment === "cod" && numericValue > 10000) {
+    if (payment === "cod" && numericValue > 1000) {
       await Swal.fire({
         title: 'COD Not Allowed',
         text: 'Orders above ₹1000 are not allowed for Cash on Delivery.',
@@ -613,7 +626,6 @@ async function placeOrder(userId) {
       resetOrderButton();
       return;
     }
-
 
     Swal.fire({
       title: 'Processing Order',
@@ -725,7 +737,6 @@ document.addEventListener('visibilitychange', function() {
     console.log('Page became visible during payment process');
   }
 });
-
 </script>
 
 <%- include("partials/userFooter") %>

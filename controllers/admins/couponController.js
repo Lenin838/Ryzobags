@@ -11,6 +11,7 @@ const couponController = {
             res.status(500).send("Failed to load coupons");
         }
     },
+
     createCoupon: async (req,res) => {
         try{
             const {code,discountAmount,minCartAmount,maxDiscount,expiresAt,usageLimit} = req.body;
@@ -35,6 +36,7 @@ const couponController = {
             res.status(500).json({error: "Failed to create coupon"});
         }
     },
+
     updateCoupon: async (req,res) => {
         try{
             const {id} = req.params;
@@ -60,6 +62,7 @@ const couponController = {
             res.status(500).json({error: "Failed to update coupon"});
         }
     },
+    
     deleteCoupon: async (req,res) => {
         try{
             const {id} = req.params;

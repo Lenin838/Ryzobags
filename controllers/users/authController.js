@@ -38,27 +38,35 @@ const generateCouponCode = async () => {
     return couponCode;
 }
 
-const createReferralCoupon = async (referrerId) => {
-    const couponCode = await generateCouponCode();
-    const expiresAt = new Date(Date.now()+30*24*60*60*1000);
-    const coupon = new Coupon({
-        code: couponCode,
-        discountAmount: 100,
-        minCartAmount: 500,
-        maxDiscount: 200,
-        expiresAt,
-        usageLimit: 1,
-        isActive: true,
-        userId: [referrerId]
-    });
-    await coupon.save();
-    return coupon;
+const createReferralCoupon = async (userId) => {
+    try{
+        const couponCode = await generateCouponCode();
+        const expiresAt = new Date(Date.now()+30*24*60*60*1000);
+        const coupon = new Coupon({
+            code: couponCode,
+            discountAmount: 100,
+            minCartAmount: 500,
+            maxDiscount: 200,
+            expiresAt,
+            usageLimit:1,
+            isActive:true,
+            userId: [userId],
+        });
+        const savedCoupon = await coupon.save();
+        console.log(`Coupon created for user ${userId}: ${savedCoupon.code}`);
+        return savedCoupon;
+    }catch (error){
+        console.error(`Error creating coupon for user ${userId}:`, error);
+        throw error;
+    }
 }
+
+
 
 const generateOtpCode=()=>Math.floor(100000 +Math.random() * 900000).toString();
 
 const userController = {
-     loadRegister: async (req, res) => {
+    loadRegister: async (req, res) => {
         try {
             res.render('user/signup');
         } catch (error) {
@@ -67,7 +75,7 @@ const userController = {
         }
     },
 
-     verifyRegister: async (req, res) => {
+    verifyRegister: async (req, res) => {
         try {
             const { fullname, email, phone, password, confirmPassword ,referralCode} = req.body;
             console.log("body:.....",req.body)
@@ -147,7 +155,7 @@ const userController = {
             const otpCode = generateOtpCode();
             console.log("2",otpCode)
             req.session.otp = otpCode;
-            req.session.otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
+            req.session.otpExpire = Date.now() + 1 * 60 * 1000;
 
             console.log("Generated OTP:", otpCode);
             console.log("Session Data:", {
@@ -179,10 +187,9 @@ const userController = {
                 console.error('Verify register error:', error.message);
                 res.status(500).json({ message: "Server error: " + error.message });
             }
-        },
+    },
 
-
-        loadOtpPage: async (req, res) => {
+    loadOtpPage: async (req, res) => {
             try {
                 if (!req.session.email) {
                     return res.redirect('/user/signup');
@@ -192,119 +199,129 @@ const userController = {
                 console.log('Load OTP page error:', error.message);
                 res.status(500).send('Server Error');
             }
-        },
+    },
 
-        verifyOtp: async (req, res) => {
+    verifyOtp: async (req, res) => {
+        try {
+            console.log("=== OTP VERIFICATION DEBUG ===");
+            console.log("Stored OTP:", req.session.otp);
+            console.log("Stored Email:", req.session.email);
+            console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
+            console.log("Session fullname:", req.session.fullname);
+            console.log("Session phone:", req.session.phone);
+            console.log("Session referralCode:", req.session.referralCode);
+            console.log("Session newReferralCode:", req.session.newReferralCode);
+
+            const { otp } = req.body;
+
+            if (!req.session.otp || !req.session.email || !req.session.fullname || !req.session.password) {
+            console.log("Missing session data");
+            return res.status(400).json({
+                message: "Session expired. Please restart the signup process.",
+                success: false,
+            });
+            }
+
+            if (Date.now() > req.session.otpExpire) {
+            console.log("OTP expired");
+            return res.status(400).json({
+                message: "OTP has expired. Please request a new one.",
+                success: false,
+            });
+            }
+
+            if (otp !== req.session.otp) {
+            console.log("Invalid OTP provided");
+            return res.status(400).json({
+                message: "Invalid OTP. Please try again.",
+                success: false,
+            });
+            }
+
+            const userData = {
+            fullname: req.session.fullname,
+            email: req.session.email,
+            phoneNumber: req.session.phone,
+            password: req.session.password,
+            referralCode: req.session.newReferralCode,
+            referredBy: req.session.referralCode
+                ? (await User.findOne({ referralCode: req.session.referralCode }).select('_id'))?._id
+                : null,
+            isVerified: true,
+            };
+
+            console.log("Creating user with data:", userData);
+
             try {
-                console.log("=== OTP VERIFICATION DEBUG ===");
-                console.log("Stored OTP:", req.session.otp);
-                console.log("Stored Email:", req.session.email);
-                console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
-                console.log("Session fullname:", req.session.fullname);
-                console.log("Session phone:", req.session.phone);
-                console.log("Session referralCode:", req.session.referralCode);
-                console.log("Session newReferralCode:", req.session.newReferralCode);
+            const user = new User(userData);
+            const savedUser = await user.save();
+            console.log("User saved successfully:", savedUser._id);
 
+            if (req.session.referralCode) {
+                const referrer = await User.findOne({ referralCode: req.session.referralCode });
+                console.log("Referrer found:", referrer ? referrer._id : "No referrer found");
 
-                const { otp } = req.body;
-
-                if (!req.session.otp || !req.session.email || !req.session.fullname || !req.session.password) {
-                    console.log("Missing session data");
-                    return res.status(400).json({ 
-                        message: "Session expired. Please restart the signup process.",
-                        success: false 
-                    });
-                }
-
-                if (Date.now() > req.session.otpExpire) {
-                    console.log("OTP expired");
-                    return res.status(400).json({ 
-                        message: "OTP has expired. Please request a new one.",
-                        success: false 
-                    });
-                }
-
-                if (otp !== req.session.otp) {
-                    console.log("Invalid OTP provided");
-                    return res.status(400).json({ 
-                        message: "Invalid OTP. Please try again.",
-                        success: false 
-                    });
-                }
-
-                const userData = {
-                    fullname: req.session.fullname,
-                    email: req.session.email,
-                    phoneNumber: req.session.phone,
-                    password: req.session.password,
-                    referralCode: req.session.newReferralCode,
-                    referredBy: req.session.referralCode?(await User.findOne({referralCode: req.session.referralCode}).select('_id'))._id: null,
-                    isVerified: true
-                };
-
-                console.log("Creating user with data:", userData);
-
+                if (referrer && referrer.canGiveReferralRewards) {
                 try {
-                    const user = new User(userData);
-                    const savedUser = await user.save();
-                    console.log("User saved successfully:", savedUser._id);
+                    const refereeCoupon = await createReferralCoupon(savedUser._id);
+                    console.log(`Coupon generated for referee: ${savedUser._id}, Coupon code: ${refereeCoupon.code}`);
 
-                    if(req.session.referralCode){
-                        const referrer = await User.findOne({referralCode: req.session.referralCode});
-                        if(referrer){
-                            await createReferralCoupon(referrer._id);
-                            console.log(`Coupon generated for referrer: ${referrer._id}`);
-                        }
-                    }
-                    req.session.otp = null;
-                    req.session.email = null;
-                    req.session.fullname = null;
-                    req.session.phone = null;
-                    req.session.password = null;
-                    req.session.otpExpire = null;
-                    req.session.referralCode = null;
-                    req.session.newReferralCode = null;
-
-                    res.status(200).json({ 
-                        message: "Email verified. Signup successful!",
-                        success: true 
-                    });
-
-                } catch (saveError) {
-                    console.error("Database save error:", saveError);
-                    
-                    if (saveError.code === 11000) {
-                        const field = Object.keys(saveError.keyPattern)[0];
-                        return res.status(400).json({
-                            message: `${field} already exists. Please use a different ${field}.`,
-                            success: false
-                        });
-                    }
-                    
-                    if (saveError.name === 'ValidationError') {
-                        const validationErrors = Object.values(saveError.errors).map(err => err.message);
-                        return res.status(400).json({
-                            message: "Validation error: " + validationErrors.join(', '),
-                            success: false
-                        });
-                    }
-
-                    return res.status(500).json({ 
-                        message: "Failed to create user account. Please try again.",
-                        success: false 
-                    });
+                    const referrerCoupon = await createReferralCoupon(referrer._id);
+                    console.log(`Coupon generated for referrer: ${referrer._id}, Coupon code: ${referrerCoupon.code}`);
+                } catch (couponError) {
+                    console.error("Coupon creation failed:", couponError);
                 }
+                } else if (referrer) {
+                console.log(`Referrer ${referrer._id} is not eligible to give referral rewards`);
+                } else {
+                console.log(`No referrer found for referralCode: ${req.session.referralCode}`);
+                }
+            }
 
-            } catch (error) {
-                console.error('Verify OTP error:', error.message);
-                res.status(500).json({ 
-                    message: "Server error: " + error.message,
-                    success: false 
+            req.session.otp = null;
+            req.session.email = null;
+            req.session.fullname = null;
+            req.session.phone = null;
+            req.session.password = null;
+            req.session.otpExpire = null;
+            req.session.referralCode = null;
+            req.session.newReferralCode = null;
+
+            res.status(200).json({
+                message: "Email verified. Signup successful!",
+                success: true,
+            });
+            } catch (saveError) {
+            console.error("Database save error:", saveError);
+            if (saveError.code === 11000) {
+                const field = Object.keys(saveError.keyPattern)[0];
+                return res.status(400).json({
+                message: `${field} already exists. Please use a different ${field}.`,
+                success: false,
                 });
             }
-        },
+            if (saveError.name === 'ValidationError') {
+                const validationErrors = Object.values(saveError.errors).map((err) => err.message);
+                return res.status(400).json({
+                message: "Validation error: " + validationErrors.join(', '),
+                success: false,
+                });
+            }
+            return res.status(500).json({
+                message: "Failed to create user account. Please try again.",
+                success: false,
+            });
+            }
+        } catch (error) {
+            console.error('Verify OTP error:', error.message);
+            res.status(500).json({
+            message: "Server error: " + error.message,
+            success: false,
+            });
+        }
+    },
 
-        resendOtp: async (req, res) => {
+    resendOtp: async (req, res) => {
             try {
                 console.log("Resend OTP requested. Session email:", req.session.email);
 
@@ -344,9 +361,9 @@ const userController = {
                     success: false 
                 });
             }
-        },
+    },
 
-        verifyLogin: async (req, res) => {
+    verifyLogin: async (req, res) => {
             try {
                 const { email, password } = req.body;
                 let errors = {};
@@ -414,19 +431,18 @@ const userController = {
                 console.error('Login error:', error.message);
                 res.status(500).json({ message: "Server error: " + error.message });
             }
-        },
+    },
 
-
-        loadLogin: async (req, res) => {
+    loadLogin: async (req, res) => {
             try {
                 res.render('user/login');
             } catch (error) {
                 console.log('Load login error:', error.message);
                 res.status(500).send('Server Error');
             }
-        },
+    },
 
-        loadHomepage: async (req, res) => {
+    loadHomepage: async (req, res) => {
             try {
                 const products = await Product.find({ isDeleted: false, isListed: true })
                     .populate("category brand")
@@ -479,17 +495,18 @@ const userController = {
                 console.error("Error loading homepage:", error.message);
                 res.status(500).send("Internal Server Error");
             }
-        },
-        loadForgotPassword: async (req,res) => {
+    },
+
+    loadForgotPassword: async (req,res) => {
             try {
                 res.render("user/forgotPassword");
             } catch (error) {
                 console.log(error.message);
                 
             }
-        },
+    },
 
-        forgotPassword: async (req, res) => {
+    forgotPassword: async (req, res) => {
             try {
                 const { email } = req.body;
                 if (!email) {
@@ -610,9 +627,9 @@ const userController = {
                     success: false 
                 });
             }
-        },
+    },
     
-        loadResetPassword: async (req, res) => {
+    loadResetPassword: async (req, res) => {
             try {
                 const token = req.params.token;
                 console.log("Loading reset password page for token:", token);
@@ -652,8 +669,9 @@ const userController = {
                     tokenValid: false
                 });
             }
-        },
-        resetPassword: async (req, res) => {
+    },
+
+    resetPassword: async (req, res) => {
             try {
                 const { token } = req.params;
                 const { password, confirmPassword } = req.body;
@@ -724,8 +742,9 @@ const userController = {
                     message: "Server error: " + error.message
                 });
             }
-        },
-        googleCallback: async (req, res) => {
+    },
+
+    googleCallback: async (req, res) => {
             try {
             const { id, emails, displayName, photos } = req.user;
             const email = emails[0].value;
@@ -777,23 +796,25 @@ const userController = {
             console.error('Error saving Google user:', error);
             res.redirect("/user/login?error=auth_failed");
             }
-        },
-        googleAuthFailure: (req, res) => {
+    },
+
+    googleAuthFailure: (req, res) => {
             console.log('Google authentication failed');
             res.redirect("/user/login?error=google_auth_failed");
-        },
+    },
 
-        initiateGoogleAuth: (req, res, next) => {
+    initiateGoogleAuth: (req, res, next) => {
             next();
-        },
-        loadLogout: (req,res) => {
+    },
+
+    loadLogout: (req,res) => {
             req.session.destroy((err)=>{
                 if(err){
                     console.log(err);
                 }
                 return res.redirect('/user/login');
             })
-        }
+    }
 };
 
 module.exports = userController;

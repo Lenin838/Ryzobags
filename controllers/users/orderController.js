@@ -191,8 +191,10 @@ const orderController = {
                 const discountRatio = originalSubtotal > 0 ? (order.discount || 0) / originalSubtotal : 0;
                 const newDiscount = newSubtotal * discountRatio;
                 
-                order.totalAmount = Math.max(0, newSubtotal - newDiscount);
-                order.discount = newDiscount;
+                // order.totalAmount = Math.max(0, newSubtotal - newDiscount);
+                // console.log("discountRatio",discountRatio)
+                // console.log(order.totalAmount)
+                // order.discount = newDiscount;
             }
 
             for (const item of order.items) {
@@ -239,7 +241,7 @@ const orderController = {
                 orderId: order.orderId,
                 itemId: targetItem._id,
                 orderStatus: order.status,
-                newTotal: order.totalAmount,
+                // newTotal: order.totalAmount,
                 activeItemsCount: activeItems.length,
                 ...walletResponse
             });
@@ -319,13 +321,12 @@ const orderController = {
             }
         });
 
-        const activeItemsTotal = order.items
-            .filter(item => item.status !== "cancelled")
-            .reduce((sum, item) => {
-                const price = typeof item.itemSalePrice === 'number' ? item.itemSalePrice : 0;
-                const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-                return sum + (price * quantity);
-            }, 0);
+        const activeItemsTotal = order.amountPaid
+            // .reduce((sum, item) => {
+            //     const price = typeof item.itemSalePrice === 'number' ? item.itemSalePrice : 0;
+            //     const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+            //     return sum + (price * quantity);
+            // }, 0);
 
         console.log('Selected address for rendering:', selectedAddress);
 
@@ -431,7 +432,7 @@ const orderController = {
                 return res.status(404).json({ success: false, message: 'Order not found' });
             }
             
-            if (!['delivered', 'shipped', 'processing'].includes(order.status.toLowerCase())) {
+            if (!['delivered', 'shipped'].includes(order.status.toLowerCase())) {
                 return res.status(400).json({ 
                     success: false, 
                     message: `Returns can only be requested for delivered, shipped, or processing orders. Current status: ${order.status}` 
@@ -484,7 +485,7 @@ const orderController = {
         }
     },
 
-   downloadInvoice: async (req, res) => {
+    downloadInvoice: async (req, res) => {
     try {
         const orderId = req.params.id;
         const userId = req.user?._id;
@@ -660,7 +661,10 @@ const orderController = {
         const summaryTop = tablePosition + (deliveredItems.length * 25) + 20;
         
         const totalOrderAmount = order.items.reduce((sum, item) => sum + (item.quantity * item.itemSalePrice), 0);
-        const proportionalDiscount = (order.discount || 0) * (deliveredSubtotal / totalOrderAmount);
+        const proportionalDiscount = order.discount || 0;
+        console.log("prop:)...........:",proportionalDiscount);
+        console.log('deliveredS............>>):',deliveredSubtotal);
+        console.log(totalOrderAmount);
         
         doc
             .fillColor(secondaryColor)

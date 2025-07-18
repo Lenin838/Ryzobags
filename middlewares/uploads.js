@@ -19,7 +19,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ 
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 const saveUserImage = async (req, file) => {
@@ -44,10 +44,9 @@ const saveUserImage = async (req, file) => {
 
     const outputPath = path.join(uploadPath, filename);
 
-    // Process image with Sharp (crop/resize/compress)
     await sharp(file.buffer)
-      .resize(300, 300) // You can adjust this for your crop dimensions
-      .jpeg({ quality: 80 }) // You can adjust quality
+      .resize(300, 300) 
+      .jpeg({ quality: 80 }) 
       .toFile(outputPath);
 
     return `/images/users/${filename}`;

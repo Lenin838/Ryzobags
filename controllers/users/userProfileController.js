@@ -258,7 +258,7 @@ const userProfileController = {
     req.flash("error", "Error loading address");
     res.redirect("/user/profile?tab=addresses");
   }
-},
+  },
 
   postEditAddress: async (req, res) => {
     try {

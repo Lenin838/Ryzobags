@@ -10,49 +10,55 @@
     <style>
         .brand-font { font-family: 'Permanent Marker', cursive; }
         .error-text { color: red; font-size: 0.75rem; margin-top: 0.25rem; }
+        /* Ensure image container maintains aspect ratio on smaller screens */
+        @media (max-width: 767px) {
+            .image-container {
+                height: 300px; /* Fixed height for mobile to prevent excessive stretching */
+            }
+        }
     </style>
 </head>
-<body class="bg-[#a0d8d8] h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-4xl bg-white rounded-xl shadow-md flex">
+<body class="bg-[#a0d8d8] min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-md flex flex-col md:flex-row">
         <!-- Left side - Form -->
-        <div class="w-2/5 p-6 flex flex-col justify-center">
-            <h1 class="brand-font text-2xl mb-3">RYZO BAGS</h1>
-            <h2 class="text-lg font-semibold mb-6">LOGIN</h2> <!-- Increased bottom margin -->
+        <div class="w-full md:w-2/5 p-4 sm:p-6 flex flex-col justify-center">
+            <h1 class="brand-font text-xl sm:text-2xl mb-3">RYZO BAGS</h1>
+            <h2 class="text-base sm:text-lg font-semibold mb-6">LOGIN</h2>
 
-            <form id="login-form" class="space-y-6"> <!-- Increased spacing between fields -->
+            <form id="login-form" class="space-y-4 sm:space-y-6">
                 <div>
-                    <input type="text" name="email" placeholder="Email" class="w-full p-3 border rounded-md text-sm"> <!-- Increased padding -->
+                    <input type="text" name="email" placeholder="Email" class="w-full p-2 sm:p-3 border rounded-md text-sm md:text-base">
                     <p class="error-text" id="email-error"></p>
                 </div>
 
                 <div>
-                    <input type="password" name="password" placeholder="Password" class="w-full p-3 border rounded-md text-sm"> <!-- Increased padding -->
+                    <input type="password" name="password" placeholder="Password" class="w-full p-2 sm:p-3 border rounded-md text-sm md:text-base">
                     <p class="error-text" id="password-error"></p>
                 </div>
 
-                <div class="text-right text-xs">
+                <div class="text-right text-xs sm:text-sm">
                     <a href="/user/forgot-password" class="text-indigo-500 hover:underline">Forgot Password?</a>
                 </div>                
 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-md text-sm"> <!-- Increased padding -->
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 sm:py-3 rounded-md text-sm md:text-base">
                     Login Now
                 </button>
 
-                <button type="button" id="signup-btn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-md text-sm"> <!-- Increased padding -->
+                <button type="button" id="signup-btn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 sm:py-3 rounded-md text-sm md:text-base">
                     Sign up
                 </button>
             </form>
 
-            <p class="text-center text-xs mt-6">Or login with</p> <!-- Increased margin-top -->
-            <button id="google-login" class="flex items-center justify-center w-full border py-3 rounded-md mt-4 text-sm"> <!-- Increased padding and spacing -->
-                <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" class="h-5 mr-2"> 
+            <p class="text-center text-xs sm:text-sm mt-4 sm:mt-6">Or login with</p>
+            <button id="google-login" class="flex items-center justify-center w-full border py-2 sm:py-3 rounded-md mt-3 sm:mt-4 text-sm md:text-base">
+                <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" class="h-4 sm:h-5 mr-2"> 
                 Login with Google
             </button>
         </div>
 
-        <!-- Right side - Enlarged Image -->
-        <div class="w-3/5">
-            <img src="/images/b5788c3b3c588b14834a48fd5c0074fb.jpg" class="w-full h-full object-cover rounded-r-xl">
+        <!-- Right side - Image -->
+        <div class="w-full md:w-3/5 image-container">
+            <img src="/images/b5788c3b3c588b14834a48fd5c0074fb.jpg" class="w-full h-full object-cover rounded-b-xl md:rounded-r-xl md:rounded-b-none">
         </div>
     </div>
 
@@ -121,7 +127,6 @@
         document.getElementById('signup-btn').addEventListener('click', () => window.location.href = '/user/signup');
         document.getElementById('google-login').addEventListener('click', () => window.location.href = '/auth/google');
     });
-
     </script>
 </body>
 </html>
