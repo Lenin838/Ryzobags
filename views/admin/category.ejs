@@ -50,12 +50,12 @@
                        Edit
                     </a>
                     <% if (category.isActive) { %>
-                    <a href="/admin/categories/unlist/<%= category._id %>" 
+                    <a href="#" onclick="unlistCategory('<%= category._id %>')" 
                        class="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition">
                        Unlist
                     </a>
                     <% } else { %>
-                    <a href="/admin/categories/list/<%= category._id %>" 
+                    <a href="#" onclick="listCategory('<%= category._id %>')" 
                        class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition">
                        List
                     </a>
@@ -113,3 +113,75 @@
     </div>
     <% } %>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    timer: 2000,
+    timerProgressBar: true,
+    showConfirmButton: false
+  });
+
+  async function unlistCategory(id) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to unlist this category?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, unlist it!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      const response = await fetch(`/admin/categories/unlist/${id}`, {
+        method: 'PATCH'
+      });
+
+      if (response.ok) {
+        Toast.fire({
+          icon: 'success',
+          title: 'Category unlisted successfully'
+        }).then(() => location.reload());
+      } else {
+        Toast.fire({
+          icon: 'error',
+          title: 'Failed to unlist category'
+        });
+      }
+    } catch (error) {
+      Toast.fire({
+        icon: 'error',
+        title: 'Network error while unlisting'
+      });
+    }
+  }
+
+  async function listCategory(id) {
+    try {
+      const response = await fetch(`/admin/categories/list/${id}`, {
+        method: 'PATCH'
+      });
+
+      if (response.ok) {
+        Toast.fire({
+          icon: 'success',
+          title: 'Category listed successfully'
+        }).then(() => location.reload());
+      } else {
+        Toast.fire({
+          icon: 'error',
+          title: 'Failed to list category'
+        });
+      }
+    } catch (error) {
+      Toast.fire({
+        icon: 'error',
+        title: 'Network error while listing'
+      });
+    }
+  }
+</script>
+

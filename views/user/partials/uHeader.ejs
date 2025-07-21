@@ -29,7 +29,9 @@
         <%= user.fullname.charAt(0).toUpperCase() %>
       </div>
     <% } %>
-    <a href="/user/logout" class="text-white hover:text-gray-200 text-xs sm:text-sm font-medium">Logout</a>
+    <form action="/user/logout" method="POST" class="inline">
+      <button type="submit" class="text-white hover:text-gray-200 text-xs sm:text-sm font-medium">Logout</button>
+    </form>
   </div>
 
   <!-- Mobile menu -->

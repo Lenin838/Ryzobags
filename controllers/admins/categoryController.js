@@ -100,8 +100,7 @@ const categoryController = {
             });
 
             if (duplicate) {
-                req.flash('error', 'Another category with the same name already exists');
-                return res.redirect(`/admin/categories/edit/${categoryId}`);
+                return res.status(400).json({success: false,message: "Another category with the same name already exists"});
             }
 
             await Category.findByIdAndUpdate(categoryId, {
@@ -110,32 +109,30 @@ const categoryController = {
                 offer: { discountPercentage: parsedDiscount }
             });
 
-            req.flash('success', 'Category updated successfully');
-            res.redirect('/admin/categories');
+            return res.status(200).json({success:true,message:"Category edited successfully"});
         } catch (error) {
             console.error('Error updating category:', error);
-            req.flash('error', 'Internal server error');
-            res.redirect(`/admin/categories/edit/${req.params.id}`);
+            return res.status(500).json({success: false,message: "Internal server error"});
         }
     },
 
     unlistCategory: async (req, res) => {
         try {
             await Category.findByIdAndUpdate(req.params.id, { isActive: false });
-            res.redirect('/admin/categories');
+            return res.status(200).json({success: true})
         } catch (error) {
             console.error('Error unlisting category:', error);
-            res.status(500).send('Internal server error');
+            res.status(500).json({success:false,message:"Internal server error"});
         }
     },
 
     listCategory: async (req, res) => {
         try {
             await Category.findByIdAndUpdate(req.params.id, { isActive: true });
-            res.redirect('/admin/categories');
+            return res.status(200).json({success: true});
         } catch (error) {
             console.error('Error listing category:', error);
-            res.status(500).send('Internal server error');
+            res.status(500).json({success:false,message:"Internal server error"});
         }
     }
 };

@@ -168,7 +168,7 @@
 
       try {
         const response = await fetch(`/admin/orders/update-status/${orderId}`, {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'CSRF-Token': csrfToken,
@@ -205,7 +205,7 @@
 
       try {
         const response = await fetch(`/admin/orders/update-status/${orderId}`, {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'CSRF-Token': csrfToken,
@@ -249,7 +249,7 @@
 
       try {
         const response = await fetch(`/admin/orders/verify-return/${orderId}`, {
-          method: 'POST',
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'CSRF-Token': csrfToken,

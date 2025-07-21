@@ -114,8 +114,10 @@
                         </svg>
                         Edit
                       </a>
-                      <form action="/admin/products/toggle-listing/<%= product._id %>" method="POST">
-                        <button class="<%= product.isListed ? 'text-amber-600 hover:text-amber-800 hover:bg-amber-50' : 'text-green-600 hover:text-green-800 hover:bg-green-50' %> font-medium transition-colors flex items-center gap-1 px-3 py-1 rounded-md">
+                        <button
+                          onclick="toggleProductListing('<%= product._id %>')"
+                          class="<%= product.isListed ? 'text-amber-600 hover:text-amber-800 hover:bg-amber-50' : 'text-green-600 hover:text-green-800 hover:bg-green-50' %> font-medium transition-colors flex items-center gap-1 px-3 py-1 rounded-md"
+                        >
                           <% if(product.isListed) { %>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -129,7 +131,6 @@
                             List
                           <% } %>
                         </button>
-                      </form>
                     </div>
                   </td>
                 </tr>
@@ -199,3 +200,56 @@
     </div>
 </body>
 </html>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  async function toggleProductListing(productId) {
+  const confirmResult = await Swal.fire({
+    title: 'Are you sure?',
+    text: "Do you want to change this product's listing status?",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, change it!'
+  });
+
+  if (!confirmResult.isConfirmed) return;
+
+  try {
+    const res = await fetch(`/admin/products/toggle-listing/${productId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Product listing updated!',
+        showConfirmButton: false,
+        timer: 2000
+      });
+      setTimeout(() => location.reload(), 1500); // Delay reload for effect
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: result.message || 'Failed to toggle listing.',
+      });
+    }
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Something went wrong. Please try again.',
+    });
+    console.error(error);
+  }
+}
+
+</script>

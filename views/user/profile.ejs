@@ -185,7 +185,7 @@
                           </span>
                         </td>
                         <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
-                          <a href="/user/ordersDetails/<%= order._id %>" class="text-indigo-600 hover:text-indigo-800">View</a>
+                          <a href="/user/orderDetails/<%= order._id %>" class="text-indigo-600 hover:text-indigo-800">View</a>
                         </td>
                       </tr>
                     <% }) %>
@@ -296,7 +296,7 @@
         formData.append('profileImage', blob, 'profile.jpg');
 
         fetch('/user/profile/upload-image', {
-          method: 'POST',
+          method: 'PUT',
           body: formData,
         })
           .then((res) => {

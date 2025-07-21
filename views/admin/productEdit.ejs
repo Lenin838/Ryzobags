@@ -660,7 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
 
             const response = await fetch(`/admin/products/edit/${document.getElementById('productId').value}`, {
-                method: 'POST',
+                method: 'PUT',
                 body: formData
             });
 

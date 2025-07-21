@@ -124,8 +124,7 @@
               <% } %>
             <% } %>
             
-            <% if (['delivered'].includes(order.status.toLowerCase()) && activeItems.length > 0) { %>
-              <button onclick="returnEntireOrder('<%= order._id %>')" class="bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm">
+            <% if (order.items.some(item => item.status.toLowerCase() === 'delivered')) { %>              <button onclick="returnEntireOrder('<%= order._id %>')" class="bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm">
                 Return Entire Order
               </button>
             <% } %>
@@ -206,7 +205,7 @@
                             const canReturnItem = item.status !== 'cancelled' && 
                                                 item.itemStatus !== 'return request' && 
                                                 item.status !== 'return request' &&
-                                                ['delivered', 'shipped'].includes(order.status.toLowerCase());
+                                                ['delivered', 'shipped'].includes(item.status.toLowerCase());
                         %>
                         <% if (canReturnItem) { %>
                           <button 
@@ -331,10 +330,10 @@
 
         if (reasonResult.isConfirmed) {
           try {
-            const response = await fetch("/user/orders/cancel", {
-              method: "POST",
+            const response = await fetch(`/user/orders/cancel`, {
+              method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId, reason: reasonResult.value }),
+              body: JSON.stringify({ orderId,reason: reasonResult.value }),
             });
             
             const data = await response.json();
@@ -393,10 +392,10 @@
 
         if (reasonResult.isConfirmed) {
           try {
-            const response = await fetch("/user/orders/cancel-item", {
-              method: "POST",
+            const response = await fetch(`/user/orders/cancel-item`, {
+              method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId, itemId, reason: reasonResult.value }),
+              body: JSON.stringify({  orderId,itemId, reason: reasonResult.value }),
             });
             
             const data = await response.json();
@@ -505,7 +504,7 @@
         });
 
         const response = await fetch(endpoint, {
-          method: "POST",
+          method: "PATCH",
           headers: { 
             "Content-Type": "application/json",
             "Accept": "application/json"

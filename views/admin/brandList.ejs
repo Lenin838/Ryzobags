@@ -42,9 +42,9 @@
                 <a href="/admin/brands/edit/<%= brand._id %>"
                   class="text-blue-600 hover:underline">Edit</a>
                 <% if (brand.isActive) { %>
-                  <a href="/admin/brands/unlist/<%= brand._id %>" class="text-red-600 hover:underline">Unlist</a>
+                  <a href="#" class=" unlist-brand hover:underline" data-id="<%= brand._id %>">Unlist</a>
                 <% } else { %>
-                  <a href="/admin/brands/list/<%= brand._id %>" class="text-green-600 hover:underline">List</a>
+                  <a href="#" class=" list-brand hover:underline" data-id="<%= brand._id %>">List</a>
                 <% } %>
               </td>
             </tr>
@@ -100,3 +100,74 @@
       </div>
     <% } %>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  document.querySelectorAll('.unlist-brand').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.preventDefault();
+      const id = btn.dataset.id;
+      try {
+        const res = await fetch(`/admin/brands/unlist/${id}`, { method: 'PATCH' });
+        const result = await res.json();
+        if (result.success) {
+          Toast.fire({
+            icon: 'success',
+            title: 'Brand unlisted successfully'
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          Toast.fire({
+            icon: 'error',
+            title: result.message || 'Failed to unlist brand'
+          });
+        }
+      } catch (error) {
+        Toast.fire({
+          icon: 'error',
+          title: 'Network error while unlisting'
+        });
+      }
+    });
+  });
+
+  document.querySelectorAll('.list-brand').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.preventDefault();
+      const id = btn.dataset.id;
+      try {
+        const res = await fetch(`/admin/brands/list/${id}`, { method: 'PATCH' });
+        const result = await res.json();
+        if (result.success) {
+          Toast.fire({
+            icon: 'success',
+            title: 'Brand listed successfully'
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          Toast.fire({
+            icon: 'error',
+            title: result.message || 'Failed to list brand'
+          });
+        }
+      } catch (error) {
+        Toast.fire({
+          icon: 'error',
+          title: 'Network error while listing'
+        });
+      }
+    });
+  });
+});
+</script>
+

@@ -117,7 +117,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <% if (user.isActive) { %>
                     <a
-                      href="/admin/block-user/<%= user._id %>"
+                      href="#"
                       class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 mr-2"
                       onclick="return blockUser(event, '<%= user._id %>')"
                     >
@@ -125,7 +125,7 @@
                     </a>
                   <% } else { %>
                     <a
-                      href="/admin/unblock-user/<%= user._id %>"
+                      href="#"
                       class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                       onclick="return unblockUser(event, '<%= user._id %>')"
                     >
@@ -229,7 +229,7 @@
   if (result.isConfirmed) {
     try {
       const response = await fetch(`/admin/block-user/${userId}`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -295,7 +295,7 @@ async function unblockUser(event, userId) {
   if (result.isConfirmed) {
     try {
       const response = await fetch(`/admin/unblock-user/${userId}`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'

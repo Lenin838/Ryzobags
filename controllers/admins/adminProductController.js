@@ -369,10 +369,10 @@ const productController = {
       const product = await Product.findById(req.params.id);
       product.isListed = !product.isListed;
       await product.save();
-      res.redirect('/admin/products');
+      return res.status(200).json({success: true});
     } catch (error) {
       console.error('Toggle product listing error:', error.message);
-      res.status(500).send('Server error');
+      res.status(500).json({success: false,message: "Internal server error"});
     }
   },
 };

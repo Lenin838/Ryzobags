@@ -7,8 +7,8 @@ categoryRouter.get('/categories',categoryController.getCategoryList);
 categoryRouter.get('/categories/add', categoryController.getAddCategory);
 categoryRouter.post('/categories/add', categoryController.postAddCategory);
 categoryRouter.get('/categories/edit/:id', categoryController.getEditCategory);
-categoryRouter.post('/categories/edit/:id', categoryController.postEditCategory);
-categoryRouter.get('/categories/unlist/:id', categoryController.unlistCategory);
-categoryRouter.get('/categories/list/:id', categoryController.listCategory);
+categoryRouter.put('/categories/edit/:id', categoryController.postEditCategory);
+categoryRouter.patch('/categories/unlist/:id', categoryController.unlistCategory);
+categoryRouter.patch('/categories/list/:id', categoryController.listCategory);
 
 module.exports = categoryRouter;

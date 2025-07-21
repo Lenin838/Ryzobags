@@ -217,21 +217,6 @@ const adminOrderController = {
             }
           }
 
-          const allItemsCancelled = order.items.every(i => i.status === 'cancelled');
-          const allItemsDelivered = order.items.every(i => i.status === 'delivered');
-          const allItemsReturned = order.items.every(i => i.status === 'returned');
-          const hasMixedStatuses = new Set(order.items.map(i => i.status)).size > 1;
-
-          if (allItemsCancelled) {
-            order.status = 'cancelled';
-          } else if (allItemsDelivered) {
-            order.status = 'delivered';
-          } else if (allItemsReturned) {
-            order.status = 'returned';
-          } else if (hasMixedStatuses) {
-            order.status = 'delivered';
-          }
-
         } else {
           if (status === 'shipped' && previousStatus !== 'shipped') {
             for (const item of order.items) {
@@ -329,6 +314,38 @@ const adminOrderController = {
           }
         }
 
+        // ALWAYS check and update order status based on item statuses (moved outside the if/else)
+        const allItemsCancelled = order.items.every(i => i.status === 'cancelled');
+        const allItemsDelivered = order.items.every(i => i.status === 'delivered');
+        const allItemsReturned = order.items.every(i => i.status === 'returned');
+        const hasMixedStatuses = new Set(order.items.map(i => i.status)).size > 1;
+
+        if (allItemsCancelled) {
+          order.status = 'cancelled';
+        } else if (allItemsDelivered) {
+          order.status = 'delivered';
+        } else if (allItemsReturned) {
+          order.status = 'returned';
+        } else if (hasMixedStatuses) {
+          // Find the status with the maximum count
+          const statusCount = {};
+          order.items.forEach(item => {
+            statusCount[item.status] = (statusCount[item.status] || 0) + 1;
+          });
+          
+          let maxCount = 0;
+          let maxStatus = 'processing'; // default fallback
+          
+          for (const [status, count] of Object.entries(statusCount)) {
+            if (count > maxCount) {
+              maxCount = count;
+              maxStatus = status;
+            }
+          }
+          
+          order.status = maxStatus;
+        }
+
         await order.save();
         return res.json({ message: `Order status updated to ${status}`, orderStatus: order.status });
       } catch (err) {
@@ -338,146 +355,224 @@ const adminOrderController = {
     },
 
     verifyReturnRequest: async (req, res) => {
-    try {
-      const { orderId } = req.params;
-      const { action } = req.body;
+      try {
+        const { orderId } = req.params;
+        const { action } = req.body;
 
-      console.log('Processing return request:', { orderId, action });
+        console.log('Processing return request:', { orderId, action });
 
-      if (!['approve', 'reject'].includes(action)) {
-        return res.status(400).json({ message: 'Invalid action' });
-      }
-
-      const order = await Order.findOne({ orderId }).populate('items.productId');
-      
-      if (!order) {
-        console.log('Order not found:', orderId);
-        return res.status(400).json({ message: 'Order not found' });
-      }
-
-      console.log('Order status:', order.status);
-
-      if (!['delivered', 'return request'].includes(order.status)) {
-        return res.status(400).json({ 
-          message: `Order not eligible for return. Current status: ${order.status}` 
-        });
-      }
-
-      const targetItems = order.items.filter(item => 
-        item.status === 'return request' || 
-        (item.requestQuantity !== undefined && item.requestQuantity > 0)
-      );
-
-      if (targetItems.length === 0) {
-        return res.status(400).json({ message: 'No items found with return requests' });
-      }
-
-      console.log(`Found ${targetItems.length} items with return requests`);
-      if (!order.returnRequest) {
-        order.returnRequest = {
-          isRequested: false,
-          reason: '',
-          requestedAt: null,
-          processedAt: null
-        };
-      }
-
-      if (action === 'approve') {
-        targetItems.forEach((item) => {
-          item.status = 'returned';
-          if (item.requestQuantity !== undefined) {
-            item.requestQuantity = 0;
-          }
-        });
-
-        const allItemsReturned = order.items.every(item => item.status === 'returned');
-        const hasReturnedItems = order.items.some(item => item.status === 'returned');
-        const hasDeliveredItems = order.items.some(item => item.status === 'delivered');
-        
-        if (allItemsReturned) {
-          order.status = 'returned';
-        } else if (hasReturnedItems && hasDeliveredItems) {
-          order.status = 'partially returned';
-        } else {
-          order.status = 'delivered';
+        if (!['approve', 'reject'].includes(action)) {
+          return res.status(400).json({ message: 'Invalid action' });
         }
-        
-        order.returnRequest.isRequested = false;
-        order.returnRequest.processedAt = new Date();
 
-        for (const item of targetItems) {
-          if (item.productId && item.size) {
-            try {
-              await Product.findByIdAndUpdate(item.productId._id || item.productId, {
-                $inc: { 'variants.$[variant].quantity': item.quantity },
-              }, {
-                arrayFilters: [{ 'variant.size': item.size }],
-              });
-              console.log(`Inventory restored for item: ${item.productId._id || item.productId}, size: ${item.size}, quantity: ${item.quantity}`);
-            } catch (inventoryError) {
-              console.error('Error updating inventory:', inventoryError);
+        // Fix 1: Use orderId field since the parameter is the human-readable order ID
+        const order = await Order.findOne({ orderId: orderId }).populate('items.productId');
+        
+        if (!order) {
+          console.log('Order not found:', orderId);
+          return res.status(400).json({ message: 'Order not found' });
+        }
+
+        console.log('Order status:', order.status);
+
+        // Fix 2: Focus on item-level validation instead of order-level status
+        // Remove the restrictive order status check and focus on returnable items
+        const targetItems = order.items.filter(item => 
+          item.status === 'return request' || 
+          item.itemStatus === 'return request' ||
+          (item.requestQuantity !== undefined && item.requestQuantity > 0)
+        );
+
+        if (targetItems.length === 0) {
+          return res.status(400).json({ message: 'No items found with return requests' });
+        }
+
+        console.log(`Found ${targetItems.length} items with return requests`);
+        
+        // Initialize returnRequest if it doesn't exist
+        if (!order.returnRequest) {
+          order.returnRequest = {
+            isRequested: false,
+            reason: '',
+            requestedAt: null,
+            processedAt: null
+          };
+        }
+
+        if (action === 'approve') {
+          targetItems.forEach((item) => {
+            item.status = 'returned';
+            item.itemStatus = 'returned';
+            if (item.requestQuantity !== undefined) {
+              item.requestQuantity = 0;
+            }
+          });
+
+          // Fix 3: Improved order status logic
+          const allItemsReturned = order.items.every(item => 
+            item.status === 'returned' || item.status === 'cancelled'
+          );
+          const hasReturnedItems = order.items.some(item => item.status === 'returned');
+          const hasDeliveredItems = order.items.some(item => 
+            item.status === 'delivered' || item.status === 'shipped' || item.status === 'processing'
+          );
+          
+          if (allItemsReturned) {
+            order.status = 'returned';
+          } else if (hasReturnedItems && hasDeliveredItems) {
+            order.status = 'partially returned';
+          }
+          // Don't change order status if it was already cancelled - keep it as is
+          
+          order.returnRequest.isRequested = false;
+          order.returnRequest.processedAt = new Date();
+
+          // Restore inventory for returned items
+          for (const item of targetItems) {
+            if (item.productId && item.size) {
+              try {
+                await Product.findByIdAndUpdate(item.productId._id || item.productId, {
+                  $inc: { 'variants.$[variant].quantity': item.quantity },
+                }, {
+                  arrayFilters: [{ 'variant.size': item.size }],
+                });
+                console.log(`Inventory restored for item: ${item.productId._id || item.productId}, size: ${item.size}, quantity: ${item.quantity}`);
+              } catch (inventoryError) {
+                console.error('Error updating inventory:', inventoryError);
+              }
             }
           }
-        }
 
-        const refundAmount = targetItems.reduce((total, item) => {
-          const itemPrice = item.itemSalePrice || (order.totalAmount / order.items.reduce((sum, i) => sum + i.quantity, 0));
-          return total + (itemPrice * item.quantity);
-        }, 0);
+          // Process refund
+          const refundAmount = targetItems.reduce((total, item) => {
+            const itemPrice = item.itemSalePrice || (item.price || 0);
+            return total + (itemPrice * item.quantity);
+          }, 0);
 
-        try {
-          const lastTx = await WalletTransaction.findOne({ userId: order.userId })
-            .sort({ createdAt: -1 })
-            .lean();
-          
-          const currentBalance = lastTx ? lastTx.wallet.balance : 0;
+          try {
+            const lastTx = await WalletTransaction.findOne({ userId: order.userId })
+              .sort({ createdAt: -1 })
+              .lean();
+            
+            const currentBalance = lastTx ? lastTx.wallet.balance : 0;
 
-          const transactionId = `REF_${orderId}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+            const transactionId = `REF_${orderId}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
-          const newTransaction = new WalletTransaction({
-            userId: order.userId,
-            transactionId: transactionId,
-            productId: orderId,
-            amount: refundAmount,
-            type: 'refund',
-            status: 'success',
-            reference: orderId,
-            description: `Refund for returned items in order ${orderId}`,
-            wallet: {
-              balance: currentBalance + refundAmount,
-              lastUpdated: new Date()
-            },
-            createdAt: new Date(),
+            const newTransaction = new WalletTransaction({
+              userId: order.userId,
+              transactionId: transactionId,
+              productId: orderId,
+              amount: refundAmount,
+              type: 'refund',
+              status: 'success',
+              reference: orderId,
+              description: `Refund for returned items in order ${orderId}`,
+              wallet: {
+                balance: currentBalance + refundAmount,
+                lastUpdated: new Date()
+              },
+              createdAt: new Date(),
+            });
+
+            await newTransaction.save();
+            console.log('Wallet credited successfully:', {
+              transactionId,
+              amount: refundAmount,
+              newBalance: currentBalance + refundAmount
+            });
+
+            // Send approval email
+            try {
+              const user = await User.findById(order.userId);
+              if (user && user.email) {
+                const returnedItemsDetails = targetItems.map(item => 
+                  `${item.productId.name || 'Product'} (${item.size}) - Qty: ${item.quantity}`
+                ).join('<br>');
+
+                await transporter.sendMail({
+                  from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
+                  to: user.email,
+                  subject: 'Order Return Approved - RyzoBags',
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <h2 style="color: #059669;">Order Return Approved</h2>
+                      <p>Your return request for the following items in order <strong>${orderId}</strong> has been approved:</p>
+                      <div style="background-color: #f3f4f6; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        ${returnedItemsDetails}
+                      </div>
+                      <p>A refund of <strong>₹${refundAmount}</strong> has been credited to your wallet.</p>
+                      <p>Current wallet balance: <strong>₹${newTransaction.wallet.balance}</strong></p>
+                      <p>Transaction ID: <strong>${transactionId}</strong></p>
+                      <p style="margin-top: 30px; color: #6b7280;">
+                        Best regards,<br>
+                        RyzoBags Team
+                      </p>
+                    </div>
+                  `,
+                });
+              }
+            } catch (emailError) {
+              console.error('Failed to send return approval email:', emailError);
+            }
+
+          } catch (walletError) {
+            console.error('Error processing wallet transaction:', walletError);
+            
+            if (walletError.code === 11000) {
+              return res.status(500).json({ 
+                message: 'Transaction ID conflict. Please try again.' 
+              });
+            }
+            
+            return res.status(500).json({ 
+              message: 'Error processing refund. Please try again.',
+              error: process.env.NODE_ENV === 'development' ? walletError.message : undefined
+            });
+          }
+
+        } else { // reject
+          targetItems.forEach((item) => {
+            // For rejected returns, restore the original status if possible
+            if (item.status === 'return request') {
+              item.status = item.originalStatus || 'delivered';
+            }
+            item.itemStatus = item.originalStatus || 'delivered';
+            if (item.requestQuantity !== undefined) {
+              item.requestQuantity = 0;
+            }
           });
 
-          await newTransaction.save();
-          console.log('Wallet credited successfully:', {
-            transactionId,
-            amount: refundAmount,
-            newBalance: currentBalance + refundAmount
-          });
+          // Check if there are other pending return requests
+          const hasOtherReturnRequests = order.items.some(item => 
+            !targetItems.includes(item) && 
+            (item.status === 'return request' || item.itemStatus === 'return request')
+          );
 
+          if (!hasOtherReturnRequests) {
+            order.returnRequest.isRequested = false;
+            order.returnRequest.processedAt = new Date();
+          }
+
+          // Send rejection email
           try {
             const user = await User.findById(order.userId);
             if (user && user.email) {
-              const returnedItemsDetails = targetItems.map(item => 
+              const rejectedItemsDetails = targetItems.map(item => 
                 `${item.productId.name || 'Product'} (${item.size}) - Qty: ${item.quantity}`
               ).join('<br>');
 
               await transporter.sendMail({
                 from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
                 to: user.email,
-                subject: 'Order Return Approved - RyzoBags',
+                subject: 'Order Return Rejected - RyzoBags',
                 html: `
                   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #059669;">Order Return Approved</h2>
-                    <p>Your return request for the following items in order <strong>${orderId}</strong> has been approved:</p>
+                    <h2 style="color: #dc2626;">Order Return Rejected</h2>
+                    <p>Your return request for the following items in order <strong>${orderId}</strong> has been rejected:</p>
                     <div style="background-color: #f3f4f6; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                      ${returnedItemsDetails}
+                      ${rejectedItemsDetails}
                     </div>
-                    <p>A refund of <strong>$${refundAmount}</strong> has been credited to your wallet.</p>
-                    <p>Current wallet balance: <strong>$${newTransaction.wallet.balance}</strong></p>
-                    <p>Transaction ID: <strong>${transactionId}</strong></p>
+                    <p>Please contact support for more details.</p>
                     <p style="margin-top: 30px; color: #6b7280;">
                       Best regards,<br>
                       RyzoBags Team
@@ -487,96 +582,33 @@ const adminOrderController = {
               });
             }
           } catch (emailError) {
-            console.error('Failed to send return approval email:', emailError);
+            console.error('Failed to send return rejection email:', emailError);
           }
-
-        } catch (walletError) {
-          console.error('Error processing wallet transaction:', walletError);
-          
-          if (walletError.code === 11000) {
-            return res.status(500).json({ 
-              message: 'Transaction ID conflict. Please try again.' 
-            });
-          }
-          
-          return res.status(500).json({ 
-            message: 'Error processing refund. Please try again.',
-            error: process.env.NODE_ENV === 'development' ? walletError.message : undefined
-          });
         }
 
-      } else { 
-        targetItems.forEach((item) => {
-          item.status = 'delivered';
-          if (item.requestQuantity !== undefined) {
-            item.requestQuantity = 0;
-          }
+        await order.save();
+        console.log('Order saved successfully');
+        
+        return res.json({ 
+          message: `Return request ${action}d successfully for ${targetItems.length} item(s)`,
+          newStatus: order.status,
+          processedItems: targetItems.length,
+          returnedItems: targetItems.map(item => ({
+            productId: item.productId._id || item.productId,
+            size: item.size,
+            quantity: item.quantity,
+            status: item.status
+          }))
         });
 
-        const hasOtherReturnRequests = order.items.some(item => 
-          !targetItems.includes(item) && item.status === 'return request'
-        );
-
-        if (!hasOtherReturnRequests) {
-          order.status = 'delivered';
-          order.returnRequest.isRequested = false;
-          order.returnRequest.processedAt = new Date();
-        }
-
-        try {
-          const user = await User.findById(order.userId);
-          if (user && user.email) {
-            const rejectedItemsDetails = targetItems.map(item => 
-              `${item.productId.name || 'Product'} (${item.size}) - Qty: ${item.quantity}`
-            ).join('<br>');
-
-            await transporter.sendMail({
-              from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
-              to: user.email,
-              subject: 'Order Return Rejected - RyzoBags',
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h2 style="color: #dc2626;">Order Return Rejected</h2>
-                  <p>Your return request for the following items in order <strong>${orderId}</strong> has been rejected:</p>
-                  <div style="background-color: #f3f4f6; padding: 15px; margin: 15px 0; border-radius: 5px;">
-                    ${rejectedItemsDetails}
-                  </div>
-                  <p>Please contact support for more details.</p>
-                  <p style="margin-top: 30px; color: #6b7280;">
-                    Best regards,<br>
-                    RyzoBags Team
-                  </p>
-                </div>
-              `,
-            });
-          }
-        } catch (emailError) {
-          console.error('Failed to send return rejection email:', emailError);
-        }
+      } catch (err) {
+        console.error('Error in verifyReturnRequest:', err);
+        return res.status(500).json({ 
+          message: 'Error processing return request',
+          error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
       }
-
-      await order.save();
-      console.log('Order saved successfully');
-      
-      return res.json({ 
-        message: `Return request ${action}d successfully for ${targetItems.length} item(s)`,
-        newStatus: order.status,
-        processedItems: targetItems.length,
-        returnedItems: targetItems.map(item => ({
-          productId: item.productId._id || item.productId,
-          size: item.size,
-          quantity: item.quantity
-        }))
-      });
-
-    } catch (err) {
-      console.error('Error in verifyReturnRequest:', err);
-      return res.status(500).json({ 
-        message: 'Error processing return request',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
-      });
     }
-    },
 };
 
 module.exports = adminOrderController;

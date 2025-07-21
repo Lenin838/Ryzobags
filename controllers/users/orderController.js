@@ -54,7 +54,8 @@ const orderController = {
 
     cancelOrder: async (req, res) => {
         try {
-            const { orderId, reason } = req.body;
+            
+            const {orderId,reason} = req.body;
             const order = await Order.findOne({ orderId, userId: req.user._id });
 
             if (!order) {
@@ -139,7 +140,8 @@ const orderController = {
 
     cancelOrderItem: async (req, res) => {
         try {
-            const { orderId, itemId, reason } = req.body;
+            
+            const { orderId,itemId, reason } = req.body;
             const order = await Order.findOne({ orderId, userId: req.user._id });
 
             if (!order) {
@@ -361,14 +363,9 @@ const orderController = {
                 return res.status(404).json({ success: false, message: 'Order not found' });
             }
             
-            if (!['delivered', 'shipped', 'processing'].includes(order.status.toLowerCase())) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Returns can only be requested for delivered, shipped, or processing orders' 
-                });
-            }
-            
+            // Check if there are any items that can be returned (instead of checking order status)
             const returnableItems = order.items.filter(item => 
+                ['delivered', 'shipped', 'processing'].includes(item.status?.toLowerCase()) &&
                 item.status !== 'cancelled' && 
                 item.itemStatus !== 'return request' && 
                 item.status !== 'return request'
@@ -377,12 +374,14 @@ const orderController = {
             if (returnableItems.length === 0) {
                 return res.status(400).json({ 
                     success: false, 
-                    message: 'No items available for return in this order' 
+                    message: 'No items available for return in this order. Items must be delivered, shipped, or processing to be returned.' 
                 });
             }
             
+            // Update only the returnable items
             order.items.forEach(item => {
-                if (item.status !== 'cancelled' && 
+                if (['delivered', 'shipped', 'processing'].includes(item.status?.toLowerCase()) &&
+                    item.status !== 'cancelled' && 
                     item.itemStatus !== 'return request' && 
                     item.status !== 'return request') {
                     item.itemStatus = 'return request';
@@ -404,7 +403,7 @@ const orderController = {
             
             res.json({ 
                 success: true, 
-                message: 'Return request for entire order submitted successfully',
+                message: 'Return request for available items submitted successfully',
                 returnedItemsCount: returnableItems.length
             });
             
@@ -432,25 +431,19 @@ const orderController = {
                 return res.status(404).json({ success: false, message: 'Order not found' });
             }
             
-            if (!['delivered', 'shipped'].includes(order.status.toLowerCase())) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Returns can only be requested for delivered, shipped, or processing orders. Current status: ${order.status}` 
-                });
-            }
-            
             const itemIndex = order.items.findIndex(item => {
                 const itemProductId = item.productId._id ? item.productId._id.toString() : item.productId.toString();
                 return itemProductId === productId.toString() && 
-                       item.status !== 'cancelled' &&
-                       item.itemStatus !== 'return request' &&
-                       item.status !== 'return request';
+                    ['delivered', 'shipped', 'processing'].includes(item.status?.toLowerCase()) &&
+                    item.status !== 'cancelled' &&
+                    item.itemStatus !== 'return request' &&
+                    item.status !== 'return request';
             });
             
             if (itemIndex === -1) {
                 return res.status(404).json({ 
                     success: false, 
-                    message: 'Item not found or not eligible for return' 
+                    message: 'Item not found or not eligible for return. Items must be delivered, shipped, or processing to be returned.' 
                 });
             }
             

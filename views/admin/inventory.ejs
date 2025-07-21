@@ -157,7 +157,7 @@
 
       try {
         const response = await fetch(`/admin/inventory/update/${productId}`, {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'CSRF-Token': '<%= csrfToken %>',
@@ -168,7 +168,6 @@
         const result = await response.json();
         if (response.ok) {
           showAlert(result.message, 'success');
-          // Update stock display
           const stockCell = stockInput.parentElement.parentElement.previousElementSibling;
           stockCell.textContent = `${quantity} ${quantity <= '<%= lowStockThreshold %>' ? '(Low Stock)' : ''}`;
           stockCell.className = `px-6 py-4 whitespace-nowrap text-sm ${quantity <= '<%= lowStockThreshold %>' ? 'text-red-600 font-bold' : 'text-gray-500'}`;

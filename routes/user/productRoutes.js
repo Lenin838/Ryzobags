@@ -19,11 +19,10 @@ userProductRouter.get('/checkout', isAuthenticated, productController.loadChecko
 userProductRouter.post('/checkout', isAuthenticated, productController.loadCheckout);
 userProductRouter.post('/orderPlaced', isAuthenticated, productController.placeOrder);
 userProductRouter.post('/verify-payment', isAuthenticated, productController.verifyPayment);
-userProductRouter.post('/paymentConfirm', isAuthenticated, productController.paymentConfirm);
 userProductRouter.get('/orderSuccess', isAuthenticated, productController.orderSuccess);
 userProductRouter.get('/orderFailure',isAuthenticated,productController.orderFailure);
 userProductRouter.post('/applyCoupon',isAuthenticated,productController.applyCoupon);
-userProductRouter.post('/payment-failure',isAuthenticated, productController.paymentFailure);
-userProductRouter.post('/retry-payment/:orderId', isAuthenticated,productController.retryPayment);
+userProductRouter.put('/payment-failure',isAuthenticated, productController.paymentFailure);
+userProductRouter.put('/retry-payment/:orderId', isAuthenticated,productController.retryPayment);
 
 module.exports = userProductRouter;

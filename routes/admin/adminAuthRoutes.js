@@ -27,10 +27,9 @@ adminRouter.post("/login" ,isAdminLoggedOut, adminController.verifyLogin);
 
 adminRouter.use(isAdminLoggedIn);
 adminRouter.get("/logout",adminController.adminLogout);
-// adminRouter.get('/dashboard',adminController.loadHome);
 adminRouter.get('/users-management',adminController.getUsers);
-adminRouter.post('/block-user/:id',adminController.blockUser);
-adminRouter.post('/unblock-user/:id',adminController.unblockUser);
+adminRouter.patch('/block-user/:id',adminController.blockUser);
+adminRouter.patch('/unblock-user/:id',adminController.unblockUser);
 
 
 

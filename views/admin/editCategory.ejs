@@ -8,7 +8,7 @@
       <div class="bg-red-100 text-red-700 p-2 rounded mb-4"><%= error %></div>
     <% } %>
     
-    <form action="/admin/categories/edit/<%= category._id %>" method="POST" class="space-y-6">
+    <form id="editCategoryForm" "space-y-6">
       <!-- Category Name Field -->
       <div>
         <label for="name" class="block text-lg font-medium text-gray-700">Category Name</label>
@@ -44,3 +44,60 @@
       </div>
     </form>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.getElementById("editCategoryForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const categoryId = "<%= category._id %>";
+    const name = document.getElementById("name").value;
+    const description = document.getElementById("description").value;
+    const discountPercentage = document.getElementById("discountPercentage").value;
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      timer: 2000,
+      showConfirmButton: false,
+      timerProgressBar: true,
+    });
+
+    try {
+      const response = await fetch(`/admin/categories/edit/${categoryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, description, discountPercentage })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: result.message || "Category updated successfully",
+          timer: 2000,
+          showConfirmButton: false
+        }).then(() => {
+          window.location.href = "/admin/categories";
+        });
+      } else {
+        Toast.fire({
+          icon: 'error',
+          title: result.message || "Update failed"
+        });
+      }
+    } catch (err) {
+      Toast.fire({
+        icon: 'error',
+        title: 'Something went wrong'
+      });
+      console.error(err);
+    }
+  });
+</script>
+
+

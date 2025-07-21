@@ -191,8 +191,7 @@ const userProfileController = {
       const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
 
       if (!name || !city || !state || !pincode || !phone) {
-        req.flash("error", "All required fields must be filled");
-        return res.redirect("/user/profile/address/add");
+        return res.status(400).json({success:false,message:"All required feilds must be filled"});
       }
 
       const addressData = {
@@ -221,12 +220,10 @@ const userProfileController = {
         });
       }
 
-      req.flash("success", "Address added successfully");
-      res.redirect("/user/profile?tab=addresses");
+      return res.status(200).json({success:true,message:"Address added successfully!"});
     } catch (err) {
       console.error(err);
-      req.flash("error", "Error adding address");
-      res.redirect("/user/profile/address/add");
+      return res.status(500).json({success:false,message:"Internal server error"});
     }
   },
 
@@ -266,21 +263,18 @@ const userProfileController = {
       const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
 
       if (!name || !city || !state || !pincode || !phone) {
-        req.flash("error", "All required fields must be filled");
-        return res.redirect(`/user/profile/address/edit/${id}`);
+        return res.status(400).json({success:false,message:"All required feilds are must be filled"});
       }
 
       const addressDoc = await Address.findOne({ userId: req.user._id });
       if (!addressDoc) {
-        req.flash("error", "No addresses found");
-        return res.redirect("/user/profile?tab=addresses");
+        return res.status(400).json({success:false,message:"No addresses found"});
       }
 
       const addressIndex = addressDoc.address.findIndex(addr => addr._id.toString() === id);
       
       if (addressIndex === -1) {
-        req.flash("error", "Address not found");
-        return res.redirect("/user/profile?tab=addresses");
+       return res.status(400).json({success:false,message:"Address not found"});
       }
 
       if (isDefault === "on") {
@@ -303,12 +297,10 @@ const userProfileController = {
 
       addressDoc.markModified('address');
       await addressDoc.save();
-      req.flash("success", "Address updated successfully");
-      res.redirect("/user/profile?tab=addresses");
+      return res.status(200).json({success:true,message:"Address updated Successfully!"});
     } catch (err) {
       console.error(err);
-      req.flash("error", "Error updating address");
-      res.redirect(`/user/profile/address/edit/${id}`);
+      return res.status(500).json({success:false,message:"Internal server error"});
     }
   },
 
@@ -474,12 +466,10 @@ const userProfileController = {
         }
 
         await User.findByIdAndUpdate(req.user._id, updates);
-        req.flash("success", "Profile updated successfully");
-        res.redirect("/user/profile");
+        return res.status(200).json({success: true,message:"Profile updated successfully!"});
       } catch (err) {
         console.error(err);
-        req.flash("error", "Error updating profile");
-        res.redirect("/user/profile/edit");
+        return res.status(500).json({success:false,message:"Internal server error"});
       }
     },
   ],
@@ -1231,13 +1221,6 @@ const userProfileController = {
       req.flash("error", "Unable to load referrals");
       res.redirect("/user/profile");
     }
-  },
-
-  logout: (req, res) => {
-    req.logout((err) => {
-      if (err) console.error(err);
-      res.redirect("/user/login");
-    });
   },
 };
 

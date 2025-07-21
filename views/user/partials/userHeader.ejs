@@ -152,11 +152,12 @@
           </a>
           
           <!-- Logout Button -->
-          <a href="/user/logout">
-            <button class="bg-white border border-primary text-primary hover:bg-primary hover:text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-300">
+          <form action="/user/logout" method="POST" class="inline">
+            <button type="submit"
+              class="bg-white border border-primary text-primary hover:bg-primary hover:text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-300">
               Log Out
             </button>
-          </a>
+          </form>
         </div>
       </div>
     </div>

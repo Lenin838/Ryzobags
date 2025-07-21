@@ -38,43 +38,59 @@
       <% } %>
       <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
         <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4"><%= address._id ? 'Edit Address' : 'Add Address' %></h5>
-        <form action="<%= action %>" method="POST" id="addressForm" class="space-y-3 sm:space-y-4">
+          <form id="addressForm" 
+            data-action="<%= address._id ? `/user/profile/address/edit/${address._id}` : '/user/profile/address/add' %>" 
+            class="space-y-3 sm:space-y-4">
           <div>
             <label for="name" class="block text-xs sm:text-sm font-medium text-gray-700">Name *</label>
-            <input type="text" id="name" name="name" value="<%= address.name || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <input type="text" id="name" name="name" value="<%= address.name || '' %>" 
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
             <p class="text-red-500 text-xs mt-1 hidden" id="nameError">Name is required (3-50 characters)</p>
           </div>
           <div>
             <label for="landMark" class="block text-xs sm:text-sm font-medium text-gray-700">Landmark</label>
-            <input type="text" id="landMark" name="landMark" value="<%= address.landMark || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <input type="text" id="landMark" name="landMark" value="<%= address.landMark || '' %>" 
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
           </div>
           <div>
             <label for="city" class="block text-xs sm:text-sm font-medium text-gray-700">City *</label>
-            <input type="text" id="city" name="city" value="<%= address.city || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <input type="text" id="city" name="city" value="<%= address.city || '' %>" 
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
             <p class="text-red-500 text-xs mt-1 hidden" id="cityError">City is required (2-50 characters)</p>
           </div>
           <div>
             <label for="state" class="block text-xs sm:text-sm font-medium text-gray-700">State *</label>
-            <input type="text" id="state" name="state" value="<%= address.state || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <input type="text" id="state" name="state" value="<%= address.state || '' %>" 
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
             <p class="text-red-500 text-xs mt-1 hidden" id="stateError">State is required (2-50 characters)</p>
           </div>
           <div>
             <label for="pincode" class="block text-xs sm:text-sm font-medium text-gray-700">Pincode *</label>
-            <input type="text" id="pincode" name="pincode" value="<%= address.pincode || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <input type="text" id="pincode" name="pincode" value="<%= address.pincode || '' %>" 
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
             <p class="text-red-500 text-xs mt-1 hidden" id="pincodeError">Pincode must be 6 digits</p>
           </div>
           <div>
             <label for="phone" class="block text-xs sm:text-sm font-medium text-gray-700">Phone *</label>
-            <input type="tel" id="phone" name="phone" value="<%= address.phone || '' %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <input type="tel" id="phone" name="phone" value="<%= address.phone || '' %>" 
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
             <p class="text-red-500 text-xs mt-1 hidden" id="phoneError">Phone must be 10 digits</p>
           </div>
           <div>
             <label for="addressType" class="block text-xs sm:text-sm font-medium text-gray-700">Address Type</label>
-            <select id="addressType" name="addressType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <select id="addressType" name="addressType" 
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
               <option value="Home" <%= address.addressType === 'Home' ? 'selected' : '' %>>Home</option>
               <option value="Work" <%= address.addressType === 'Work' ? 'selected' : '' %>>Work</option>
               <option value="Other" <%= address.addressType === 'Other' ? 'selected' : '' %>>Other</option>
             </select>
+          </div>
+          <div>
+            <label class="flex items-center">
+              <input type="checkbox" id="isDefault" name="isDefault" <%= address.isDefault ? 'checked' : '' %>
+                     class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <span class="ml-2 text-xs sm:text-sm text-gray-700">Set as default address</span>
+            </label>
           </div>
           <div class="flex justify-end space-x-3 sm:space-x-4">
             <a href="/user/profile?tab=addresses" class="text-gray-600 hover:text-gray-800 text-xs sm:text-sm">Cancel</a>
@@ -84,6 +100,7 @@
       </div>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
@@ -93,18 +110,25 @@
       const sidebar = document.getElementById("sidebar");
       const addressForm = document.getElementById("addressForm");
 
-      mobileMenuToggle.addEventListener("click", () => {
-        mobileMenu.classList.toggle("hidden");
-      });
+      // Mobile menu handlers
+      if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener("click", () => {
+          mobileMenu.classList.toggle("hidden");
+        });
+      }
 
-      closeMobileMenu.addEventListener("click", () => {
-        mobileMenu.classList.add("hidden");
-      });
+      if (closeMobileMenu) {
+        closeMobileMenu.addEventListener("click", () => {
+          mobileMenu.classList.add("hidden");
+        });
+      }
 
-      toggleSidebar.addEventListener("click", () => {
-        sidebar.classList.toggle("hidden");
-        mobileMenu.classList.add("hidden");
-      });
+      if (toggleSidebar) {
+        toggleSidebar.addEventListener("click", () => {
+          sidebar.classList.toggle("hidden");
+          if (mobileMenu) mobileMenu.classList.add("hidden");
+        });
+      }
 
       window.addEventListener("click", (e) => {
         if (e.target === mobileMenu) {
@@ -112,8 +136,8 @@
         }
       });
 
-      // Form validation
-      addressForm.addEventListener("submit", (e) => {
+      // Form validation and submission
+      addressForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         let isValid = true;
 
@@ -156,7 +180,96 @@
         }
 
         if (isValid) {
-          addressForm.submit();
+          try {
+            // Show loading state
+            const submitButton = document.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Saving...';
+            submitButton.disabled = true;
+
+            // Prepare form data
+            const formData = new FormData(addressForm);
+            const data = {};
+            
+            // Convert FormData to object
+            formData.forEach((value, key) => {
+              data[key] = value;
+            });
+
+            // Handle checkbox for isDefault
+            data.isDefault = document.getElementById("isDefault").checked;
+
+            const url = addressForm.getAttribute("data-action");
+            const method = url.includes("/edit/") ? "PUT" : "POST";
+
+            console.log('Sending data:', data); // Debug log
+            console.log('URL:', url, 'Method:', method); // Debug log
+
+            const response = await fetch(url, {
+              method,
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            console.log('Server response:', result); // Debug log
+
+            if (result.success) {
+              Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: result.message || 'Address saved successfully!',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                  toast.addEventListener('mouseenter', Swal.stopTimer);
+                  toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+              });
+
+              setTimeout(() => {
+                window.location.href = "/user/profile?tab=addresses";
+              }, 1000);
+            } else {
+              // Show error toast
+              Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: result.message || 'Failed to save address',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+              });
+            }
+
+            // Reset button state
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+
+          } catch (err) {
+            console.error("Request error:", err);
+            
+            // Reset button state
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.textContent = 'Save Address';
+            submitButton.disabled = false;
+            
+            // Show network error toast
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'error',
+              title: 'Network error occurred',
+              showConfirmButton: false,
+              timer: 3000,
+              timerProgressBar: true
+            });
+          }
         }
       });
     });

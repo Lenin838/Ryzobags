@@ -91,8 +91,7 @@ const brandController = {
           });
       
           if (duplicate) {
-            req.flash('error', 'Another brand with the same name already exists');
-            return res.redirect(`/admin/brands/edit/${brandId}`);
+            return res.status(400).json({success: false, message:"Another brand with the same name already exists"});
           }
       
           await Brand.findByIdAndUpdate(brandId, {
@@ -100,32 +99,30 @@ const brandController = {
             description,
           });
       
-          req.flash('success', 'Brand updated successfully');
-          res.redirect('/admin/brands');
+         return res.status(200).json({success:true,message:"Brand updated successfully"});
         } catch (error) {
           console.error('Error updating brand:', error);
-          req.flash('error', 'Internal server error');
-          res.redirect(`/admin/brands/edit/${req.params.id}`);
+          return res.status(500).json({success: false, message: "Internal Server error"});
         }
     },
       
     unlistedBrand: async (req,res) => {
         try {
             await Brand.findByIdAndUpdate(req.params.id,{isActive:false});
-            res.redirect('/admin/brands');
+            return res.status(200).json({success: true});
         } catch (error) {
             console.error('Error unlisting brand:',error);
-            res.status(500).send('Internal server error');
+            res.status(500).json({success: false,message:'Internal server error'});
         }
     },
 
     listBrand: async (req,res) => {
         try {
             await Brand.findByIdAndUpdate(req.params.id,{isActive:true});
-            res.redirect('/admin/brands');
+            return res.status(200).json({success: true})
         } catch (error) {
             console.error('Error listing brand:',error);
-            res.status(500).send('Internal server error');
+            res.status(500).json({success:false,message:'Internal server error'});
         }
     }
 };

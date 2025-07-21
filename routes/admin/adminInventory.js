@@ -4,6 +4,6 @@ const adminInventoryController = require('../../controllers/admins/adminInventor
 const { isAdminLoggedIn } = require('../../middlewares/adminAuth');
 
 adminInventoryRouter.get('/inventory', isAdminLoggedIn, adminInventoryController.getInventory);
-adminInventoryRouter.post('/inventory/update/:id', isAdminLoggedIn, adminInventoryController.updateStock);
+adminInventoryRouter.put('/inventory/update/:id', isAdminLoggedIn, adminInventoryController.updateStock);
 
 module.exports = adminInventoryRouter;

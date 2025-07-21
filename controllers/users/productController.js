@@ -156,14 +156,30 @@ const productController = {
           return {
             ...variant.toObject(),
             discountedPrice,
+            hasStock: variant.quantity > 0,
+            stockCount: variant.quantity
           };
         });
+
+        const totalStock = variants.reduce((total,variant)=>total+variant.quantity,0);
+        const hasAnyStock = variants.some(variant => variant.quantity > 0);
+
+        const stockPerSize = variants.map(variant => ({
+          size: variant.size,
+          hasStock: variant.quantity > 0,
+          quantity: variant.quantity
+        }));
 
         return {
           ...product.toObject(),
           variants,
+          totalStock,
+          hasAnyStock,
+          stockPerSize,
+          isOutOfStock: totalStock === 0
         };
       });
+
 
     if (hasPriceFilter) {
       validProducts = validProducts.filter(product => {
@@ -266,13 +282,27 @@ const productController = {
             return {
                 ...variant,
                 discountedPrice,
+                hasStock: variant.quantity > 0,
+                stockCount: variant.quantity
             };
         });
+
 
         const stockPerVariant = product.variants.map((variant) => ({
             size: variant.size,
             hasStock: variant.quantity > 0,
+            quantity: variant.quantity,
+            stockStatus: variant.quantity === 0?'out-of-stock':variant.quantity < 5?'low-stock':'in-stock'
         }));
+
+        const totalStock = product.variants.reduce((total,variant)=>total+variant.quantity,0);
+        const hasAnyStock = product.variants.some(variant => variant.quantity > 0);
+        const isCompletelyOutOfStock = totalStock === 0;
+
+        product.totalStock = totalStock
+        product.hasAnyStock = hasAnyStock
+        product.isOutOfStock = isCompletelyOutOfStock
+        product.stockPerVariant = stockPerVariant
 
         let relatedProducts = [];
         if (product.category) {
@@ -296,8 +326,17 @@ const productController = {
                     return {
                         ...variant,
                         discountedPrice,
+                        hasStock: variant.quantity > 0,
+                        stockCount: variant.quantity
                     };
                 });
+
+                const totalStock = relatedProduct.variants.reduce((total,variant)=>total+variant.quantity,0);
+                const hasAnyStock = relatedProduct.variants.some(variant => variant.quantity>0);
+
+                relatedProduct.totalStock = totalStock;
+                relatedProduct.hasAnyStock = hasAnyStock;
+                relatedProduct.isOutOfStock = totalStock === 0;
 
                 return relatedProduct;
             });
@@ -1097,7 +1136,7 @@ const productController = {
         }
 
         const selectedAddress = userAddressDoc.address.find(
-          (addr) => addr._id.toString() === addressId && addr.status === "active"
+          (addr) => addr._id.toString() === addressId && addr?.status === "active"
         );
         
         if (!selectedAddress) {
@@ -1410,50 +1449,6 @@ const productController = {
           success: false,
           message: err.message || "Failed to process order",
         });
-      }
-    },
-
-    paymentConfirm: async (req,res) => {
-      try{
-        const {orderId,status} = req.body;
-
-        if(!mongoose.Types.ObjectId.isValid(orderId)){
-          return res.status(400).json({success: false, message: "Invalid order ID"});
-        }
-
-        if(!["pending","completed","failed"].includes(status)){
-          return res.status(400).json({success: false, message: "Invalid status"});
-        }
-
-        const order = await Order.findById(orderId);
-        if(!order){
-          return res.status(404).json({success: false, message:"order not found"});
-        }
-
-        const updateData = {
-          paymentStatus: status,
-          updatedAt: new Date(),
-        };
-
-        if(status === "failed"){
-          updateData.status = "failed";
-          updateData.failureReason = "Payment confirmation failed";
-          updateData.paymentFailureReason = "Payment confirmation failed";
-          updateData.paymentFailureDate = new Date();
-
-          await restoreOrderStock(order);
-        }else if(status === "completed"){
-          updateData.status = "processing";
-          updateData.isPaymentVerified = true;
-          updateData.paymentDate = new Date();
-          updateData.amountPaid = order.totalAmount;
-        }
-
-        await Order.findByIdAndUpdate(orderId, updateData);
-        res.status(200).json({success: true, message: "Payment updated"});
-      }catch (err){
-        console.error("Error updating Payment:",err);
-        res.status(500).json({success: false,message:"Error updating payment"});
       }
     },
 

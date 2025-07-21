@@ -39,9 +39,9 @@ userRouter.post('/login', isNotAuthenticated, userController.verifyLogin);
 userRouter.get('/forgot-password', isNotAuthenticated, userController.loadForgotPassword);
 userRouter.post('/forgot-password', isNotAuthenticated, userController.forgotPassword);
 userRouter.get('/reset-password/:token', isNotAuthenticated, userController.loadResetPassword);
-userRouter.post('/reset-password/:token', isNotAuthenticated, userController.resetPassword);
+userRouter.put('/reset-password/:token', isNotAuthenticated, userController.resetPassword);
 
 userRouter.get('/home', userController.loadHomepage);
-userRouter.get('/logout', userController.loadLogout);
+userRouter.post('/logout', userController.loadLogout);
 
 module.exports = userRouter;

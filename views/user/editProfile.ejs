@@ -55,7 +55,7 @@
         <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Edit Profile</h5>
         
         <!-- Profile Form -->
-        <form action="/user/profile/edit" method="POST" enctype="multipart/form-data">
+        <form id="editProfileForm">
           <div class="mb-3 sm:mb-4">
             <label for="fullname" class="block text-xs sm:text-sm font-medium text-gray-700">Full Name</label>
             <input type="text" name="fullname" id="fullname" value="<%= user.fullname %>" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 sm:py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm" required>
@@ -127,7 +127,7 @@
       </div>
     </div>
   </div>
-  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // Element references
@@ -317,6 +317,58 @@
         }
       });
     });
+
+    document.getElementById("editProfileForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    try {
+        const res = await fetch("/user/profile/edit", {
+            method: "PUT",
+            body: formData,
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            // Success toast notification
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Profile updated successfully!',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            // Error toast notification
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Error: ' + result.message,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+    } catch (error) {
+        // Network error toast notification
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Network error. Please try again.',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        console.error('Error:', error);
+    }
+});
   </script>
 </body>
 </html>
