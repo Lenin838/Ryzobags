@@ -44,13 +44,13 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-              <% if (cart && cart.items && cart.items.length > 0) { %>
-                <% for (let i = 0; i < cart.items.length; i++) { %>
-                  <% if (cart.items[i].productId) { %>
-                    <% const item = cart.items[i]; %>
-                    <% const product = item.productId; %>
-                    <% const variant = item.variant; %>
-                    <% const price = item.finalPrice || 0; %>
+            <% if (cart && cart.items && cart.items.length > 0) { %>
+              <% for (let i = 0; i < cart.items.length; i++) { %>
+                <% if (cart.items[i].productId) { %>
+                  <% const item = cart.items[i]; %>
+                  <% const product = item.productId; %>
+                  <% const variant = item.variant; %>
+                  <% const price = item.finalPrice || 0; %>
                   <tr class="hover:bg-gray-50 transition-colors">
                     <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                       <img class="h-12 w-12 sm:h-16 sm:w-16 object-cover rounded" src="<%= product.mainImage && product.mainImage.length > 0 ? product.mainImage : '/img/placeholder.jpg' %>" alt="<%= product.name %>" />
@@ -71,18 +71,18 @@
                       ₹<%= price * item.quantity %>
                     </td>
                   </tr>
-                  <% } else { %>
-                    <tr>
-                      <td colspan="6" class="px-2 sm:px-6 py-2 sm:py-4 text-center text-xs sm:text-sm text-gray-500">Invalid product data</td>
-                    </tr>
-                  <% } %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="6" class="px-2 sm:px-6 py-2 sm:py-4 text-center text-xs sm:text-sm text-gray-500">Invalid product data</td>
+                  </tr>
                 <% } %>
-              <% } else { %>
-                <tr>
-                  <td colspan="6" class="px-2 sm:px-6 py-2 sm:py-4 text-center text-xs sm:text-sm text-gray-500">No products found</td>
-                </tr>
               <% } %>
-            </tbody>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="px-2 sm:px-6 py-2 sm:py-4 text-center text-xs sm:text-sm text-gray-500">No products found</td>
+              </tr>
+            <% } %>
+          </tbody>
         </table>
       </div>
     </div>
@@ -123,11 +123,11 @@
                   </div>
                 </div>
               <% }) %>
-              <% } else { %>
-                <div class="col-span-2 border border-gray-200 rounded-lg p-3 sm:p-4 text-center text-xs sm:text-sm text-gray-500">
-                  No address found
-                </div>
-              <% } %>
+            <% } else { %>
+              <div class="col-span-2 border border-gray-200 rounded-lg p-3 sm:p-4 text-center text-xs sm:text-sm text-gray-500">
+                No address found
+              </div>
+            <% } %>
             <div class="col-span-2 mt-3 sm:mt-4">
               <a href="/user/profile/address/add">
                 <button class="w-full py-2 px-3 sm:px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
@@ -154,12 +154,6 @@
                 Razorpay
               </label>
             </div>
-            <div class="flex items-center p-2 sm:p-3 rounded-md hover:bg-gray-50 transition-colors">
-              <input class="form-radio h-4 sm:h-5 w-4 sm:w-5 text-blue-600 focus:ring-blue-500" type="radio" value="wallet" name="payment_option" id="wallet">
-              <label class="ml-2 sm:ml-3 block text-xs sm:text-sm font-medium text-gray-700" for="wallet">
-                Wallet
-              </label>
-            </div>
           </div>
         </div>
       </div>
@@ -168,11 +162,11 @@
       <div class="sm:col-span-4">
         <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 order-summary sticky top-4 sm:top-6">
           <h2 class="text-lg sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Order Summary</h2>
-          
+
           <!-- Coupon Input -->
           <div class="mb-4 sm:mb-6">
             <div class="flex">
-              <input type="text" id="inputCoupon" placeholder="Enter coupon code" 
+              <input type="text" id="inputCoupon" placeholder="Enter coupon code"
                 class="flex-grow px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-l-md focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm" />
               <button id="applyButton" type="button" onclick="applyCoupon('<%=grandTotal%>')"
                 class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-xs sm:text-sm">
@@ -180,7 +174,7 @@
               </button>
             </div>
           </div>
-          
+
           <!-- Available Coupons -->
           <div class="mb-4 sm:mb-6">
             <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Available Coupons</h3>
@@ -192,11 +186,11 @@
                       <span class="text-xs font-semibold text-gray-800"><%= coupon[i].code %></span>
                     </div>
                     <div class="flex space-x-1 sm:space-x-2">
-                      <button onclick="useCoupon('<%= coupon[i].code %>')" id="useButton_<%= coupon[i].code %>" 
+                      <button onclick="useCoupon('<%= coupon[i].code %>')" id="useButton_<%= coupon[i].code %>"
                         class="px-2 sm:px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors use-button">
                         Use
                       </button>
-                      <button onclick="cancelCoupon('<%= coupon[i].code %>')" id="cancelButton_<%= coupon[i].code %>" 
+                      <button onclick="cancelCoupon('<%= coupon[i].code %>')" id="cancelButton_<%= coupon[i].code %>"
                         class="px-2 sm:px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
                         style="display: none;">
                         Cancel
@@ -209,9 +203,9 @@
               <% } %>
             </div>
           </div>
-          
+
           <!-- Order Details -->
-          <% 
+          <%
           let cartTotal = 0;
           if (cart && cart.items && cart.items.length > 0) {
             for (let i = 0; i < cart.items.length; i++) {
@@ -224,7 +218,7 @@
             }
           }
           %>
-          
+
           <div class="border-t border-gray-200 pt-3 sm:pt-4 space-y-2 sm:space-y-3">
             <div class="flex justify-between text-xs sm:text-sm">
               <span class="text-gray-600">Subtotal</span>
@@ -245,9 +239,9 @@
               </span>
             </div>
           </div>
-          
-          <div class="mt-4 sm:mt-6">  
-            <input type="hidden" id="grandTotalInput" value="<%= grandTotal %>">       
+
+          <div class="mt-4 sm:mt-6">
+            <input type="hidden" id="grandTotalInput" value="<%= grandTotal %>">
             <button type="button" onclick="placeOrder('<%= user._id %>')" id="placeOrderButton"
               class="w-full py-2 sm:py-3 px-3 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-xs sm:text-sm">
               Place Order
@@ -274,10 +268,10 @@ function useCoupon(code) {
 async function applyCoupon(totalAmount) {
   const couponName = document.getElementById("inputCoupon").value.trim();
   if (!couponName) {
-    await Swal.fire({ 
-      icon: 'error', 
-      title: 'Error', 
-      text: 'Please enter a coupon code.' 
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please enter a coupon code.'
     });
     return;
   }
@@ -287,7 +281,7 @@ async function applyCoupon(totalAmount) {
     if (appliedCoupon) {
       const prevUseButton = document.getElementById(`useButton_${appliedCoupon}`);
       const prevCancelButton = document.getElementById(`cancelButton_${appliedCoupon}`);
-      
+
       if (prevUseButton) prevUseButton.style.display = 'inline-block';
       if (prevCancelButton) prevCancelButton.style.display = 'none';
     }
@@ -314,24 +308,24 @@ async function applyCoupon(totalAmount) {
       if (document.getElementById(`cancelButton_${couponName}`))
         document.getElementById(`cancelButton_${couponName}`).style.display = 'inline-block';
 
-      await Swal.fire({ 
-        icon: 'success', 
-        title: 'Success', 
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
         text: `Coupon applied successfully! You saved ₹${data.discount.toFixed(2)}`
       });
     } else {
-      await Swal.fire({ 
-        icon: 'error', 
-        title: 'Error', 
-        text: data.message || 'Failed to apply coupon.' 
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: data.message || 'Failed to apply coupon.'
       });
     }
   } catch (error) {
     console.error('Error applying coupon:', error);
-    await Swal.fire({ 
-      icon: 'error', 
-      title: 'Error', 
-      text: 'Failed to apply coupon. Please try again.' 
+    await Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to apply coupon. Please try again.'
     });
   }
 }
@@ -432,15 +426,15 @@ async function handleRazorpayPayment(response, amount) {
     };
 
     const rzp1 = new Razorpay(options);
-    
+
     rzp1.on('payment.failed', function (responseError) {
       console.error('Razorpay payment failed:', responseError.error);
       paymentInProgress = false;
       handlePaymentFailure(responseError.error, response.mongoOrderId);
     });
-    
+
     rzp1.open();
-    
+
   } catch (error) {
     console.error('Razorpay initialization error:', error);
     paymentInProgress = false;
@@ -452,7 +446,7 @@ async function handleRazorpayPayment(response, amount) {
 async function handlePaymentSuccess(razorpayResponse, mongoOrderId) {
   try {
     console.log("Processing payment success:", razorpayResponse);
-    
+
     Swal.fire({
       title: 'Verifying Payment',
       html: 'Please wait while we verify your payment...<br><small>Do not close this window</small>',
@@ -463,12 +457,12 @@ async function handlePaymentSuccess(razorpayResponse, mongoOrderId) {
         Swal.showLoading();
       }
     });
-    
+
     const verificationResult = await verifyPaymentWithRetry(razorpayResponse, 3);
-    
+
     if (verificationResult.success) {
       Swal.close();
-      
+
       await Swal.fire({
         title: 'Payment Successful!',
         text: 'Your order has been placed successfully!',
@@ -476,17 +470,17 @@ async function handlePaymentSuccess(razorpayResponse, mongoOrderId) {
         timer: 2000,
         showConfirmButton: false
       });
-      
+
       window.location.href = `/user/orderSuccess?orderId=${verificationResult.order._id}`;
     } else {
       throw new Error(verificationResult.message || 'Payment verification failed');
     }
-    
+
   } catch (error) {
     console.error('Payment success handling error:', error);
     paymentInProgress = false;
     Swal.close();
-    
+
     await Swal.fire({
       title: 'Payment Verification Failed',
       html: `
@@ -496,7 +490,7 @@ async function handlePaymentSuccess(razorpayResponse, mongoOrderId) {
       icon: 'error',
       confirmButtonText: 'OK'
     });
-    
+
     window.location.href = `/user/orderFailure?orderId=${mongoOrderId}&error=${encodeURIComponent(error.message || 'Payment verification failed')}`;
   }
 }
@@ -505,27 +499,27 @@ async function handlePaymentFailure(error, mongoOrderId) {
   console.error('Payment failed:', error);
   paymentInProgress = false;
   resetOrderButton();
-  
+
   await Swal.fire({
     title: 'Payment Failed',
     text: error.description || 'Payment failed. Please try again.',
     icon: 'error',
     confirmButtonText: 'OK'
   });
-  
+
   window.location.href = `/user/orderFailure?orderId=${mongoOrderId}&error=${encodeURIComponent(error.description || "Payment failed")}`;
 }
 
 async function verifyPaymentWithRetry(razorpayResponse, maxRetries = 3) {
   let lastError;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Payment verification attempt ${attempt}/${maxRetries}`);
-      
+
       const response = await fetch('/user/verify-payment', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
@@ -542,7 +536,7 @@ async function verifyPaymentWithRetry(razorpayResponse, maxRetries = 3) {
       if (response.ok) {
         const data = await response.json();
         console.log(`Verification attempt ${attempt} - Response:`, data);
-        
+
         if (data.success) {
           return data;
         } else {
@@ -552,19 +546,19 @@ async function verifyPaymentWithRetry(razorpayResponse, maxRetries = 3) {
         const errorText = await response.text();
         lastError = new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      
+
     } catch (error) {
       console.error(`Verification attempt ${attempt} failed:`, error);
       lastError = error;
     }
-    
+
     if (attempt < maxRetries) {
       const delay = Math.pow(2, attempt) * 1000;
       console.log(`Waiting ${delay}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-  
+
   throw lastError || new Error('Payment verification failed after all retries');
 }
 
@@ -586,7 +580,7 @@ async function placeOrder(userId) {
     const discountElement = document.getElementById("discount");
     const discount = discountElement ? Math.round(parseFloat(discountElement.textContent.replace(/[^\d.]/g, '')) * 100) / 100 : 0;
     const totalElement = document.getElementById("totalValue");
-    
+
     if (!totalElement) {
       throw new Error("Total value element not found");
     }
@@ -626,7 +620,7 @@ async function placeOrder(userId) {
       return;
     }
 
-    if (appliedCoupon && couponDiscount===0) {
+    if (appliedCoupon && couponDiscount === 0) {
       await Swal.fire({
         icon: 'warning',
         title: 'Invalid Coupon',
@@ -661,7 +655,7 @@ async function placeOrder(userId) {
 
     const response = await fetch('/user/orderPlaced', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
@@ -685,12 +679,10 @@ async function placeOrder(userId) {
 
     Swal.close();
 
-    if (payment === "cod" || payment === "wallet") {
+    if (payment === "cod") {
       await handleDirectPayment(data);
     } else if (payment === "razorpay") {
       await handleRazorpayPayment(data, numericValue);
-    } else if (payment === "paypal") {
-      await handlePaypalPayment(data, numericValue);
     } else {
       throw new Error("Unknown payment method: " + payment);
     }
@@ -699,7 +691,7 @@ async function placeOrder(userId) {
     console.error("Order placement error:", error);
     paymentInProgress = false;
     Swal.close();
-    
+
     await Swal.fire({
       title: 'Order Failed',
       text: error.message || "Couldn't process your order. Please try again.",

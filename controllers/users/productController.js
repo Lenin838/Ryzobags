@@ -928,14 +928,12 @@ const productController = {
           ? addressDoc.address.filter((addr) => addr.status === "active")
           : [];
 
-        // CALCULATE SUBTOTAL FIRST
         let subtotal = 0;
         let totalProductDiscount = 0;
 
         const itemsWithStock = cart.items.map((item) => {
           const product = item.productId;
           
-          // Add null check for product
           if (!product) {
             return null;
           }
@@ -1052,22 +1050,22 @@ const productController = {
 
     placeOrder: async (req, res) => {
       let order = null;
-      
+
       try {
         const userId = req.session.user?._id;
         const { addressId, payment, totalPrice, discount, coupon } = req.body;
 
         const validationErrors = [];
-        
+
         if (!userId) validationErrors.push("User not authenticated");
         if (!addressId) validationErrors.push("Shipping address is required");
         if (!payment) validationErrors.push("Payment method is required");
-        
-        const validPaymentMethods = ["cod", "wallet", "razorpay"];
+
+        const validPaymentMethods = ["cod", "razorpay"]; // Removed "wallet"
         if (!validPaymentMethods.includes(payment)) {
           validationErrors.push("Invalid payment method");
         }
-        
+
         if (!totalPrice || isNaN(totalPrice)) {
           validationErrors.push("Invalid total price");
         }
@@ -1089,12 +1087,12 @@ const productController = {
               failureReason: validationErrors.join(', '),
               paymentFailureReason: "Validation failed"
             });
-            
+
             await order.save();
           } catch (saveError) {
             console.error("Failed to save validation error order:", saveError);
           }
-          
+
           return res.status(400).json({
             success: false,
             message: validationErrors[0]
@@ -1119,14 +1117,14 @@ const productController = {
             paymentFailureReason: "Address validation failed"
           });
           await order.save();
-          
+
           throw new Error("No addresses found for this user");
         }
 
         const selectedAddress = userAddressDoc.address.find(
           (addr) => addr._id.toString() === addressId && addr?.status === "active"
         );
-        
+
         if (!selectedAddress) {
           order = new Order({
             orderId: `RYZO-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1144,7 +1142,7 @@ const productController = {
             paymentFailureReason: "Address validation failed"
           });
           await order.save();
-          
+
           throw new Error("Selected address not found or inactive");
         }
 
@@ -1155,7 +1153,7 @@ const productController = {
             { path: "brand", model: "Brand" },
           ],
         });
-        
+
         if (!cart || cart.items.length === 0) {
           order = new Order({
             orderId: `RYZO-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1173,17 +1171,17 @@ const productController = {
             paymentFailureReason: "Cart validation failed"
           });
           await order.save();
-          
+
           throw new Error("Cannot place empty order");
         }
 
         let totalAmount = 0;
         const items = [];
-        
+
         for (const item of cart.items) {
           const product = item.productId;
           const variant = product.variants.find((v) => v.size === item.size);
-          
+
           if (!variant) {
             order = new Order({
               orderId: `RYZO-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1201,10 +1199,10 @@ const productController = {
               paymentFailureReason: "Product validation failed"
             });
             await order.save();
-            
+
             throw new Error(`Size ${item.size} not available for ${product.name}`);
           }
-          
+
           if (variant.quantity < item.quantity) {
             order = new Order({
               orderId: `RYZO-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1222,7 +1220,7 @@ const productController = {
               paymentFailureReason: "Stock validation failed"
             });
             await order.save();
-            
+
             throw new Error(`Only ${variant.quantity} left in stock for ${product.name}`);
           }
 
@@ -1240,27 +1238,27 @@ const productController = {
             quantity: item.quantity,
             itemSalePrice: finalPrice,
             status: payment === "razorpay" ? "failed" : "pending",
-            });
+          });
         }
 
         let calculatedCouponDiscount = 0;
         let couponId = null;
-        
+
         if (req.session.checkoutData && req.session.checkoutData.couponId) {
-          const couponDoc = await Coupon.findOne({ 
-            _id: req.session.checkoutData.couponId, 
-            isActive: true, 
+          const couponDoc = await Coupon.findOne({
+            _id: req.session.checkoutData.couponId,
+            isActive: true,
             expiresAt: { $gt: new Date() },
             minCartAmount: { $lte: totalAmount }
           });
 
           if (couponDoc) {
-            const ordersWithCoupon = await Order.countDocuments({ 
-              userId, 
+            const ordersWithCoupon = await Order.countDocuments({
+              userId,
               couponId: couponDoc._id,
               status: { $in: ['delivered', 'shipped'] }
             });
-            
+
             if (ordersWithCoupon >= couponDoc.usageLimit) {
               order = new Order({
                 orderId: `RYZO-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1279,7 +1277,7 @@ const productController = {
                 paymentFailureReason: "Coupon validation failed"
               });
               await order.save();
-              
+
               throw new Error("Coupon usage limit exceeded");
             }
             if (couponDoc.discountType === 'percentage') {
@@ -1316,7 +1314,7 @@ const productController = {
               paymentFailureReason: "Coupon validation failed"
             });
             await order.save();
-            
+
             throw new Error("Invalid or expired coupon");
           }
         }
@@ -1354,42 +1352,14 @@ const productController = {
 
         if (payment === "cod") {
           order.paymentStatus = "pending";
-          order.status = "processing"; 
+          order.status = "processing";
           await order.save();
           return res.status(200).json({
             success: true,
             order: { _id: order._id },
             message: "COD order placed successfully",
           });
-        } 
-        else if (payment === "wallet") {
-          const user = await User.findById(userId);
-          if (user.walletBalance < calculatedTotal) {
-            order.paymentStatus = "failed";
-            order.status = "failed";
-            order.failureReason = "Insufficient wallet balance";
-            order.paymentFailureReason = "Insufficient wallet balance";
-            await order.save();
-            
-            return res.status(400).json({
-              success: false,
-              message: "Insufficient wallet balance",
-            });
-          }
-          user.walletBalance -= calculatedTotal;
-          await user.save();
-          order.paymentStatus = "completed";
-          order.status = "processing";
-          order.amountPaid = calculatedTotal;
-          order.isPaymentVerified = true;
-          await order.save();
-          return res.status(200).json({
-            success: true,
-            order: { _id: order._id },
-            message: "Wallet order placed successfully",
-          });
-        } 
-        else if (payment === "razorpay") {
+        } else if (payment === "razorpay") {
           const razorpayOrder = await razorpay.orders.create({
             amount: calculatedTotal * 100,
             currency: "INR",
@@ -1405,17 +1375,16 @@ const productController = {
             order_id: razorpayOrder.id,
             message: "Razorpay order created",
           });
-        } 
-        else {
+        } else {
           order.paymentStatus = "failed";
           order.status = "failed";
           order.failureReason = "Invalid payment method";
           order.paymentFailureReason = "Invalid payment method";
           await order.save();
-          
+
           throw new Error("Invalid payment method");
         }
-        
+
       } catch (err) {
         console.error("Order Error:", err.message);
         if (order && order._id) {
@@ -1431,7 +1400,7 @@ const productController = {
             console.error("Failed to update order to failed status:", updateError);
           }
         }
-        
+
         res.status(500).json({
           success: false,
           message: err.message || "Failed to process order",
