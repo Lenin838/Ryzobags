@@ -178,8 +178,16 @@
                       <tr>
                         <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500"><%= order.orderId %></td>
                         <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500"><%= new Date(order.orderDate).toLocaleDateString() %></td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">₹<%= order.totalAmount.toFixed(2) %></td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
+                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">₹<%= 
+                          order.items && order.items.length > 0 
+                            ? order.items.reduce((total, item) => {
+                                const price = parseFloat(item.itemSalePrice) || 0;
+                                const qty = parseInt(item.quantity) || 0;
+                                return total + (price * qty);
+                              }, 0).toFixed(2)
+                            : '0.00'
+                        %></td>                        
+                          <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
                           <span class="px-2 py-0.5 sm:py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
                             <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
                           </span>

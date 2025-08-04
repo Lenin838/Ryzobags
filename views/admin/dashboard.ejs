@@ -7,202 +7,91 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Custom gradient for chart bars */
     .chart-gradient {
       background: linear-gradient(45deg, #4F46E5, #9333EA);
     }
+    [x-cloak] { display: none !important; }
   </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
+  <!-- Main content only (no header/sidebar) -->
   <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
     <!-- Header Section with Metrics -->
-    <div class="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6">Admin Dashboard</h1>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="p-5 bg-indigo-50 rounded-xl hover:shadow-md transition-shadow duration-300">
-          <h3 class="text-base font-semibold text-indigo-700">Total Orders</h3>
-          <p class="text-2xl font-bold text-indigo-600"><%= totalOrders || 0 %></p>
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 mb-6 border border-gray-100">
+      <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 sm:mb-6">Admin Dashboard</h1>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="p-4 sm:p-5 bg-indigo-50 rounded-xl hover:shadow-md transition-shadow duration-300">
+          <h3 class="text-sm sm:text-base font-semibold text-indigo-700">Total Orders</h3>
+          <p class="text-xl sm:text-2xl font-bold text-indigo-600"><%= totalOrders || 0 %></p>
         </div>
-        <div class="p-5 bg-green-50 rounded-xl hover:shadow-md transition-shadow duration-300">
-          <h3 class="text-base font-semibold text-green-700">Total Revenue</h3>
-          <p class="text-2xl font-bold text-green-600">₹<%= totalRevenue.toFixed(2) %></p>
+        <div class="p-4 sm:p-5 bg-green-50 rounded-xl hover:shadow-md transition-shadow duration-300">
+          <h3 class="text-sm sm:text-base font-semibold text-green-700">Total Revenue</h3>
+          <p class="text-xl sm:text-2xl font-bold text-green-600">₹<%= totalRevenue.toFixed(2) %></p>
         </div>
-        <div class="p-5 bg-blue-50 rounded-xl hover:shadow-md transition-shadow duration-300">
-          <h3 class="text-base font-semibold text-blue-700">Total Products</h3>
-          <p class="text-2xl font-bold text-blue-600"><%= totalProducts || 0 %></p>
+        <div class="p-4 sm:p-5 bg-blue-50 rounded-xl hover:shadow-md transition-shadow duration-300">
+          <h3 class="text-sm sm:text-base font-semibold text-blue-700">Total Products</h3>
+          <p class="text-xl sm:text-2xl font-bold text-blue-600"><%= totalProducts || 0 %></p>
         </div>
-        <div class="p-5 bg-yellow-50 rounded-xl hover:shadow-md transition-shadow duration-300">
-          <h3 class="text-base font-semibold text-yellow-700">Total Categories</h3>
-          <p class="text-2xl font-bold text-yellow-600"><%= totalCategories || 0 %></p>
+        <div class="p-4 sm:p-5 bg-yellow-50 rounded-xl hover:shadow-md transition-shadow duration-300">
+          <h3 class="text-sm sm:text-base font-semibold text-yellow-700">Total Categories</h3>
+          <p class="text-xl sm:text-2xl font-bold text-yellow-600"><%= totalCategories || 0 %></p>
         </div>
       </div>
     </div>
 
-    <!-- Filter Section (Selection Style) -->
-    <div class="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-5">Filter Revenue Data</h2>
-      <div class="flex flex-wrap gap-3 mb-4">
-        <button type="button" class="px-5 py-2.5 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'daily' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('daily')">Daily</button>
-        <button type="button" class="px-5 py-2.5 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'weekly' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('weekly')">Weekly</button>
-        <button type="button" class="px-5 py-2.5 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'monthly' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('monthly')">Monthly</button>
-        <button type="button" class="px-5 py-2.5 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'yearly' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('yearly')">Yearly</button>
-        <button type="button" class="px-5 py-2.5 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'custom' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('custom')">Custom</button>
+    <!-- Filter Section -->
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 mb-6 border border-gray-100">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-5">Filter Revenue Data</h2>
+      <div class="flex flex-wrap gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <button type="button" class="px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'daily' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('daily')">Daily</button>
+        <button type="button" class="px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'weekly' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('weekly')">Weekly</button>
+        <button type="button" class="px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'monthly' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('monthly')">Monthly</button>
+        <button type="button" class="px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'yearly' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('yearly')">Yearly</button>
+        <button type="button" class="px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors <%= filter === 'custom' ? 'bg-indigo-600 text-white' : '' %>" onclick="setFilter('custom')">Custom</button>
       </div>
-      <div id="custom-date" class="flex flex-col sm:flex-row gap-4 mt-4 <%= filter === 'custom' ? '' : 'hidden' %>">
+      <div id="custom-date" class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-3 sm:mt-4 <%= filter === 'custom' ? '' : 'hidden' %>">
         <div class="w-full sm:w-auto">
-          <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
-          <input type="date" id="startDate" name="startDate" value="<%= startDate %>" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+          <label for="startDate" class="block text-xs sm:text-sm font-medium text-gray-700">Start Date</label>
+          <input type="date" id="startDate" name="startDate" value="<%= startDate %>" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 text-sm sm:text-base">
         </div>
         <div class="w-full sm:w-auto">
-          <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
-          <input type="date" id="endDate" name="endDate" value="<%= endDate %>" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+          <label for="endDate" class="block text-xs sm:text-sm font-medium text-gray-700">End Date</label>
+          <input type="date" id="endDate" name="endDate" value="<%= endDate %>" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 text-sm sm:text-base">
         </div>
-        <button type="button" id="applyFilterBtn" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-6 sm:mt-0" onclick="applyFilter()">Apply Filter</button>
+        <button type="button" id="applyFilterBtn" class="bg-indigo-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-4 sm:mt-0 text-sm sm:text-base" onclick="applyFilter()">Apply Filter</button>
       </div>
     </div>
 
-    <!-- Revenue Chart (Enhanced Bar Chart) -->
-    <div class="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-5">Revenue Over Time</h2>
+    <!-- Revenue Chart -->
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 mb-6 border border-gray-100">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-5">Revenue Over Time</h2>
       <div class="relative">
-        <canvas id="revenueChart" class="w-full h-72 sm:h-96"></canvas>
+        <canvas id="revenueChart" class="w-full h-64 sm:h-72 md:h-96"></canvas>
       </div>
     </div>
-
-    <script>
-      const chartData = {
-        type: "bar",
-        data: {
-          labels: '<%- JSON.stringify(chartLabels) %>',
-          datasets: [{
-            label: "Revenue (₹)",
-            data: '<%- JSON.stringify(chartValues) %>',
-            backgroundColor: (context) => {
-              const chart = context.chart;
-              const { ctx, chartArea } = chart;
-              if (!chartArea) return null;
-              return getGradient(ctx, chartArea);
-            },
-            borderColor: "#9333EA",
-            borderWidth: 2,
-            borderRadius: 5,
-            barThickness: 20,
-            hoverBackgroundColor: "#4F46E5",
-            hoverBorderColor: "#6B7280"
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-            duration: 1000,
-            easing: 'easeInOutQuad'
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: { display: true, text: "Revenue (₹)", font: { size: 14 } },
-              ticks: { font: { size: 12 } }
-            },
-            x: {
-              title: { display: true, text: "<%= filter.charAt(0).toUpperCase() + filter.slice(1) %> Period", font: { size: 14 } },
-              ticks: { font: { size: 12 } }
-            }
-          },
-          plugins: {
-            legend: { display: true, position: 'top', labels: { font: { size: 14 } } },
-            title: { display: true, text: "Revenue Over Time", font: { size: 18 }, color: '#1F2937' },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-              backgroundColor: '#ffffff',
-              titleColor: '#1F2937',
-              bodyColor: '#4B5563',
-              borderColor: '#E5E7EB',
-              borderWidth: 1,
-              caretSize: 0,
-              displayColors: false,
-              callbacks: {
-                label: (context) => `$${context.raw.toLocaleString()}`
-              }
-            }
-          }
-        }
-      };
-
-      function getGradient(ctx, chartArea) {
-        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-        gradient.addColorStop(0, '#4F46E5');
-        gradient.addColorStop(1, '#9333EA');
-        return gradient;
-      }
-
-      const ctx = document.getElementById('revenueChart').getContext('2d');
-      new Chart(ctx, chartData);
-
-      function setFilter(filterType) {
-        const filterElement = document.getElementById('filter');
-        filterElement.value = filterType;
-        const customDateDiv = document.getElementById('custom-date');
-        customDateDiv.classList.toggle('hidden', filterType !== 'custom');
-        if (filterType !== 'custom') {
-          showAlert();
-          applyFilter();
-        }
-      }
-
-      function applyFilter() {
-        const filter = document.getElementById('filter').value;
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-        let url = '/admin/dashboard?filter=' + filter;
-        if (filter === 'custom' && startDate && endDate) {
-          url += '&startDate=' + startDate + '&endDate=' + endDate;
-        }
-        showAlert();
-        window.location.href = url;
-      }
-
-      function showAlert() {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg opacity-0 transition-opacity duration-300';
-        alertDiv.textContent = 'Filter applied successfully!';
-        document.body.appendChild(alertDiv);
-        setTimeout(() => {
-          alertDiv.style.opacity = '1';
-        }, 10);
-        setTimeout(() => {
-          alertDiv.style.opacity = '0';
-          setTimeout(() => document.body.removeChild(alertDiv), 300);
-        }, 1500); // Show for 1.5 seconds, then fade out
-      }
-
-      // Hidden input to store filter value
-      document.write('<input type="hidden" id="filter" value="<%= filter %>">');
-    </script>
 
     <!-- Top 10 Products -->
-    <div class="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-5">Top 10 Best-Selling Products</h2>
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 mb-6 border border-gray-100">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-5">Top 10 Best-Selling Products</h2>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Product Name</th>
-              <th class="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Quantity Sold</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wider">Product Name</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wider">Quantity Sold</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% if (topProducts && topProducts.length > 0) { %>
               <% topProducts.forEach(product => { %>
                 <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900"><%= product.name || 'N/A' %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900"><%= product.totalSold || 0 %></td>
+                  <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-base text-gray-900"><%= product.name || 'N/A' %></td>
+                  <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-base text-gray-900"><%= product.totalSold || 0 %></td>
                 </tr>
               <% }) %>
             <% } else { %>
               <tr>
-                <td colspan="2" class="px-6 py-4 text-base text-gray-500 text-center">No data available</td>
+                <td colspan="2" class="px-4 sm:px-6 py-4 text-sm sm:text-base text-gray-500 text-center">No data available</td>
               </tr>
             <% } %>
           </tbody>
@@ -211,27 +100,27 @@
     </div>
 
     <!-- Top 10 Categories -->
-    <div class="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-5">Top 10 Best-Selling Categories</h2>
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 mb-6 border border-gray-100">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-5">Top 10 Best-Selling Categories</h2>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Category Name</th>
-              <th class="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Quantity Sold</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wider">Category Name</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wider">Quantity Sold</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% if (topCategories && topCategories.length > 0) { %>
               <% topCategories.forEach(category => { %>
                 <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900"><%= category.name || 'N/A' %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900"><%= category.totalSold || 0 %></td>
+                  <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-base text-gray-900"><%= category.name || 'N/A' %></td>
+                  <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-base text-gray-900"><%= category.totalSold || 0 %></td>
                 </tr>
               <% }) %>
             <% } else { %>
               <tr>
-                <td colspan="2" class="px-6 py-4 text-base text-gray-500 text-center">No data available</td>
+                <td colspan="2" class="px-4 sm:px-6 py-4 text-sm sm:text-base text-gray-500 text-center">No data available</td>
               </tr>
             <% } %>
           </tbody>
@@ -240,27 +129,27 @@
     </div>
 
     <!-- Top 10 Brands -->
-    <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-100">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-5">Top 10 Best-Selling Brands</h2>
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 border border-gray-100">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-5">Top 10 Best-Selling Brands</h2>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Brand Name</th>
-              <th class="px-6 py-3 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Quantity Sold</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wider">Brand Name</th>
+              <th class="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wider">Quantity Sold</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <% if (topBrands && topBrands.length > 0) { %>
               <% topBrands.forEach(brand => { %>
                 <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900"><%= brand.name || 'N/A' %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-base text-gray-900"><%= brand.totalSold || 0 %></td>
+                  <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-base text-gray-900"><%= brand.name || 'N/A' %></td>
+                  <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-base text-gray-900"><%= brand.totalSold || 0 %></td>
                 </tr>
               <% }) %>
             <% } else { %>
               <tr>
-                <td colspan="2" class="px-6 py-4 text-base text-gray-500 text-center">No data available</td>
+                <td colspan="2" class="px-4 sm:px-6 py-4 text-sm sm:text-base text-gray-500 text-center">No data available</td>
               </tr>
             <% } %>
           </tbody>
@@ -269,13 +158,116 @@
     </div>
   </div>
 
+  <!-- Your existing scripts (unchanged) -->
   <script>
-    function toggleCustomDate() {
-      const filter = document.getElementById('filter').value;
-      const customDateDiv = document.getElementById('custom-date');
-      customDateDiv.classList.toggle('hidden', filter !== 'custom');
+    const chartData = {
+      type: "bar",
+      data: {
+        labels: '<%- JSON.stringify(chartLabels) %>',
+        datasets: [{
+          label: "Revenue (₹)",
+          data: '<%- JSON.stringify(chartValues) %>',
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) return null;
+            return getGradient(ctx, chartArea);
+          },
+          borderColor: "#9333EA",
+          borderWidth: 2,
+          borderRadius: 5,
+          barThickness: 20,
+          hoverBackgroundColor: "#4F46E5",
+          hoverBorderColor: "#6B7280"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuad'
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: "Revenue (₹)", font: { size: 14 } },
+            ticks: { font: { size: 12 } }
+          },
+          x: {
+            title: { display: true, text: "<%= filter.charAt(0).toUpperCase() + filter.slice(1) %> Period", font: { size: 14 } },
+            ticks: { font: { size: 12 } }
+          }
+        },
+        plugins: {
+          legend: { display: true, position: 'top', labels: { font: { size: 14 } } },
+          title: { display: true, text: "Revenue Over Time", font: { size: 18 }, color: '#1F2937' },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: '#ffffff',
+            titleColor: '#1F2937',
+            bodyColor: '#4B5563',
+            borderColor: '#E5E7EB',
+            borderWidth: 1,
+            caretSize: 0,
+            displayColors: false,
+            callbacks: {
+              label: (context) => `$${context.raw.toLocaleString()}`
+            }
+          }
+        }
+      }
+    };
+
+    function getGradient(ctx, chartArea) {
+      const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+      gradient.addColorStop(0, '#4F46E5');
+      gradient.addColorStop(1, '#9333EA');
+      return gradient;
     }
-    toggleCustomDate();
+
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, chartData);
+
+    function setFilter(filterType) {
+      const filterElement = document.getElementById('filter');
+      filterElement.value = filterType;
+      const customDateDiv = document.getElementById('custom-date');
+      customDateDiv.classList.toggle('hidden', filterType !== 'custom');
+      if (filterType !== 'custom') {
+        showAlert();
+        applyFilter();
+      }
+    }
+
+    function applyFilter() {
+      const filter = document.getElementById('filter').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      let url = '/admin/dashboard?filter=' + filter;
+      if (filter === 'custom' && startDate && endDate) {
+        url += '&startDate=' + startDate + '&endDate=' + endDate;
+      }
+      showAlert();
+      window.location.href = url;
+    }
+
+    function showAlert() {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg opacity-0 transition-opacity duration-300';
+      alertDiv.textContent = 'Filter applied successfully!';
+      document.body.appendChild(alertDiv);
+      setTimeout(() => {
+        alertDiv.style.opacity = '1';
+      }, 10);
+      setTimeout(() => {
+        alertDiv.style.opacity = '0';
+        setTimeout(() => document.body.removeChild(alertDiv), 300);
+      }, 1500);
+    }
+
+    document.write('<input type="hidden" id="filter" value="<%= filter %>">');
   </script>
 </body>
 </html>

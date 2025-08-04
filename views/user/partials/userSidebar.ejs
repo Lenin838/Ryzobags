@@ -1,5 +1,14 @@
-<aside class="w-64 bg-white shadow-lg p-4 hidden sm:block fixed top-16 left-0 h-screen z-40">
-  <h2 class="text-lg font-bold text-indigo-600 mb-4">My Account</h2>
+<aside class="w-64 bg-white shadow-lg p-4 fixed top-16 left-0 h-screen z-40 transition-transform duration-300 ease-in-out transform md:translate-x-0 -translate-x-full md:w-64 sm:w-56 w-full" id="sidebar">
+  <!-- Hamburger menu for mobile -->
+  <div class="flex justify-between items-center mb-4 md:hidden">
+    <h2 class="text-lg font-bold text-indigo-600">My Account</h2>
+    <button id="close-sidebar" class="text-gray-600 hover:text-indigo-600 focus:outline-none">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
   <ul class="space-y-2">
     <li><a href="/user/profile" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'profile' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Profile</a></li>
     <li><a href="/user/profile/edit" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'edit' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Edit Profile</a></li>
@@ -11,3 +20,35 @@
     <li><a href="/user/referrals" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'referrals' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Referrals</a></li>
   </ul>
 </aside>
+
+<!-- Hamburger menu button for mobile (outside sidebar) -->
+<button id="open-sidebar" class="md:hidden fixed top-16 left-4 z-50 text-gray-600 hover:text-indigo-600 focus:outline-none">
+  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+  </svg>
+</button>
+
+<script>
+  // JavaScript to toggle sidebar visibility
+  const sidebar = document.getElementById('sidebar');
+  const openSidebarBtn = document.getElementById('open-sidebar');
+  const closeSidebarBtn = document.getElementById('close-sidebar');
+
+  openSidebarBtn.addEventListener('click', () => {
+    sidebar.classList.remove('-translate-x-full');
+    sidebar.classList.add('translate-x-0');
+  });
+
+  closeSidebarBtn.addEventListener('click', () => {
+    sidebar.classList.remove('translate-x-0');
+    sidebar.classList.add('-translate-x-full');
+  });
+
+  // Close sidebar when clicking outside on mobile
+  document.addEventListener('click', (event) => {
+    if (!sidebar.contains(event.target) && !openSidebarBtn.contains(event.target) && !sidebar.classList.contains('-translate-x-full')) {
+      sidebar.classList.remove('translate-x-0');
+      sidebar.classList.add('-translate-x-full');
+    }
+  });
+</script>

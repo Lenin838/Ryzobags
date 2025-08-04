@@ -29,7 +29,7 @@
       },
       variants: {
         extend: {
-          textColor: ['hover'] // Enable hover variant for textColor to fix Tailwind error
+          textColor: ['hover']
         }
       }
     };
@@ -42,7 +42,7 @@
         text-wrap: balance;
       }
       .nav-link {
-        @apply relative px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary transition-all duration-300 overflow-hidden;
+        @apply relative px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:text-primary transition-all duration-300 overflow-hidden;
       }
       .nav-link::after {
         @apply content-[''] absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 origin-bottom-right transition-transform duration-300 ease-out;
@@ -71,7 +71,7 @@
 
 <body class="font-sans bg-white text-gray-800">
   <!-- Announcement Bar -->
-  <div class="bg-gradient-to-r from-primary via-primary to-primary-dark text-white py-2.5 text-sm font-medium relative overflow-hidden">
+  <div class="bg-gradient-to-r from-primary via-primary to-primary-dark text-white py-2 text-xs sm:text-sm font-medium relative overflow-hidden">
     <div class="absolute inset-0 opacity-10">
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
@@ -82,15 +82,15 @@
         <rect width="100%" height="100%" fill="url(#dots)"></rect>
       </svg>
     </div>
-    <div class="container mx-auto px-4 flex items-center justify-center">
-      <div class="flex items-center space-x-1 md:space-x-3">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+      <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 text-center">
         <div class="flex items-center">
-          <i class="fas fa-truck-fast mr-2 text-white/80"></i>
+          <i class="fas fa-truck-fast mr-2 text-white/80 text-sm sm:text-base"></i>
           <span>Free shipping on orders over ₹750</span>
         </div>
-        <span class="hidden md:inline-block">|</span>
+        <span class="hidden sm:inline-block">|</span>
         <div class="flex items-center">
-          <i class="fas fa-tag mr-2 text-white/80"></i>
+          <i class="fas fa-tag mr-2 text-white/80 text-sm sm:text-base"></i>
           <span class="font-semibold">Use code <span class="bg-white/20 px-1.5 py-0.5 rounded text-white">RYZO10</span> for 10% off</span>
         </div>
       </div>
@@ -100,10 +100,10 @@
   <!-- Header -->
   <header class="sticky top-0 z-50 bg-white border-b border-gray-100">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-18 md:h-20">
+      <div class="flex items-center justify-between h-16 sm:h-18 md:h-20">
         <!-- Mobile Menu Button -->
         <button id="mobile-menu-button" class="md:hidden flex items-center text-gray-700 hover:text-primary transition-colors focus:outline-none">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
@@ -111,42 +111,42 @@
         <!-- Logo -->
         <a href="/" class="flex items-center">
           <div class="relative">
-            <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dark">RYZO BAGS</span>
+            <span class="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dark">RYZO BAGS</span>
             <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-primary-dark"></span>
           </div>
         </a>
 
         <!-- Desktop Navigation -->
-        <nav class="hidden md:flex space-x-2">
+        <nav class="hidden md:flex space-x-2 lg:space-x-4">
           <a href="/user/home" class="nav-link">Home</a>
           <a href="/user/shop" class="nav-link">Shop</a>
         </nav>
 
         <!-- Search, Wishlist, Cart, Account -->
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 sm:space-x-4">
           <!-- Wishlist -->
           <a href="/user/wishlist" class="text-gray-700 hover:text-primary transition-colors relative group">
-            <div class="p-2 rounded-full group-hover:bg-gray-50 transition-all">
-              <i class="fa-regular fa-heart h-5 w-5"></i>
+            <div class="p-1.5 sm:p-2 rounded-full group-hover:bg-gray-50 transition-all">
+              <i class="fa-regular fa-heart h-4 w-4 sm:h-5 sm:w-5"></i>
             </div>
-            <span id="wishlist-count" class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
+            <span id="wishlist-count" class="absolute -top-1.5 -right-1.5 bg-primary text-white text-[10px] sm:text-xs font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
           </a>
 
           <!-- Cart -->
           <a href="/user/cart" class="text-gray-700 hover:text-primary transition-colors relative group">
-            <div class="p-2 rounded-full group-hover:bg-gray-50 transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="p-1.5 sm:p-2 rounded-full group-hover:bg-gray-50 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
-            <span id="cart-count" class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
+            <span id="cart-count" class="absolute -top-1.5 -right-1.5 bg-primary text-white text-[10px] sm:text-xs font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center shadow-sm group-hover:animate-pulse">0</span>
           </a>
           
           <!-- Account -->
           <a href="/user/profile" class="text-gray-700 hover:text-primary transition-colors">
-            <div class="p-2 rounded-full hover:bg-gray-50 transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-}-7z" />
+            <div class="p-1.5 sm:p-2 rounded-full hover:bg-gray-50 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
           </a>
@@ -154,7 +154,7 @@
           <!-- Logout Button -->
           <form action="/user/logout" method="POST" class="inline">
             <button type="submit"
-              class="bg-white border border-primary text-primary hover:bg-primary hover:text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-300">
+              class="bg-white border border-primary text-primary hover:bg-primary hover:text-white px-2 sm:px-4 py-1 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300">
               Log Out
             </button>
           </form>
@@ -163,27 +163,27 @@
     </div>
 
     <!-- Mobile Menu -->
-    <div id="mobile-menu" Juno    <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-100">
-      <div class="container mx-auto px-4 py-2">
+    <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-100">
+      <div class="container mx-auto px-4 sm:px-6 py-2">
         <div class="relative mb-4 mt-2">
-          <input type="text" placeholder="Search products..." class="w-full py-2 pl-10 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <input type="text" placeholder="Search products..." class="w-full py-2 pl-10 pr-4 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
           <div class="absolute inset-y-0 left-0 flex items-center pl-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
         </div>
         <div class="space-y-0 divide-y divide-gray-100">
-          <a href="/user/home" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Home</a>
-          <a href="/user/shop" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Shop</a>
-          <a href="/user/cart" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Cart (<span id="mobile-cart-count">0</span>)</a>
-          <a href="/user/wishlist" class="block px-4 py-3 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Wishlist (<span id="mobile-wishlist-count">0</span>)</a>
+          <a href="/user/home" class="block px-4 py-3 text-xs sm:text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Home</a>
+          <a href="/user/shop" class="block px-4 py-3 text-xs sm:text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Shop</a>
+          <a href="/user/cart" class="block px-4 py-3 text-xs sm:text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Cart (<span id="mobile-cart-count">0</span>)</a>
+          <a href="/user/wishlist" class="block px-4 py-3 text-xs sm:text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-all">Wishlist (<span id="mobile-wishlist-count">0</span>)</a>
         </div>
       </div>
     </div>
   </header>
   
-  <!-- Add this script at the end of your body tag -->
+  <!-- JavaScript remains unchanged -->
   <script>
     // Mobile menu toggle
     const mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -200,7 +200,6 @@
       
       navLinks.forEach(link => {
         link.classList.remove('nav-link-active');
-        // Check if the link's href matches the current path
         if (link.getAttribute('href') === currentPath) {
           link.classList.add('nav-link-active');
         }
@@ -215,21 +214,18 @@
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include' // Important for session cookies
+          credentials: 'include'
         });
 
         const result = await response.json();
 
         if (result.success) {
           const count = result.count || 0;
-          // Update desktop wishlist count
           const wishlistCountElement = document.getElementById('wishlist-count');
           if (wishlistCountElement) {
             wishlistCountElement.textContent = count;
-            // Show/hide count badge based on count
             wishlistCountElement.style.display = count > 0 ? 'flex' : 'none';
           }
-          // Update mobile wishlist count
           const mobileWishlistCountElement = document.getElementById('mobile-wishlist-count');
           if (mobileWishlistCountElement) {
             mobileWishlistCountElement.textContent = count;
@@ -250,21 +246,18 @@
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include' // Important for session cookies
+          credentials: 'include'
         });
 
         const result = await response.json();
 
         if (result.success) {
           const count = result.count || 0;
-          // Update desktop cart count
           const cartCountElement = document.getElementById('cart-count');
           if (cartCountElement) {
             cartCountElement.textContent = count;
-            // Show/hide count badge based on count
             cartCountElement.style.display = count > 0 ? 'flex' : 'none';
           }
-          // Update mobile cart count if you have one
           const mobileCartCountElement = document.getElementById('mobile-cart-count');
           if (mobileCartCountElement) {
             mobileCartCountElement.textContent = count;
@@ -292,7 +285,6 @@
     });
 
     // Optional: Periodically refresh counts (every 30 seconds)
-    // Uncomment if you want auto-refresh
     // setInterval(updateCounts, 30000);
 
     // Function to call after adding/removing items (for other pages)

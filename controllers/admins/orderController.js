@@ -314,7 +314,6 @@ const adminOrderController = {
           }
         }
 
-        // ALWAYS check and update order status based on item statuses (moved outside the if/else)
         const allItemsCancelled = order.items.every(i => i.status === 'cancelled');
         const allItemsDelivered = order.items.every(i => i.status === 'delivered');
         const allItemsReturned = order.items.every(i => i.status === 'returned');
@@ -327,14 +326,13 @@ const adminOrderController = {
         } else if (allItemsReturned) {
           order.status = 'returned';
         } else if (hasMixedStatuses) {
-          // Find the status with the maximum count
           const statusCount = {};
           order.items.forEach(item => {
             statusCount[item.status] = (statusCount[item.status] || 0) + 1;
           });
           
           let maxCount = 0;
-          let maxStatus = 'processing'; // default fallback
+          let maxStatus = 'processing';
           
           for (const [status, count] of Object.entries(statusCount)) {
             if (count > maxCount) {
@@ -359,24 +357,21 @@ const adminOrderController = {
         const { orderId } = req.params;
         const { action } = req.body;
 
-        console.log('Processing return request:', { orderId, action });
+        // console.log('Processing return request:', { orderId, action });
 
         if (!['approve', 'reject'].includes(action)) {
           return res.status(400).json({ message: 'Invalid action' });
         }
 
-        // Fix 1: Use orderId field since the parameter is the human-readable order ID
         const order = await Order.findOne({ orderId: orderId }).populate('items.productId');
         
         if (!order) {
-          console.log('Order not found:', orderId);
+          // console.log('Order not found:', orderId);
           return res.status(400).json({ message: 'Order not found' });
         }
 
-        console.log('Order status:', order.status);
+        // console.log('Order status:', order.status);
 
-        // Fix 2: Focus on item-level validation instead of order-level status
-        // Remove the restrictive order status check and focus on returnable items
         const targetItems = order.items.filter(item => 
           item.status === 'return request' || 
           item.itemStatus === 'return request' ||
@@ -387,9 +382,8 @@ const adminOrderController = {
           return res.status(400).json({ message: 'No items found with return requests' });
         }
 
-        console.log(`Found ${targetItems.length} items with return requests`);
+        // console.log(`Found ${targetItems.length} items with return requests`);
         
-        // Initialize returnRequest if it doesn't exist
         if (!order.returnRequest) {
           order.returnRequest = {
             isRequested: false,
@@ -408,7 +402,6 @@ const adminOrderController = {
             }
           });
 
-          // Fix 3: Improved order status logic
           const allItemsReturned = order.items.every(item => 
             item.status === 'returned' || item.status === 'cancelled'
           );
@@ -422,12 +415,10 @@ const adminOrderController = {
           } else if (hasReturnedItems && hasDeliveredItems) {
             order.status = 'partially returned';
           }
-          // Don't change order status if it was already cancelled - keep it as is
           
           order.returnRequest.isRequested = false;
           order.returnRequest.processedAt = new Date();
 
-          // Restore inventory for returned items
           for (const item of targetItems) {
             if (item.productId && item.size) {
               try {
@@ -436,14 +427,13 @@ const adminOrderController = {
                 }, {
                   arrayFilters: [{ 'variant.size': item.size }],
                 });
-                console.log(`Inventory restored for item: ${item.productId._id || item.productId}, size: ${item.size}, quantity: ${item.quantity}`);
+                // console.log(`Inventory restored for item: ${item.productId._id || item.productId}, size: ${item.size}, quantity: ${item.quantity}`);
               } catch (inventoryError) {
                 console.error('Error updating inventory:', inventoryError);
               }
             }
           }
 
-          // Process refund
           const refundAmount = targetItems.reduce((total, item) => {
             const itemPrice = item.itemSalePrice || (item.price || 0);
             return total + (itemPrice * item.quantity);
@@ -475,13 +465,12 @@ const adminOrderController = {
             });
 
             await newTransaction.save();
-            console.log('Wallet credited successfully:', {
-              transactionId,
-              amount: refundAmount,
-              newBalance: currentBalance + refundAmount
-            });
+            // console.log('Wallet credited successfully:', {
+            //   transactionId,
+            //   amount: refundAmount,
+            //   newBalance: currentBalance + refundAmount
+            // });
 
-            // Send approval email
             try {
               const user = await User.findById(order.userId);
               if (user && user.email) {
@@ -530,9 +519,8 @@ const adminOrderController = {
             });
           }
 
-        } else { // reject
+        } else {
           targetItems.forEach((item) => {
-            // For rejected returns, restore the original status if possible
             if (item.status === 'return request') {
               item.status = item.originalStatus || 'delivered';
             }
@@ -542,7 +530,6 @@ const adminOrderController = {
             }
           });
 
-          // Check if there are other pending return requests
           const hasOtherReturnRequests = order.items.some(item => 
             !targetItems.includes(item) && 
             (item.status === 'return request' || item.itemStatus === 'return request')
@@ -553,7 +540,6 @@ const adminOrderController = {
             order.returnRequest.processedAt = new Date();
           }
 
-          // Send rejection email
           try {
             const user = await User.findById(order.userId);
             if (user && user.email) {
@@ -587,7 +573,7 @@ const adminOrderController = {
         }
 
         await order.save();
-        console.log('Order saved successfully');
+        // console.log('Order saved successfully');
         
         return res.json({ 
           message: `Return request ${action}d successfully for ${targetItems.length} item(s)`,

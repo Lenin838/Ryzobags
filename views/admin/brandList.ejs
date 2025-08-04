@@ -1,50 +1,56 @@
-<div class="p-8 bg-white rounded-xl shadow-md">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-3xl font-bold text-gray-800">Brand List</h2>
+<div class="p-4 sm:p-6 md:p-8 bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
+      <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Brand List</h2>
       <a href="/admin/brands/add"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">+ Add Brand</a>
+        class="w-full sm:w-auto bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-md sm:rounded-lg hover:bg-indigo-700 text-sm sm:text-base text-center">
+        + Add Brand
+      </a>
     </div>
   
-    <form method="GET" action="/admin/brands" class="mb-4 flex gap-4">
+    <form method="GET" action="/admin/brands" class="mb-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
       <input type="text" name="search" value="<%= searchQuery %>" placeholder="Search brand..."
-        class="border border-gray-300 rounded-lg py-2 px-4 w-full max-w-xs focus:ring-2 focus:ring-indigo-400" />
-      <button type="submit"
-        class="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-indigo-100">Search</button>
-      <% if (searchQuery) { %>
-        <a href="/admin/brands" class="text-red-500 font-medium hover:underline">Clear</a>
-      <% } %>
+        class="border border-gray-300 rounded-md sm:rounded-lg py-2 px-3 sm:px-4 w-full focus:ring-2 focus:ring-indigo-400 text-sm sm:text-base" />
+      <div class="flex gap-3 sm:gap-4">
+        <button type="submit"
+          class="w-full sm:w-auto bg-gray-100 text-gray-800 px-3 sm:px-4 py-2 rounded-md sm:rounded-lg hover:bg-indigo-100 text-sm sm:text-base">
+          Search
+        </button>
+        <% if (searchQuery) { %>
+          <a href="/admin/brands" class="text-red-500 font-medium hover:underline text-sm sm:text-base flex items-center">Clear</a>
+        <% } %>
+      </div>
     </form>
   
     <div class="overflow-x-auto">
       <table class="min-w-full table-auto border border-gray-200">
         <thead class="bg-gray-100">
           <tr class="text-left text-gray-700">
-            <th class="p-3">Index</th>
-            <th class="p-3">Name</th>
-            <th class="p-3">Description</th>
-            <th class="p-3">Status</th>
-            <th class="p-3 text-center">Actions</th>
+            <th class="p-2 sm:p-3 text-sm sm:text-base">Index</th>
+            <th class="p-2 sm:p-3 text-sm sm:text-base">Name</th>
+            <th class="p-2 sm:p-3 text-sm sm:text-base hidden sm:table-cell">Description</th>
+            <th class="p-2 sm:p-3 text-sm sm:text-base">Status</th>
+            <th class="p-2 sm:p-3 text-sm sm:text-base text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           <% brands.forEach((brand, index) => { %>
-            <tr class="border-t border-gray-200">
-              <td class="p-3"><%= (currentPage - 1) * limit + index + 1 %></td>
-              <td class="p-3 font-medium"><%= brand.name %></td>
-              <td class="p-3"><%= brand.description %></td>
-              <td class="p-3">
-                <span class="px-2 py-1 rounded-full text-sm font-semibold
+            <tr class="border-t border-gray-200 hover:bg-gray-50">
+              <td class="p-2 sm:p-3 text-sm sm:text-base"><%= (currentPage - 1) * limit + index + 1 %></td>
+              <td class="p-2 sm:p-3 text-sm sm:text-base font-medium"><%= brand.name %></td>
+              <td class="p-2 sm:p-3 text-sm sm:text-base hidden sm:table-cell"><%= brand.description %></td>
+              <td class="p-2 sm:p-3 text-sm sm:text-base">
+                <span class="px-2 py-1 rounded-full text-xs sm:text-sm font-semibold
                   <%= brand.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' %>">
                   <%= brand.isActive ? 'Active' : 'Inactive' %>
                 </span>
               </td>
-              <td class="p-3 text-center space-x-3">
+              <td class="p-2 sm:p-3 text-sm sm:text-base text-center space-x-2 sm:space-x-3">
                 <a href="/admin/brands/edit/<%= brand._id %>"
-                  class="text-blue-600 hover:underline">Edit</a>
+                  class="text-blue-600 hover:underline text-sm sm:text-base">Edit</a>
                 <% if (brand.isActive) { %>
-                  <a href="#" class=" unlist-brand hover:underline" data-id="<%= brand._id %>">Unlist</a>
+                  <a href="#" class="unlist-brand hover:underline text-sm sm:text-base" data-id="<%= brand._id %>">Unlist</a>
                 <% } else { %>
-                  <a href="#" class=" list-brand hover:underline" data-id="<%= brand._id %>">List</a>
+                  <a href="#" class="list-brand hover:underline text-sm sm:text-base" data-id="<%= brand._id %>">List</a>
                 <% } %>
               </td>
             </tr>
@@ -55,18 +61,18 @@
   
     <!-- Pagination -->
     <% if (totalPages > 1) { %>
-      <div class="mt-6 flex flex-col sm:flex-row justify-between items-center">
-        <p class="text-sm text-gray-600 mb-4 sm:mb-0">
+      <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <p class="text-xs sm:text-sm text-gray-600">
           Showing <%= (currentPage - 1) * limit + 1 %> to <%= Math.min(currentPage * limit, totalBrands) %> of <%= totalBrands %> brands
         </p>
-        <div class="flex gap-1">
+        <div class="flex flex-wrap gap-1 justify-center">
           <% if (currentPage > 1) { %>
             <a href="/admin/brands?page=1&search=<%= searchQuery %>"
-              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
               First
             </a>
             <a href="/admin/brands?page=<%= currentPage - 1 %>&search=<%= searchQuery %>"
-              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
               Prev
             </a>
           <% } %>
@@ -81,27 +87,29 @@
              
              for (let i = startPage; i <= endPage; i++) { %>
             <a href="/admin/brands?page=<%= i %>&search=<%= searchQuery %>"
-              class="px-3 py-1 rounded-md border <%= i === currentPage ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' %>">
+              class="px-2 sm:px-3 py-1 rounded-md border <%= i === currentPage ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' %> text-xs sm:text-sm">
               <%= i %>
             </a>
           <% } %>
 
           <% if (currentPage < totalPages) { %>
             <a href="/admin/brands?page=<%= currentPage + 1 %>&search=<%= searchQuery %>"
-              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
               Next
             </a>
             <a href="/admin/brands?page=<%= totalPages %>&search=<%= searchQuery %>"
-              class="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100">
+              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
               Last
             </a>
           <% } %>
         </div>
       </div>
     <% } %>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+/* Original script remains completely unchanged */
 document.addEventListener('DOMContentLoaded', () => {
   const Toast = Swal.mixin({
     toast: true,
@@ -170,4 +178,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-

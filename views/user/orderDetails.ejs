@@ -92,16 +92,22 @@
             %>
             
             <% if (activeItems.length > 0) { %>
-              <p class="text-xs sm:text-sm text-gray-700">Active Items Subtotal: ₹<%= activeItemsTotal.toFixed(2) %></p>
+              <p class="text-xs sm:text-sm text-gray-700">Active Items Subtotal: ₹<%= 
+                activeItems.reduce((total, item) => {
+                  const price = parseFloat(item.itemSalePrice) || 0;
+                  const qty = parseInt(item.quantity) || 0;
+                  return total + (price * qty);
+                }, 0).toFixed(2)
+              %></p>
             <% } %>
             
             
             <% if (order.discount && order.discount > 0) { %>
-              <p class="text-xs sm:text-sm text-gray-700">Discount: -₹<%= order.discount.toFixed(2) %></p>
+              <p class="text-xs sm:text-sm text-gray-700">Discount: ₹<%= order.discount.toFixed(2) %></p>
             <% } %>
             
             <p class="text-base sm:text-lg font-semibold text-gray-900 border-t pt-1 sm:pt-2 mt-1 sm:mt-2">
-              Current Total: ₹<%= (activeItemsTotal - (order.discount || 0)).toFixed(2) %>
+              Current Total: ₹<%= activeItemsTotal.toFixed() %>
             </p>
             
             <% if (order.status === 'cancelled') { %>

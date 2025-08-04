@@ -53,7 +53,7 @@ const createReferralCoupon = async (userId) => {
             userId: [userId],
         });
         const savedCoupon = await coupon.save();
-        console.log(`Coupon created for user ${userId}: ${savedCoupon.code}`);
+        // console.log(`Coupon created for user ${userId}: ${savedCoupon.code}`);
         return savedCoupon;
     }catch (error){
         console.error(`Error creating coupon for user ${userId}:`, error);
@@ -78,7 +78,7 @@ const userController = {
     verifyRegister: async (req, res) => {
         try {
             const { fullname, email, phone, password, confirmPassword ,referralCode} = req.body;
-            console.log("body:.....",req.body)
+            // console.log("body:.....",req.body)
             let errors = {};
 
             if (!fullname || fullname.trim() === "") {
@@ -120,16 +120,16 @@ const userController = {
                     errors.referralCode = "Invalid referral code.";
                 }
             }
-            console.log("1",referrer)
+            // console.log("1",referrer)
 
             if (Object.keys(errors).length > 0) {
                 return res.status(400).json({ errors });
             }
-            console.log(errors)
+            // console.log(errors)
 
             try {
                 const existingUser = await User.findOne({ email });
-                console.log("existing",existingUser)
+                // console.log("existing",existingUser)
                 if (existingUser) {
                     return res.status(400).json({ 
                         message: "User already exists. Please log in." 
@@ -144,7 +144,7 @@ const userController = {
 
             const hashedPassword = await bcrypt.hash(password, 10);
             const newReferralCode = await generateReferralCode();
-            console.log("hashedPassword","newReferralCode",newReferralCode,hashedPassword)
+            // console.log("hashedPassword","newReferralCode",newReferralCode,hashedPassword)
             req.session.fullname = fullname;
             req.session.email = email;
             req.session.phone = phone;
@@ -158,19 +158,19 @@ const userController = {
             req.session.otpExpire = Date.now() + 1 * 60 * 1000;
 
             console.log("Generated OTP:", otpCode);
-            console.log("Session Data:", {
-                fullname: req.session.fullname,
-                email: req.session.email,
-                phone: req.session.phone,
-                otpExpire: new Date(req.session.otpExpire),
-                referralCode : req.session.referralCode,
-                newReferralCode: req.session.newReferralCode,
+            // console.log("Session Data:", {
+            //     fullname: req.session.fullname,
+            //     email: req.session.email,
+            //     phone: req.session.phone,
+            //     otpExpire: new Date(req.session.otpExpire),
+            //     referralCode : req.session.referralCode,
+            //     newReferralCode: req.session.newReferralCode,
                 
-            });
+            // });
 
             try {
                 await sendOtpEmail(email, otpCode);
-                console.log("OTP email sent successfully");
+                // console.log("OTP email sent successfully");
             } catch (emailError) {
                 console.error('Email sending error:', emailError);
                 return res.status(500).json({ 
@@ -196,21 +196,21 @@ const userController = {
                 }
                 res.render("user/otp");
             } catch (error) {
-                console.log('Load OTP page error:', error.message);
+                // console.log('Load OTP page error:', error.message);
                 res.status(500).send('Server Error');
             }
     },
 
     verifyOtp: async (req, res) => {
         try {
-            console.log("=== OTP VERIFICATION DEBUG ===");
-            console.log("Stored OTP:", req.session.otp);
-            console.log("Stored Email:", req.session.email);
-            console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
-            console.log("Session fullname:", req.session.fullname);
-            console.log("Session phone:", req.session.phone);
-            console.log("Session referralCode:", req.session.referralCode);
-            console.log("Session newReferralCode:", req.session.newReferralCode);
+            // console.log("=== OTP VERIFICATION DEBUG ===");
+            // console.log("Stored OTP:", req.session.otp);
+            // console.log("Stored Email:", req.session.email);
+            // console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
+            // console.log("Session fullname:", req.session.fullname);
+            // console.log("Session phone:", req.session.phone);
+            // console.log("Session referralCode:", req.session.referralCode);
+            // console.log("Session newReferralCode:", req.session.newReferralCode);
 
             const { otp } = req.body;
 
@@ -223,7 +223,7 @@ const userController = {
             }
 
             if (Date.now() > req.session.otpExpire) {
-            console.log("OTP expired");
+            // console.log("OTP expired");
             return res.status(400).json({
                 message: "OTP has expired. Please request a new one.",
                 success: false,
@@ -231,7 +231,7 @@ const userController = {
             }
 
             if (otp !== req.session.otp) {
-            console.log("Invalid OTP provided");
+            // console.log("Invalid OTP provided");
             return res.status(400).json({
                 message: "Invalid OTP. Please try again.",
                 success: false,
@@ -250,31 +250,31 @@ const userController = {
             isVerified: true,
             };
 
-            console.log("Creating user with data:", userData);
+            // console.log("Creating user with data:", userData);
 
             try {
             const user = new User(userData);
             const savedUser = await user.save();
-            console.log("User saved successfully:", savedUser._id);
+            // console.log("User saved successfully:", savedUser._id);
 
             if (req.session.referralCode) {
                 const referrer = await User.findOne({ referralCode: req.session.referralCode });
-                console.log("Referrer found:", referrer ? referrer._id : "No referrer found");
+                // console.log("Referrer found:", referrer ? referrer._id : "No referrer found");
 
                 if (referrer && referrer.canGiveReferralRewards) {
                 try {
                     const refereeCoupon = await createReferralCoupon(savedUser._id);
-                    console.log(`Coupon generated for referee: ${savedUser._id}, Coupon code: ${refereeCoupon.code}`);
+                    // console.log(`Coupon generated for referee: ${savedUser._id}, Coupon code: ${refereeCoupon.code}`);
 
                     const referrerCoupon = await createReferralCoupon(referrer._id);
-                    console.log(`Coupon generated for referrer: ${referrer._id}, Coupon code: ${referrerCoupon.code}`);
+                    // console.log(`Coupon generated for referrer: ${referrer._id}, Coupon code: ${referrerCoupon.code}`);
                 } catch (couponError) {
                     console.error("Coupon creation failed:", couponError);
                 }
                 } else if (referrer) {
-                console.log(`Referrer ${referrer._id} is not eligible to give referral rewards`);
+                // console.log(`Referrer ${referrer._id} is not eligible to give referral rewards`);
                 } else {
-                console.log(`No referrer found for referralCode: ${req.session.referralCode}`);
+                // console.log(`No referrer found for referralCode: ${req.session.referralCode}`);
                 }
             }
 
@@ -323,7 +323,7 @@ const userController = {
 
     resendOtp: async (req, res) => {
             try {
-                console.log("Resend OTP requested. Session email:", req.session.email);
+                // console.log("Resend OTP requested. Session email:", req.session.email);
 
                 if (!req.session.email) {
                     return res.status(400).json({ 
@@ -340,7 +340,7 @@ const userController = {
 
                 try {
                     await sendOtpEmail(req.session.email, newOtp);
-                    console.log("New OTP sent to:", req.session.email);
+                    // console.log("New OTP sent to:", req.session.email);
 
                     return res.status(200).json({ 
                         message: "A new OTP has been sent to your email.",
@@ -437,7 +437,7 @@ const userController = {
             try {
                 res.render('user/login');
             } catch (error) {
-                console.log('Load login error:', error.message);
+                console.error('Load login error:', error.message);
                 res.status(500).send('Server Error');
             }
     },
@@ -501,7 +501,7 @@ const userController = {
             try {
                 res.render("user/forgotPassword");
             } catch (error) {
-                console.log(error.message);
+                console.error(error.message);
                 
             }
     },
@@ -597,7 +597,7 @@ const userController = {
                     `
                 });
 
-                console.log("Password reset email sent successfully to:", email);
+                // console.log("Password reset email sent successfully to:", email);
 
                 res.status(200).json({ 
                     message: "Password reset link has been sent to your email",
@@ -632,20 +632,20 @@ const userController = {
     loadResetPassword: async (req, res) => {
             try {
                 const token = req.params.token;
-                console.log("Loading reset password page for token:", token);
+                // console.log("Loading reset password page for token:", token);
                 const user = await User.findOne({
                     resetToken: token,
                     resetTokenExpire: { $gt: Date.now() }
                 });
                 
-                console.log("User found with token:", user ? "Yes" : "No");
-                console.log("Current time:", Date.now());
+                // console.log("User found with token:", user ? "Yes" : "No");
+                // console.log("Current time:", Date.now());
                 if (user) {
-                    console.log("Token expiry:", user.resetTokenExpire);
+                    // console.log("Token expiry:", user.resetTokenExpire);
                 }
                 
                 if (!user) {
-                    console.log("Token is invalid or expired");
+                    // console.log("Token is invalid or expired");
                     return res.render('user/resetPassword', {
                         errors: { token: 'Invalid or expired token. Please request a new password reset.' },
                         token: "", 
@@ -653,7 +653,7 @@ const userController = {
                         tokenValid: false
                     });
                 }
-                console.log("Token is valid, rendering form");
+                // console.log("Token is valid, rendering form");
                 res.render('user/resetPassword', {
                     errors: {},
                     token: token, 
@@ -676,8 +676,8 @@ const userController = {
                 const { token } = req.params;
                 const { password, confirmPassword } = req.body;
 
-                console.log("Reset password attempt for token:", token);
-                console.log("Current time:", Date.now());
+                // console.log("Reset password attempt for token:", token);
+                // console.log("Current time:", Date.now());
 
                 const user = await User.findOne({
                     resetToken: token,
@@ -686,12 +686,12 @@ const userController = {
 
                 console.log("User found:", user ? "Yes" : "No");
                 if (user) {
-                    console.log("Token expiry:", user.resetTokenExpire);
-                    console.log("Time remaining:", user.resetTokenExpire - Date.now(), "ms");
+                    // console.log("Token expiry:", user.resetTokenExpire);
+                    // console.log("Time remaining:", user.resetTokenExpire - Date.now(), "ms");
                 }
 
                 if (!user) {
-                    console.log("No user found with valid token");
+                    // console.log("No user found with valid token");
                     return res.status(400).json({
                         success: false,
                         message: "Invalid or expired token. Please request a new password reset."
@@ -728,7 +728,7 @@ const userController = {
                 user.resetTokenExpire = undefined;
                 await user.save();
 
-                console.log("Password reset successful for user:", user.email);
+                // console.log("Password reset successful for user:", user.email);
 
                 return res.status(200).json({
                     success: true,
@@ -789,7 +789,7 @@ const userController = {
                 googleId: user.googleId
             };
 
-            console.log('Google user saved/updated successfully:', user.email);
+            // console.log('Google user saved/updated successfully:', user.email);
             res.redirect("/user/home");
             
             } catch (error) {
@@ -799,7 +799,7 @@ const userController = {
     },
 
     googleAuthFailure: (req, res) => {
-            console.log('Google authentication failed');
+            // console.log('Google authentication failed');
             res.redirect("/user/login?error=google_auth_failed");
     },
 
@@ -810,7 +810,7 @@ const userController = {
     loadLogout: (req,res) => {
             req.session.destroy((err)=>{
                 if(err){
-                    console.log(err);
+                    console.error("error in logout:",err);
                 }
                 return res.redirect('/user/login');
             })

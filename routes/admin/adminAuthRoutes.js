@@ -10,6 +10,7 @@ const adminInventoryRouter = require('../../routes/admin/adminInventory');
 const couponRouter = require('../../routes/admin/couponRoutes');
 const salesRouter = require('../../routes/admin/salesReportRoutes');
 const dashboardRouter = require('../../routes/admin/adminDashboardRoutes');
+const {loginLimiter} = require('../../middlewares/rateLimiter');
 
 
 adminRouter.use('/',dashboardRouter);
@@ -23,7 +24,7 @@ adminRouter.use('/',categoryRouter);
 
 
 adminRouter.get('/login' ,isAdminLoggedOut,adminController.loadLoginPage);
-adminRouter.post("/login" ,isAdminLoggedOut, adminController.verifyLogin);
+adminRouter.post("/login" ,loginLimiter,isAdminLoggedOut, adminController.verifyLogin);
 
 adminRouter.use(isAdminLoggedIn);
 adminRouter.get("/logout",adminController.adminLogout);

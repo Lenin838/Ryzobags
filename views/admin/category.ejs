@@ -1,85 +1,89 @@
-<div class="p-6 bg-gray-50 rounded shadow-lg">
-    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Category Management</h1>
+<div class="p-4 sm:p-6 bg-gray-50 rounded-lg shadow-md">
+    <h1 class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-4 sm:mb-6">Category Management</h1>
 
-    <form method="GET" action="/admin/categories" class="flex gap-3 mb-6">
+    <form method="GET" action="/admin/categories" class="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
         <input type="text" name="search" value="<%= searchQuery %>" 
                placeholder="Search category..." 
-               class="border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-            Search
-        </button>
-        <% if (searchQuery) { %>
-        <a href="/admin/categories" 
-           class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
-            Clear
-        </a>
-        <% } %>
+               class="border border-gray-300 px-3 sm:px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base">
+        <div class="flex gap-3">
+            <button type="submit" class="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm sm:text-base w-full sm:w-auto">
+                Search
+            </button>
+            <% if (searchQuery) { %>
+            <a href="/admin/categories" 
+               class="bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-600 transition text-sm sm:text-base w-full sm:w-auto text-center">
+                Clear
+            </a>
+            <% } %>
+        </div>
     </form>
 
     <a href="/admin/categories/add" 
-       class="bg-green-500 text-white px-5 py-3 rounded-lg inline-block mb-6 hover:bg-green-600 transition shadow-md">
+       class="bg-green-500 text-white px-4 sm:px-5 py-2 sm:py-3 rounded-lg inline-block mb-4 sm:mb-6 hover:bg-green-600 transition shadow-md text-sm sm:text-base">
        + Add Category
     </a>
 
-    <table class="w-full border border-gray-200 bg-white rounded-lg shadow-md">
-        <thead>
-            <tr class="bg-gray-200">
-                <th class="p-4 border-b">Index</th>
-                <th class="p-4 border-b">Name</th>
-                <th class="p-4 border-b">Status</th>
-                <th class="p-4 border-b">offer</th>
-                <th class="p-4 border-b">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% categories.forEach((category, index) => { %>
-            <tr class="text-center border-b hover:bg-gray-100 transition">
-                <td class="p-4"><%= index + 1 %></td>
-                <td class="p-4"><%= category.name %></td>
-                <td class="p-4">
-                    <% if (category.isActive) { %>
-                    <span class="text-green-600 font-semibold">Listed</span>
-                    <% } else { %>
-                    <span class="text-red-600 font-semibold">Unlisted</span>
-                    <% } %>
-                </td>
-                <td class="p-4"><%= category.offer.discountPercentage %>%</td>
-                <td class="p-4 flex justify-center space-x-3">
-                    <a href="/admin/categories/edit/<%= category._id %>" 
-                       class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition">
-                       Edit
-                    </a>
-                    <% if (category.isActive) { %>
-                    <a href="#" onclick="unlistCategory('<%= category._id %>')" 
-                       class="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition">
-                       Unlist
-                    </a>
-                    <% } else { %>
-                    <a href="#" onclick="listCategory('<%= category._id %>')" 
-                       class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition">
-                       List
-                    </a>
-                    <% } %>
-                </td>
-            </tr>
-            <% }) %>
-        </tbody>
-    </table>
+    <div class="overflow-x-auto">
+        <table class="w-full border border-gray-200 bg-white rounded-lg shadow-md">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2 sm:p-4 border-b text-sm sm:text-base">Index</th>
+                    <th class="p-2 sm:p-4 border-b text-sm sm:text-base">Name</th>
+                    <th class="p-2 sm:p-4 border-b text-sm sm:text-base">Status</th>
+                    <th class="p-2 sm:p-4 border-b text-sm sm:text-base">Offer</th>
+                    <th class="p-2 sm:p-4 border-b text-sm sm:text-base">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% categories.forEach((category, index) => { %>
+                <tr class="text-center border-b hover:bg-gray-100 transition">
+                    <td class="p-2 sm:p-4 text-sm sm:text-base"><%= index + 1 %></td>
+                    <td class="p-2 sm:p-4 text-sm sm:text-base"><%= category.name %></td>
+                    <td class="p-2 sm:p-4 text-sm sm:text-base">
+                        <% if (category.isActive) { %>
+                        <span class="text-green-600 font-semibold">Listed</span>
+                        <% } else { %>
+                        <span class="text-red-600 font-semibold">Unlisted</span>
+                        <% } %>
+                    </td>
+                    <td class="p-2 sm:p-4 text-sm sm:text-base"><%= category.offer.discountPercentage %>%</td>
+                    <td class="p-2 sm:p-4 text-sm sm:text-base flex justify-center space-x-2 sm:space-x-3">
+                        <a href="/admin/categories/edit/<%= category._id %>" 
+                           class="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-lg hover:bg-blue-700 transition text-xs sm:text-sm">
+                           Edit
+                        </a>
+                        <% if (category.isActive) { %>
+                        <a href="#" onclick="unlistCategory('<%= category._id %>')" 
+                           class="bg-red-600 text-white px-2 sm:px-3 py-1 rounded-lg hover:bg-red-700 transition text-xs sm:text-sm">
+                           Unlist
+                        </a>
+                        <% } else { %>
+                        <a href="#" onclick="listCategory('<%= category._id %>')" 
+                           class="bg-green-600 text-white px-2 sm:px-3 py-1 rounded-lg hover:bg-green-700 transition text-xs sm:text-sm">
+                           List
+                        </a>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
 
     <!-- Pagination -->
     <% if (totalPages > 1) { %>
-    <div class="mt-6 flex flex-col sm:flex-row justify-between items-center">
-        <p class="text-sm text-gray-600 mb-4 sm:mb-0">
+    <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <p class="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-0">
             Showing <%= (currentPage - 1) * 10 + 1 %> to <%= Math.min(currentPage * 10, totalCategories) %> of <%= totalCategories %> categories
         </p>
-        <div class="flex gap-1">
+        <div class="flex flex-wrap gap-1 justify-center">
             <% if (currentPage > 1) { %>
                 <a href="/admin/categories?page=1&search=<%= searchQuery %>" 
-                   class="px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition">
+                   class="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition text-xs sm:text-sm">
                     First
                 </a>
                 <a href="/admin/categories?page=<%= currentPage - 1 %>&search=<%= searchQuery %>" 
-                   class="px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition">
+                   class="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition text-xs sm:text-sm">
                     Prev
                 </a>
             <% } %>
@@ -94,18 +98,18 @@
                
                for (let i = startPage; i <= endPage; i++) { %>
                 <a href="/admin/categories?page=<%= i %>&search=<%= searchQuery %>" 
-                   class="px-3 py-1 border border-gray-300 rounded-lg <%= currentPage === i ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-100' %> transition">
+                   class="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg <%= currentPage === i ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-100' %> transition text-xs sm:text-sm">
                     <%= i %>
                 </a>
             <% } %>
 
             <% if (currentPage < totalPages) { %>
                 <a href="/admin/categories?page=<%= currentPage + 1 %>&search=<%= searchQuery %>" 
-                   class="px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition">
+                   class="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition text-xs sm:text-sm">
                     Next
                 </a>
                 <a href="/admin/categories?page=<%= totalPages %>&search=<%= searchQuery %>" 
-                   class="px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition">
+                   class="px-2 sm:px-3 py-1 border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition text-xs sm:text-sm">
                     Last
                 </a>
             <% } %>
@@ -113,6 +117,8 @@
     </div>
     <% } %>
 </div>
+
+<!-- Original script remains completely unchanged -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   const Toast = Swal.mixin({
@@ -184,4 +190,3 @@
     }
   }
 </script>
-

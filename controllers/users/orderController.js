@@ -271,21 +271,21 @@ const orderController = {
             return res.redirect("/user/profile?tab=orders");
         }
 
-        console.log("Order details:", order.address.toString());
+        // console.log("Order details:", order.address.toString());
 
         let selectedAddress = null;
         
         try {
             const userAddressDoc = await Address.findOne({ userId: order.userId }).lean();
-            console.log('User address document found:', userAddressDoc);
+            // console.log('User address document found:', userAddressDoc);
             
             if (userAddressDoc && userAddressDoc.address && Array.isArray(userAddressDoc.address)) {
-                console.log('Address array length:', userAddressDoc.address.length);
+                // console.log('Address array length:', userAddressDoc.address.length);
                 if (order.address) {
                     selectedAddress = userAddressDoc.address.find(addr => 
                         addr._id.toString() === order.address.toString()
                     );
-                    console.log('Order-specific address found:', selectedAddress);
+                    // console.log('Order-specific address found:', selectedAddress);
                 }
                 
                 if (!selectedAddress) {
@@ -330,7 +330,7 @@ const orderController = {
             //     return sum + (price * quantity);
             // }, 0);
 
-        console.log('Selected address for rendering:', selectedAddress);
+        // console.log('Selected address for rendering:', selectedAddress);
 
         res.render("user/orderDetails", {
             order,
@@ -363,7 +363,6 @@ const orderController = {
                 return res.status(404).json({ success: false, message: 'Order not found' });
             }
             
-            // Check if there are any items that can be returned (instead of checking order status)
             const returnableItems = order.items.filter(item => 
                 ['delivered', 'shipped', 'processing'].includes(item.status?.toLowerCase()) &&
                 item.status !== 'cancelled' && 
@@ -378,7 +377,6 @@ const orderController = {
                 });
             }
             
-            // Update only the returnable items
             order.items.forEach(item => {
                 if (['delivered', 'shipped', 'processing'].includes(item.status?.toLowerCase()) &&
                     item.status !== 'cancelled' && 
@@ -556,17 +554,17 @@ const orderController = {
             .text('Payment Method:', col1, 225)
             .text(order.paymentMethod || 'N/A', col1 + 80, 225);
 
-        console.log('Order address field:', order.address);
-        console.log('Order userId:', order.userId);
+        // console.log('Order address field:', order.address);
+        // console.log('Order userId:', order.userId);
         
         let selectedAddress = null;
         
         try {
             const userAddressDoc = await Address.findOne({ userId: order.userId });
-            console.log('User address document found:', !!userAddressDoc);
+            // console.log('User address document found:', !!userAddressDoc);
             
             if (userAddressDoc && userAddressDoc.address && Array.isArray(userAddressDoc.address)) {
-                console.log('Address array length:', userAddressDoc.address.length);
+                // console.log('Address array length:', userAddressDoc.address.length);
                 
                 selectedAddress = userAddressDoc.address.find(addr => 
                     addr._id.toString() === order.address.toString()
@@ -580,7 +578,7 @@ const orderController = {
                     selectedAddress = userAddressDoc.address[0];
                 }
                 
-                console.log('Selected address found:', selectedAddress);
+                // console.log('Selected address found:', selectedAddress);
             }
         } catch (addressError) {
             console.error('Error fetching user address:', addressError);
@@ -655,9 +653,6 @@ const orderController = {
         
         const totalOrderAmount = order.items.reduce((sum, item) => sum + (item.quantity * item.itemSalePrice), 0);
         const proportionalDiscount = order.discount || 0;
-        console.log("prop:)...........:",proportionalDiscount);
-        console.log('deliveredS............>>):',deliveredSubtotal);
-        console.log(totalOrderAmount);
         
         doc
             .fillColor(secondaryColor)

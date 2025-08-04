@@ -28,6 +28,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Zoom container styles */
         .zoom-container {
             position: relative;
             overflow: hidden;
@@ -36,26 +37,25 @@
         .zoomed-image {
             position: absolute;
             top: 0;
-            left: 100%;
+            left: 0;
             width: 100%;
             height: 100%;
             background-repeat: no-repeat;
             background-size: 200%;
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity 0.3s ease;
             pointer-events: none;
             z-index: 10;
-            border-radius: 0.375rem /* rounded-md */;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
         .zoom-container:hover .zoomed-image {
             opacity: 1;
-            left: 0;
         }
-        
+
         /* Custom scrollbar for thumbnail gallery */
         .thumbnail-scroll::-webkit-scrollbar {
-            height: 3px;
+            height: 4px;
         }
         .thumbnail-scroll::-webkit-scrollbar-track {
             background: #f1f1f1;
@@ -68,16 +68,8 @@
         .thumbnail-scroll::-webkit-scrollbar-thumb:hover {
             background: #006570;
         }
-        @media (min-width: 640px) {
-            .thumbnail-scroll::-webkit-scrollbar {
-                height: 4px;
-            }
-            .zoomed-image {
-                border-radius: 0.5rem /* rounded-xl */;
-            }
-        }
-        
-        /* Ensure full height layout */
+
+        /* Full height layout */
         html, body {
             height: 100%;
             margin: 0;
@@ -85,12 +77,35 @@
         body {
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
         }
         .content {
             flex: 1 0 auto;
         }
         footer {
             flex-shrink: 0;
+        }
+
+        /* Responsive image container */
+        .product-image-container {
+            max-width: 100%;
+            aspect-ratio: 1/1;
+        }
+
+        /* Ensure consistent button sizes */
+        .action-button {
+            min-height: 48px;
+        }
+
+        /* Smooth transitions for hover effects */
+        .thumbnail-item {
+            transition: border-color 0.2s ease;
+        }
+
+        @media (min-width: 640px) {
+            .thumbnail-scroll::-webkit-scrollbar {
+                height: 5px;
+            }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -99,101 +114,71 @@
 <body class="bg-gray-50 font-sans">
     <div class="content">
         <!-- Breadcrumbs -->
-        <div class="bg-gradient-to-r from-primary-dark to-primary py-6 sm:py-8">
-            <div class="container mx-auto px-2 sm:px-4">
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4"><%= product.name %></h1>
-                <div class="flex items-center text-primary-light text-sm sm:text-base">
+        <div class="bg-gradient-to-r from-primary-dark to-primary py-4 sm:py-6">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 sm:mb-3"><%= product.name %></h1>
+                <nav class="flex items-center text-sm sm:text-base text-primary-light">
                     <a href="/user/home" class="hover:text-white transition-colors">Home</a>
-                    <span class="mx-1 sm:mx-2">/</span>
+                    <span class="mx-2">/</span>
                     <a href="/user/shop" class="hover:text-white transition-colors">Shop</a>
-                    <span class="mx-1 sm:mx-2">/</span>
+                    <span class="mx-2">/</span>
                     <span class="text-white"><%= product.name %></span>
-                </div>
+                </nav>
             </div>
         </div>
 
         <!-- Product Section -->
-        <div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
-            <div class="flex flex-col md:flex-row gap-6 sm:gap-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                 <!-- Product Image Gallery -->
-                <div class="w-full md:w-1/2">
-                    <div class="zoom-container rounded-lg sm:rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
-                        <img src="<%= product.mainImage %>" class="w-full h-64 sm:h-80 md:h-auto object-contain aspect-square p-2 sm:p-4" id="mainProductImage" alt="<%= product.name %>">
+                <div class="flex flex-col gap-4">
+                    <div class="product-image-container zoom-container rounded-lg sm:rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+                        <img src="<%= product.mainImage %>" class="w-full h-full object-contain p-4" id="mainProductImage" alt="<%= product.name %>">
                         <div class="zoomed-image" id="zoomedImage"></div>
                     </div>
-                    <div class="flex mt-3 sm:mt-4 space-x-1 sm:space-x-2 overflow-x-auto pb-2 thumbnail-scroll">
-                        <% if (Array.isArray(product.subImages)) { %>
+                    <div class="flex overflow-x-auto thumbnail-scroll gap-2 pb-2">
+                        <% if (Array.isArray(product.subImages) && product.subImages.length > 0) { %>
                             <% product.subImages.forEach((image, index) => { %>
-                                <div class="min-w-[64px] h-16 sm:min-w-[80px] sm:h-20 rounded-lg overflow-hidden border-2 <%= index === 0 ? 'border-primary' : 'border-transparent' %> hover:border-primary transition cursor-pointer" onclick="changeImage('<%= image %>', this)">
+                                <div class="thumbnail-item min-w-[80px] h-20 sm:min-w-[100px] sm:h-24 rounded-lg overflow-hidden border-2 <%= index === 0 ? 'border-primary' : 'border-transparent' %> hover:border-primary transition cursor-pointer" onclick="changeImage('<%= image %>', this)">
                                     <img src="<%= image %>" class="w-full h-full object-cover" alt="Product thumbnail">
                                 </div>
                             <% }) %>
-                        <% } else if (product.mainImage) { %>
-                            <div class="min-w-[64px] h-16 sm:min-w-[80px] sm:h-20 rounded-lg overflow-hidden border-2 border-primary hover:border-primary transition cursor-pointer" onclick="changeImage('<%= product.mainImage %>', this)">
+                        <% } else { %>
+                            <div class="thumbnail-item min-w-[80px] h-20 sm:min-w-[100px] sm:h-24 rounded-lg overflow-hidden border-2 border-primary hover:border-primary transition cursor-pointer" onclick="changeImage('<%= product.mainImage %>', this)">
                                 <img src="<%= product.mainImage %>" class="w-full h-full object-cover" alt="Product thumbnail">
                             </div>
                         <% } %>
                     </div>
-                    
-                    <!-- Product Actions for Mobile -->
-                    <div class="md:hidden mt-4 sm:mt-6 flex flex-col space-y-2 sm:space-y-3">
-                        <button class="w-full py-2 sm:py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition flex items-center justify-center text-sm sm:text-base" onclick="addtoCart('<%= product._id %>')">
-                            <i class="fa-solid fa-cart-plus mr-2"></i> Add to Cart
-                        </button>
-                        <button class="w-full py-2 sm:py-3 bg-gray-100 hover:bg-primary/10 text-gray-700 font-medium rounded-lg transition flex items-center justify-center text-sm sm:text-base" onclick="addToWishlist('<%= product._id %>')">
-                            <i class="fa-regular fa-heart mr-2"></i> Add to Wishlist
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Product Details -->
-                <div class="w-full md:w-1/2">
-                    <div class="bg-white p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+                <div class="flex flex-col">
+                    <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
                         <!-- Product Title and Rating -->
-                        <div class="hidden md:block">
-                            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2"><%= product.name %></h2>
-                            <div class="flex items-center mt-2 mb-4 sm:mb-6">
-                                <div class="flex text-amber-400">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star-half-stroke"></i>
-                                </div>
-                                <span class="ml-2 text-gray-600 text-sm sm:text-base">4.5 (128 ratings)</span>
-                                <span class="mx-2 text-gray-400 hidden sm:inline">|</span>
-                                <span class="text-green-600 text-sm sm:text-base hidden sm:inline">2,456 sold</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Mobile Rating -->
-                        <div class="md:hidden flex items-center mb-3 sm:mb-4">
-                            <div class="flex text-amber-400">
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4"><%= product.name %></h2>
+                        <div class="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                            <div class="flex text-amber-400 text-sm">
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star-half-stroke"></i>
                             </div>
-                            <span class="ml-2 text-gray-600 text-sm">4.5 (128 ratings)</span>
+                            <span class="text-gray-600 text-sm">4.5 (128 ratings)</span>
+                            <span class="text-gray-400 hidden sm:inline">|</span>
+                            <span class="text-green-600 text-sm hidden sm:inline">2,456 sold</span>
                         </div>
-                        
-                        <!-- Unified Price and Stock Section -->
-                        <div class="p-3 sm:p-4 bg-primary/5 rounded-lg mb-4 sm:mb-6">
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-                                <div>
-                                    <span class="text-lg sm:text-xl md:text-2xl font-bold text-primary" id="currentPrice">
-                                        <!-- Price will be updated by JavaScript -->
-                                    </span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-green-600 font-medium text-sm sm:text-base" id="stockInfo">
-                                        <i class="fa-solid fa-check mr-1"></i>
-                                        <span id="currentStock"><%= product.variants[0] && typeof product.variants[0].quantity === 'number' ? product.variants[0].quantity : 'N/A' %></span> In Stock
-                                    </span>
-                                </div>
+
+                        <!-- Price and Stock -->
+                        <div class="p-4 bg-primary/5 rounded-lg mb-4 sm:mb-6">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                                <span class="text-lg sm:text-xl font-bold text-primary" id="currentPrice"></span>
+                                <span class="text-green-600 font-medium text-sm flex items-center" id="stockInfo">
+                                    <i class="fa-solid fa-check mr-1"></i>
+                                    <span id="currentStock"><%= product.variants[0]?.quantity ?? 'N/A' %></span> In Stock
+                                </span>
                             </div>
-                            <div class="mt-3 sm:mt-4 flex flex-col sm:flex-row items-start sm:items-center text-xs sm:text-sm text-gray-600 gap-2 sm:gap-4">
+                            <div class="mt-3 flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                                 <div class="flex items-center">
                                     <i class="fa-solid fa-truck mr-2 text-primary"></i>
                                     Free Delivery
@@ -204,75 +189,79 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Divider -->
-                        <div class="my-4 sm:my-6 border-t border-gray-100"></div>
-                        
-                        <!-- Product Options - Size Selection -->
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2 sm:mb-3 text-sm sm:text-base">Select Size:</label>
+
+                        <!-- Size Selection -->
+                        <div class="mb-4 sm:mb-6">
+                            <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Select Size:</label>
                             <div class="flex flex-wrap gap-2 sm:gap-3" id="variantSelector">
                                 <% product.variants.forEach((variant, index) => { %>
+                                    <% const isOutOfStock = !variant.quantity || variant.quantity <= 0; %>
                                     <button 
-                                        class="px-3 sm:px-4 py-1 sm:py-2 border-2 <%= index === 0 ? 'border-primary text-primary bg-primary/5' : 'border-gray-200 text-gray-700' %> rounded-lg font-medium hover:border-primary hover:text-primary transition text-sm sm:text-base"
-                                        onclick="selectVariant('<%= index %>')"
+                                        class="px-4 py-2 border-2 text-sm sm:text-base font-medium rounded-lg flex flex-col items-center <%= index === 0 ? (isOutOfStock ? 'border-red-300 text-red-600 bg-red-50' : 'border-primary text-primary bg-primary/5') : (isOutOfStock ? 'border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed' : 'border-gray-200 text-gray-700 hover:border-primary hover:text-primary') %> transition"
+                                        onclick="<%= isOutOfStock ? '' : `selectVariant('${index}')` %>"
                                         data-variant-index="<%= index %>"
+                                        <%= isOutOfStock ? 'disabled' : '' %>
                                     >
-                                        <%= variant.size %>
+                                        <span><%= variant.size %></span>
+                                        <% if (isOutOfStock) { %>
+                                            <span class="text-xs text-red-500">Out of Stock</span>
+                                        <% } else if (variant.quantity < 5) { %>
+                                            <span class="text-xs text-orange-500">Only <%= variant.quantity %> left</span>
+                                        <% } %>
                                     </button>
                                 <% }) %>
                             </div>
                         </div>
-                        
+
                         <!-- Quantity Selector -->
-                        <div class="mt-4 sm:mt-6">
-                            <label class="block text-gray-700 font-medium mb-2 sm:mb-3 text-sm sm:text-base">Quantity:</label>
-                            <div class="flex items-center">
-                                <button class="w-8 sm:w-10 h-8 sm:h-10 bg-gray-100 rounded-l-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition" onclick="decrementQuantity()">
+                        <div class="mb-4 sm:mb-6">
+                            <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Quantity:</label>
+                            <div class="flex items-center gap-2">
+                                <button class="w-10 h-10 bg-gray-100 rounded-l-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition disabled:opacity-50" onclick="decrementQuantity()">
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
-                                <input type="number" id="quantityInput" value="1" min="1" max="<%= product.variants[0] && typeof product.variants[0].quantity === 'number' ? product.variants[0].quantity : 1 %>" class="w-12 sm:w-16 h-8 sm:h-10 border-y border-gray-200 text-center focus:outline-none text-sm sm:text-base" readonly>
-                                <button class="w-8 sm:w-10 h-8 sm:h-10 bg-gray-100 rounded-r-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition" onclick="incrementQuantity()">
+                                <input type="number" id="quantityInput" value="1" min="1" max="<%= product.variants[0]?.quantity ?? 1 %>" class="w-16 h-10 border border-gray-200 text-center focus:outline-none text-sm sm:text-base disabled:bg-gray-100" readonly>
+                                <button class="w-10 h-10 bg-gray-100 rounded-r-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition disabled:opacity-50" onclick="incrementQuantity()">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
-                                <span class="ml-3 sm:ml-4 text-xs sm:text-sm text-gray-500">
-                                    <span id="currentStock-text"><%= product.variants[0] && typeof product.variants[0].quantity === 'number' ? product.variants[0].quantity : 'N/A' %></span> items available
+                                <span class="text-sm text-gray-500">
+                                    <span id="currentStock-text"><%= product.variants[0]?.quantity ?? 'N/A' %></span> items available
                                 </span>
                             </div>
                         </div>
-                        
-                        <!-- Action Buttons - Desktop Only -->
-                        <div class="hidden md:flex mt-6 sm:mt-8 gap-3 sm:gap-4">
-                            <button class="flex-1 py-2 sm:py-3 px-4 sm:px-6 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition flex items-center justify-center text-sm sm:text-base" onclick="addtoCart('<%= product._id %>')">
-                                <i class="fa-solid fa-cart-plus mr-2"></i> Add to Cart
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3 sm:gap-4">
+                            <% const firstVariantOutOfStock = !product.variants[0]?.quantity || product.variants[0].quantity <= 0; %>
+                            <button class="action-button flex-1 py-3 px-6 <%= firstVariantOutOfStock ? 'bg-gray-400 cursor-not-allowed opacity-75' : 'bg-primary hover:bg-primary-dark' %> text-white rounded-lg font-medium transition flex items-center justify-center text-sm sm:text-base" 
+                                    onclick="addtoCart('<%= product._id %>')"
+                                    <%= firstVariantOutOfStock ? 'disabled' : '' %>>
+                                <i class="<%= firstVariantOutOfStock ? 'fa-solid fa-times' : 'fa-solid fa-cart-plus' %> mr-2"></i> 
+                                <%= firstVariantOutOfStock ? 'Out of Stock' : 'Add to Cart' %>
                             </button>
-                            <button class="p-2 sm:p-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-primary transition" onclick="addToWishlist('<%= product._id %>')">
+                            <button class="action-button p-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-primary transition" onclick="addToWishlist('<%= product._id %>')">
                                 <i class="<%= wishlist.includes(product._id.toString()) ? 'fa-solid text-red-600' : 'fa-regular' %> fa-heart"></i>
                             </button>
                         </div>
-                        
+
                         <!-- Delivery & Returns -->
-                        <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                            <div class="flex-1 border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-primary/30 hover:bg-primary/5 transition">
-                                <div class="flex items-center">
-                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center mr-2 sm:mr-3">
-                                        <i class="fa-solid fa-truck-fast text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="font-medium text-gray-800 text-sm sm:text-base">Fast Delivery</h5>
-                                        <p class="text-xs sm:text-sm text-gray-500">Delivered in 2-3 days</p>
-                                    </div>
+                        <div class="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-truck-fast text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800 text-sm sm:text-base">Fast Delivery</h5>
+                                    <p class="text-xs sm:text-sm text-gray-500">Delivered in 2-3 days</p>
                                 </div>
                             </div>
-                            <div class="flex-1 border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-primary/30 hover:bg-primary/5 transition">
-                                <div class="flex items-center">
-                                    <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center mr-2 sm:mr-3">
-                                        <i class="fa-solid fa-rotate-left text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="font-medium text-gray-800 text-sm sm:text-base">Easy Returns</h5>
-                                        <p class="text-xs sm:text-sm text-gray-500">30-day return policy</p>
-                                    </div>
+                            <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-rotate-left text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800 text-sm sm:text-base">Easy Returns</h5>
+                                    <p class="text-xs sm:text-sm text-gray-500">30-day return policy</p>
                                 </div>
                             </div>
                         </div>
@@ -282,66 +271,63 @@
         </div>
 
         <!-- Product Description & Details -->
-        <div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
-            <div class="bg-white p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
-                <div class="flex flex-col md:flex-row gap-4 sm:gap-6">
-                    <div class="md:w-2/3">
-                        <div class="border-b border-gray-100 pb-3 sm:pb-4 mb-4 sm:mb-6">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                    <div class="md:col-span-2">
+                        <div class="border-b border-gray-100 pb-3 mb-4">
                             <h3 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-                                <span class="w-1 h-5 sm:w-1.5 sm:h-6 bg-primary rounded-full mr-2 sm:mr-3"></span>
+                                <span class="w-1 h-5 bg-primary rounded-full mr-2"></span>
                                 Product Description
                             </h3>
                         </div>
-                        
-                        <p class="text-sm sm:text-base text-gray-700 leading-relaxed mb-4 sm:mb-6">
+                        <p class="text-sm sm:text-base text-gray-700 leading-relaxed mb-4">
                             Crafted for both style and functionality, this premium bag blends contemporary design with timeless appeal. Featuring a spacious interior and thoughtfully placed compartments, it offers effortless organization for your daily essentials. The high-quality materials and sturdy craftsmanship ensure durability, while the sleek silhouette and refined details add a touch of elegance to any outfit.
                         </p>
-
-                        <div class="mt-6 sm:mt-8">
-                            <h4 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                        <div class="mt-4">
+                            <h4 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 flex items-center">
                                 <i class="fa-solid fa-circle-check text-primary mr-2"></i>
                                 Benefits:
                             </h4>
-                            <ul class="space-y-2 sm:space-y-3 pl-4 sm:pl-6">
+                            <ul class="space-y-2 pl-4">
                                 <li class="flex items-start text-sm sm:text-base">
                                     <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
-                                    <span>Premium-quality materials for long-lasting durability</span>
+                                    Premium-quality materials for long-lasting durability
                                 </li>
                                 <li class="flex items-start text-sm sm:text-base">
                                     <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
-                                    <span>Balanced blend of style, comfort, and durability</span>
+                                    Balanced blend of style, comfort, and durability
                                 </li>
                                 <li class="flex items-start text-sm sm:text-base">
                                     <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
-                                    <span>Perfect for every occasion, from casual outings to formal events</span>
+                                    Perfect for every occasion, from casual outings to formal events
                                 </li>
                                 <li class="flex items-start text-sm sm:text-base">
                                     <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
-                                    <span>Elegant bags with premium packaging</span>
+                                    Elegant bags with premium packaging
                                 </li>
                             </ul>
                         </div>
                     </div>
-                    
-                    <div class="md:w-1/3 md:border-l border-gray-100 md:pl-4 sm:md:pl-6">
-                        <h4 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                    <div class="md:border-l border-gray-100 md:pl-6">
+                        <h4 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 flex items-center">
                             <i class="fa-solid fa-circle-info text-primary mr-2"></i>
                             Product Details:
                         </h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
                                 <p class="text-xs sm:text-sm text-gray-500">Size</p>
                                 <p class="font-medium text-gray-800 text-sm sm:text-base">Medium / Small / Large</p>
                             </div>
-                            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
                                 <p class="text-xs sm:text-sm text-gray-500">Type</p>
                                 <p class="font-medium text-gray-800 text-sm sm:text-base">Premium bags</p>
                             </div>
-                            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
                                 <p class="text-xs sm:text-sm text-gray-500">Bag Collection</p>
                                 <p class="font-medium text-gray-800 text-sm sm:text-base">Leather Luxe</p>
                             </div>
-                            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
                                 <p class="text-xs sm:text-sm text-gray-500">Durability</p>
                                 <p class="font-medium text-gray-800 text-sm sm:text-base">Long-lasting (8-10 years)</p>
                             </div>
@@ -352,173 +338,103 @@
         </div>
 
         <!-- Customer Reviews Section -->
-        <div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
-            <div class="bg-white p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
-                <div class="border-b border-gray-100 pb-3 sm:pb-4 mb-4 sm:mb-6">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+                <div class="border-b border-gray-100 pb-3 mb-4">
                     <h3 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-                        <span class="w-1 h-5 sm:w-1.5 sm:h-6 bg-primary rounded-full mr-2 sm:mr-3"></span>
+                        <span class="w-1 h-5 bg-primary rounded-full mr-2"></span>
                         Customer Reviews
                     </h3>
                 </div>
-                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
                     <!-- Review Summary -->
                     <div class="md:col-span-1">
-                        <div class="flex flex-col items-center p-4 sm:p-6 bg-primary/5 rounded-lg sm:rounded-xl">
-                            <div class="text-4xl sm:text-5xl font-bold text-primary">4.5</div>
-                            <div class="flex text-amber-400 my-1 sm:my-2">
+                        <div class="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
+                            <div class="text-4xl font-bold text-primary">4.5</div>
+                            <div class="flex text-amber-400 my-2">
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star"></i>
                                 <i class="fa-solid fa-star-half-stroke"></i>
                             </div>
-                            <p class="text-xs sm:text-sm text-gray-600">Based on 128 reviews</p>
+                            <p class="text-sm text-gray-600">Based on 128 reviews</p>
                         </div>
-                        
-                        <div class="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
+                        <div class="mt-4 space-y-2">
                             <div class="flex items-center">
-                                <span class="w-12 sm:w-16 text-xs sm:text-sm text-gray-600">5 stars</span>
-                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-1 sm:mx-2">
+                                <span class="w-16 text-sm text-gray-600">5 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
                                     <div class="h-2 bg-primary rounded-full" style="width: 75%"></div>
                                 </div>
-                                <span class="w-8 text-xs sm:text-sm text-gray-600">75%</span>
+                                <span class="w-8 text-sm text-gray-600">75%</span>
                             </div>
                             <div class="flex items-center">
-                                <span class="w-12 sm:w-16 text-xs sm:text-sm text-gray-600">4 stars</span>
-                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-1 sm:mx-2">
+                                <span class="w-16 text-sm text-gray-600">4 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
                                     <div class="h-2 bg-primary rounded-full" style="width: 15%"></div>
                                 </div>
-                                <span class="w-8 text-xs sm:text-sm text-gray-600">15%</span>
+                                <span class="w-8 text-sm text-gray-600">15%</span>
                             </div>
                             <div class="flex items-center">
-                                <span class="w-12 sm:w-16 text-xs sm:text-sm text-gray-600">3 stars</span>
-                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-1 sm:mx-2">
+                                <span class="w-16 text-sm text-gray-600">3 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
                                     <div class="h-2 bg-primary rounded-full" style="width: 7%"></div>
                                 </div>
-                                <span class="w-8 text-xs sm:text-sm text-gray-600">7%</span>
+                                <span class="w-8 text-sm text-gray-600">7%</span>
                             </div>
                             <div class="flex items-center">
-                                <span class="w-12 sm:w-16 text-xs sm:text-sm text-gray-600">2 stars</span>
-                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-1 sm:mx-2">
+                                <span class="w-16 text-sm text-gray-600">2 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
                                     <div class="h-2 bg-primary rounded-full" style="width: 2%"></div>
                                 </div>
-                                <span class="w-8 text-xs sm:text-sm text-gray-600">2%</span>
+                                <span class="w-8 text-sm text-gray-600">2%</span>
                             </div>
                             <div class="flex items-center">
-                                <span class="w-12 sm:w-16 text-xs sm:text-sm text-gray-600">1 star</span>
-                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-1 sm:mx-2">
+                                <span class="w-16 text-sm text-gray-600">1 star</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
                                     <div class="h-2 bg-primary rounded-full" style="width: 1%"></div>
                                 </div>
-                                <span class="w-8 text-xs sm:text-sm text-gray-600">1%</span>
+                                <span class="w-8 text-sm text-gray-600">1%</span>
                             </div>
                         </div>
-                        
-                        <div class="mt-4 sm:mt-6">
-                            <button class="w-full py-2 sm:py-3 px-3 sm:px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition flex items-center justify-center text-sm sm:text-base">
-                                <i class="fa-solid fa-pen-to-square mr-2"></i>
-                                Write a Review
-                            </button>
-                        </div>
+                        <button class="mt-4 w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition text-sm">Write a Review</button>
                     </div>
-                    
+
                     <!-- Review List -->
-                    <div class="md:col-span-2">
-                        <!-- Review Item 1 -->
-                        <div class="border-b border-gray-100 pb-4 sm:pb-6 mb-4 sm:mb-6">
-                            <div class="flex flex-col sm:flex-row justify-between items-start">
-                                <div class="flex items-center mb-2 sm:mb-0">
-                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Reviewer" class="w-8 sm:w-10 h-8 sm:h-10 rounded-full mr-2 sm:mr-3">
-                                    <div>
-                                        <h5 class="font-medium text-gray-800 text-sm sm:text-base">Rahul Sharma</h5>
-                                        <p class="text-xs sm:text-sm text-gray-500">Verified Purchase</p>
+                    <div class="md:col-span-2 space-y-6">
+                        <% const reviews = [
+                            { name: 'Rahul Sharma', image: 'https://randomuser.me/api/portraits/men/32.jpg', rating: 5, text: 'Absolutely love this bag! The design is elegant and timeless. I\'ve received numerous compliments whenever I carry it. The packaging is premium, making it a perfect gift. Highly recommend!', time: '2 months ago', helpful: 24 },
+                            { name: 'Priya Patel', image: 'https://randomuser.me/api/portraits/women/44.jpg', rating: 4, text: 'The bag is beautiful and elegant, perfect for evening outings. My only complaint is that the straps could be a bit more comfortable, hence the 4 stars. Still, I find myself reaching for it often and would definitely purchase again.', time: '1 month ago', helpful: 16 },
+                            { name: 'Arjun Mehta', image: 'https://randomuser.me/api/portraits/men/67.jpg', rating: 3.5, text: 'Good bag for the price point. The design is stylish, but not as unique as I was hoping. The craftsmanship is elegant, and the zipper works smoothly. Decent durability, with regular use lasting about 6 months.', time: '3 weeks ago', helpful: 8 }
+                        ]; %>
+                        <% reviews.forEach(review => { %>
+                            <div class="border-b border-gray-100 pb-4">
+                                <div class="flex flex-col sm:flex-row justify-between gap-3">
+                                    <div class="flex items-center">
+                                        <img src="<%= review.image %>" alt="Reviewer" class="w-10 h-10 rounded-full mr-3">
+                                        <div>
+                                            <h5 class="font-medium text-gray-800 text-sm sm:text-base"><%= review.name %></h5>
+                                            <p class="text-xs sm:text-sm text-gray-500">Verified Purchase</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex text-amber-400">
+                                        <% for (let i = 0; i < 5; i++) { %>
+                                            <i class="fa-solid fa-star<%= i < Math.floor(review.rating) ? '' : (i < review.rating ? '-half-stroke' : '-regular') %>"></i>
+                                        <% } %>
                                     </div>
                                 </div>
-                                <div class="flex text-amber-400">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
+                                <p class="mt-3 text-sm sm:text-base text-gray-700"><%= review.text %></p>
+                                <div class="mt-2 flex items-center text-sm text-gray-500 gap-2">
+                                    <span><%= review.time %></span>
+                                    <span>•</span>
+                                    <button class="hover:text-primary transition flex items-center">
+                                        <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (<%= review.helpful %>)
+                                    </button>
                                 </div>
                             </div>
-                            <p class="mt-2 sm:mt-3 text-sm sm:text-base text-gray-700">
-                                Absolutely love this bag! The design is elegant and timeless. I've received numerous compliments whenever I carry it. The packaging is premium, making it a perfect gift. Highly recommend!
-                            </p>
-                            <div class="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm text-gray-500">
-                                <span>2 months ago</span>
-                                <span class="mx-1 sm:mx-2">•</span>
-                                <button class="hover:text-primary transition flex items-center">
-                                    <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (24)
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Review Item 2 -->
-                        <div class="border-b border-gray-100 pb-4 sm:pb-6 mb-4 sm:mb-6">
-                            <div class="flex flex-col sm:flex-row justify-between items-start">
-                                <div class="flex items-center mb-2 sm:mb-0">
-                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Reviewer" class="w-8 sm:w-10 h-8 sm:h-10 rounded-full mr-2 sm:mr-3">
-                                    <div>
-                                        <h5 class="font-medium text-gray-800 text-sm sm:text-base">Priya Patel</h5>
-                                        <p class="text-xs sm:text-sm text-gray-500">Verified Purchase</p>
-                                    </div>
-                                </div>
-                                <div class="flex text-amber-400">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                </div>
-                            </div>
-                            <p class="mt-2 sm:mt-3 text-sm sm:text-base text-gray-700">
-                                The bag is beautiful and elegant, perfect for evening outings. My only complaint is that the straps could be a bit more comfortable, hence the 4 stars. Still, I find myself reaching for it often and would definitely purchase again.
-                            </p>
-                            <div class="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm text-gray-500">
-                                <span>1 month ago</span>
-                                <span class="mx-1 sm:mx-2">•</span>
-                                <button class="hover:text-primary transition flex items-center">
-                                    <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (16)
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Review Item 3 -->
-                        <div>
-                            <div class="flex flex-col sm:flex-row justify-between items-start">
-                                <div class="flex items-center mb-2 sm:mb-0">
-                                    <img src="https://randomuser.me/api/portraits/men/67.jpg" alt="Reviewer" class="w-8 sm:w-10 h-8 sm:h-10 rounded-full mr-2 sm:mr-3">
-                                    <div>
-                                        <h5 class="font-medium text-gray-800 text-sm sm:text-base">Arjun Mehta</h5>
-                                        <p class="text-xs sm:text-sm text-gray-500">Verified Purchase</p>
-                                    </div>
-                                </div>
-                                <div class="flex text-amber-400">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star-half-stroke"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                </div>
-                            </div>
-                            <p class="mt-2 sm:mt-3 text-sm sm:text-base text-gray-700">
-                                Good bag for the price point. The design is stylish, but not as unique as I was hoping. The craftsmanship is elegant, and the zipper works smoothly. Decent durability, with regular use lasting about 6 months.
-                            </p>
-                            <div class="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm text-gray-500">
-                                <span>3 weeks ago</span>
-                                <span class="mx-1 sm:mx-2">•</span>
-                                <button class="hover:text-primary transition flex items-center">
-                                    <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (8)
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- See More Reviews Button -->
-                        <div class="mt-4 sm:mt-6 text-center">
-                            <button class="px-4 sm:px-6 py-2 sm:py-3 border border-gray-200 rounded-lg text-gray-700 hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition text-sm sm:text-base">
-                                See All 128 Reviews
-                            </button>
+                        <% }) %>
+                        <div class="text-center">
+                            <button class="px-6 py-3 border border-gray-200 rounded-lg text-gray-700 hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition text-sm">See All 128 Reviews</button>
                         </div>
                     </div>
                 </div>
@@ -526,21 +442,20 @@
         </div>
 
         <!-- Related Products -->
-        <div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
-            <div class="border-b border-gray-100 pb-3 sm:pb-4 mb-4 sm:mb-6">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="border-b border-gray-100 pb-3 mb-4">
                 <h3 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-                    <span class="w-1 h-5 sm:w-1.5 sm:h-6 bg-primary rounded-full mr-2 sm:mr-3"></span>
+                    <span class="w-1 h-5 bg-primary rounded-full mr-2"></span>
                     You May Also Like
                 </h3>
             </div>
-            
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 <% relatedProducts.forEach(related => { %>
-                    <div class="bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden hover:shadow-md transition group border border-gray-100">
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition border border-gray-100">
                         <a href="/user/productView/<%= related._id %>" class="block relative">
-                            <img src="<%= related.mainImage %>" class="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition duration-300" alt="Related Product">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div class="p-3 sm:p-4">
+                            <img src="<%= related.mainImage %>" class="w-full h-40 sm:h-48 object-cover hover:scale-105 transition duration-300" alt="Related Product">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="p-4">
                                 <h5 class="font-medium text-gray-800 truncate text-sm sm:text-base"><%= related.name %></h5>
                                 <div class="flex items-center mt-1">
                                     <div class="flex text-amber-400 text-xs">
@@ -556,13 +471,13 @@
                                     <div>
                                         <span class="font-bold text-primary text-sm sm:text-base">₹<%= related.variants[0].discountedPrice %></span>
                                         <% if (related.variants[0].discountedPrice < related.variants[0].regularPrice) { %>
-                                            <span class="text-xs line-through text-gray-500 font-normal ml-1 sm:ml-2">₹<%= related.variants[0].regularPrice %></span>
-                                            <span class="text-xs text-green-600 font-medium ml-1 sm:ml-2">
+                                            <span class="text-xs line-through text-gray-500 ml-2">₹<%= related.variants[0].regularPrice %></span>
+                                            <span class="text-xs text-green-600 font-medium ml-2">
                                                 (<%= Math.round(((related.variants[0].regularPrice - related.variants[0].discountedPrice) / related.variants[0].regularPrice) * 100) %>% OFF)
                                             </span>
                                         <% } %>
                                     </div>
-                                    <button class="w-7 sm:w-8 h-7 sm:h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-primary/10 hover:text-primary transition">
+                                    <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-primary/10 hover:text-primary transition">
                                         <i class="fa-solid fa-cart-plus"></i>
                                     </button>
                                 </div>
@@ -573,9 +488,10 @@
             </div>
         </div>
     </div>
-    
+
     <%- include("partials/userFooter") %>
 
+    <!-- JavaScript remains unchanged -->
     <script>
         const variants = <%- JSON.stringify(product.variants.map((variant, index) => ({
     index: index,

@@ -27,7 +27,6 @@ const restoreOrderStock = async (order) => {
         {$inc: {"variants.$.quantity": item.quantity}}
       );
     }
-    console.log("Stock restored for failed order:",order.orderId);
   }catch (error){
     console.error("Error restoring stock:",error);
   }
@@ -87,8 +86,6 @@ const productController = {
     const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : null;
     const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : null;
     const hasPriceFilter = (minPrice !== null && !isNaN(minPrice)) || (maxPrice !== null && !isNaN(maxPrice));
-
-    console.log(`Price filter: ${minPrice} - ${maxPrice}, Has filter: ${hasPriceFilter}`);
 
     if (hasPriceFilter) {
       const priceFilter = {};
@@ -191,12 +188,8 @@ const productController = {
         });
       });
     }
-
-    console.log(`=== DEBUG PRODUCTS ===`);
-    console.log(`Total products found: ${validProducts.length}`);
     validProducts.forEach(product => {
       const prices = product.variants.map(v => v.discountedPrice || v.regularPrice);
-      console.log(`Product: ${product.name}, ID: ${product._id}, Prices: ${prices}`);
       
       if (hasPriceFilter) {
         const inRange = product.variants.some(variant => {
@@ -205,7 +198,6 @@ const productController = {
           const maxCheck = maxPrice === null || isNaN(maxPrice) || price <= maxPrice;
           return minCheck && maxCheck;
         });
-        console.log(`  In range (${minPrice}-${maxPrice}): ${inRange}`);
       }
     });
 
@@ -349,7 +341,6 @@ const productController = {
             ? wishlist.products.map((product) => product.productId.toString())
             : [];
 
-        console.log("Wishlist ", newList);
 
         res.render("user/productView", {
             wishlist: newList,
@@ -371,8 +362,6 @@ const productController = {
         const { id } = req.params;
         const { size, quantity = 1 } = req.body;
         const userId = req.session.user?._id;
-
-        console.log('Received addToCart request:', { id, size, quantity, userId });
 
         if (!userId) {
           return res.status(401).json({ success: false, message: "User not authenticated" });
@@ -585,7 +574,6 @@ const productController = {
       
       const count = wishlist && wishlist.products ? wishlist.products.length : 0;
       
-      console.log(`Wishlist count for user ${userId}:`, count);
       
       res.status(200).json({ success: true, count });
       
@@ -622,7 +610,6 @@ const productController = {
           }, 0);
         }
         
-        console.log(`Cart count for user ${userId}:`, count);
         
         res.status(200).json({ success: true, count });
         
@@ -700,7 +687,6 @@ const productController = {
         const itemTotal = finalPrice * item.quantity;
         const itemOriginal = basePrice * item.quantity;
 
-        console.log("finallllPrice...).....:",finalPrice);
 
         totalAmount += itemTotal;
         originalAmount += itemOriginal;
@@ -719,8 +705,6 @@ const productController = {
       }),
     };
 
-    console.log("totalamt.....:",totalAmount);
-    console.log("originalamt.......:",originalAmount);
 
     const itemCount = cartData.items.length;
     const hasOutOfStock = cartData.items.some(item => !item.isValid);
@@ -790,7 +774,6 @@ const productController = {
         }
 
         const { productId, size, quantity } = req.body;
-        console.log('Received updateCartQuantity request:', { productId, size, quantity });
 
         if (!productId || !size) {
           return res.status(400).json({ success: false, message: "Product ID and size are required" });
@@ -850,7 +833,6 @@ const productController = {
     },
     
     removeFromWishlist: async (req, res) => {
-      console.log('=== removeFromWishlist controller called ===');
       try {
         const userId = req.session.user?._id;
         const productId = req.params.id;
@@ -904,161 +886,168 @@ const productController = {
     },
 
     loadCheckout: async (req, res) => {
-  try {
-    const userId = req.session.user?._id;
+      try {
+        const userId = req.session.user?._id;
 
-    if (!userId) {
-      return res.redirect("/user/login?message=Please log in to proceed to checkout.");
-    }
+        if (!userId) {
+          return res.redirect("/user/login?message=Please log in to proceed to checkout.");
+        }
 
-    if (req.method === 'POST' && req.body.email) {
-      const email = req.body.email.trim();
-      
-      if (email) {
-        await User.findByIdAndUpdate(userId, { email: email });
-        req.session.user.email = email;
-      }
-    }
-
-    const currentEmail = req.session.user?.email;
-
-    const cart = await Cart.findOne({ userId }).populate({
-      path: "items.productId",
-      match: { isDeleted: false, isListed: true },
-      populate: [
-        { path: "category", model: "Category" },
-        { path: "brand", model: "Brand" },
-      ],
-    });
-    
-    if (!cart || !cart.items || cart.items.length <= 0) {
-      return res.redirect("/user/cart?message=Your cart is empty. Please add items before checkout.");
-    }
-
-    const user = await User.findById(userId);
-    
-    if (!user) {
-      return res.redirect("/user/login?message=User not found. Please log in again.");
-    }
-    
-    const addressDoc = await Address.findOne({ userId });
-    const addresses = addressDoc && addressDoc.address 
-      ? addressDoc.address.filter((addr) => addr.status === "active")
-      : [];
-
-    const coupon = await Coupon.find({
-      isActive: true,
-      expiresAt: { $gt: new Date()},
-      userId: {$ne: userId},
-    });
-    
-    console.log("Available coupons:", coupon);
-    
-    const isReferredUser = !!user.referredBy;
-    const isReferrer = await User.exists({referredBy: user._id});
-    const referralCoupons = coupon.filter(c=> c.code.startsWith("RYZO"));
-    const normalCoupons = coupon.filter(c => !c.code.startsWith("RYZO"));
-
-    let finalCoupon = normalCoupons;
-    if(isReferredUser || isReferrer){
-      finalCoupon = [...normalCoupons,...referralCoupons];
-    }
-
-    let subtotal = 0;
-    let totalProductDiscount = 0;
-
-    const itemsWithStock = cart.items.map((item) => {
-      const product = item.productId;
-      const variant = product.variants.find((v) => v.size === item.size);
-
-      const basePrice = variant?.regularPrice || 0;
-      const productDiscount = product.offer?.discountPercentage || 0;
-      const categoryDiscount = product.category?.offer?.discountPercentage || 0;
-      const maxDiscount = Math.max(productDiscount, categoryDiscount);
-      const discountedPrice = Math.round(basePrice - (basePrice * maxDiscount / 100));
-      const discountAmount = basePrice - discountedPrice;
-
-      console.log("finalPrice.....:", discountedPrice);
-      const itemTotal = discountedPrice * item.quantity;
-      subtotal += itemTotal;
-      totalProductDiscount += discountAmount * item.quantity; 
-
-      return {
-        ...item.toObject(),
-        product,
-        variant: variant || null,
-        finalPrice: discountedPrice,
-        maxDiscount,
-        itemTotal,
-        hasStock: variant && variant.quantity >= item.quantity,
-        discountAmountPerItem: discountAmount
-      };
-    });
-
-    const outOfStockItems = itemsWithStock.filter((item) => !item.hasStock);
-    const hasOutOfStock = outOfStockItems.length > 0;
-
-    let couponDiscount = 0;
-    let grandTotal = subtotal;
-    
-    if (req.session.checkoutData && req.session.checkoutData.couponId) {
-      const couponDoc = await Coupon.findOne({ 
-        _id: req.session.checkoutData.couponId, 
-        isActive: true, 
-        expiresAt: { $gt: new Date() },
-        minCartAmount: { $lte: subtotal }
-      });
-
-      if (couponDoc) {
-        if (couponDoc.discountType === 'percentage') {
-          couponDiscount = Math.round((subtotal * couponDoc.discountAmount) / 100);
-          if (couponDoc.maxDiscount && couponDiscount > couponDoc.maxDiscount) {
-            couponDiscount = couponDoc.maxDiscount;
+        if (req.method === 'POST' && req.body.email) {
+          const email = req.body.email.trim();
+          
+          if (email) {
+            await User.findByIdAndUpdate(userId, { email: email });
+            req.session.user.email = email;
           }
-        } else {
-          couponDiscount = Math.min(couponDoc.discountAmount, subtotal);
+        }
+
+        const currentEmail = req.session.user?.email;
+
+        const cart = await Cart.findOne({ userId }).populate({
+          path: "items.productId",
+          match: { isDeleted: false, isListed: true },
+          populate: [
+            { path: "category", model: "Category" },
+            { path: "brand", model: "Brand" },
+          ],
+        });
+        
+        if (!cart || !cart.items || cart.items.length <= 0) {
+          return res.redirect("/user/cart?message=Your cart is empty. Please add items before checkout.");
+        }
+
+        const user = await User.findById(userId);
+        
+        if (!user) {
+          return res.redirect("/user/login?message=User not found. Please log in again.");
         }
         
-        grandTotal = subtotal - couponDiscount;
+        const addressDoc = await Address.findOne({ userId });
+        const addresses = addressDoc && addressDoc.address 
+          ? addressDoc.address.filter((addr) => addr.status === "active")
+          : [];
+
+        // CALCULATE SUBTOTAL FIRST
+        let subtotal = 0;
+        let totalProductDiscount = 0;
+
+        const itemsWithStock = cart.items.map((item) => {
+          const product = item.productId;
+          
+          // Add null check for product
+          if (!product) {
+            return null;
+          }
+
+          const variant = product.variants?.find((v) => v.size === item.size);
+
+          const basePrice = variant?.regularPrice || 0;
+          const productDiscount = product.offer?.discountPercentage || 0;
+          const categoryDiscount = product.category?.offer?.discountPercentage || 0;
+          const maxDiscount = Math.max(productDiscount, categoryDiscount);
+          const discountedPrice = Math.round(basePrice - (basePrice * maxDiscount / 100));
+          const discountAmount = basePrice - discountedPrice;
+
+          const itemTotal = discountedPrice * item.quantity;
+          subtotal += itemTotal;
+          totalProductDiscount += discountAmount * item.quantity; 
+
+          return {
+            ...item.toObject(),
+            product,
+            variant: variant || null,
+            finalPrice: discountedPrice,
+            maxDiscount,
+            itemTotal,
+            hasStock: variant && variant.quantity >= item.quantity,
+            discountAmountPerItem: discountAmount
+          };
+        }).filter(item => item !== null);
+
+        const coupon = await Coupon.find({
+          isActive: true,
+          expiresAt: { $gt: new Date()},
+          userId: {$ne: userId},
+          minCartAmount: {$lte: subtotal}
+        });
         
-        req.session.checkoutData = {
-          ...req.session.checkoutData,
+        const isReferredUser = !!user.referredBy;
+        const isReferrer = await User.exists({referredBy: user._id});
+        const referralCoupons = coupon.filter(c=> c.code.startsWith("RYZO"));
+        const normalCoupons = coupon.filter(c => !c.code.startsWith("RYZO"));
+
+        let finalCoupon = normalCoupons;
+        if(isReferredUser || isReferrer){
+          finalCoupon = [...normalCoupons,...referralCoupons];
+        }
+
+        const outOfStockItems = itemsWithStock.filter((item) => !item.hasStock);
+        const hasOutOfStock = outOfStockItems.length > 0;
+
+        let couponDiscount = 0;
+        let grandTotal = subtotal;
+        
+        if (req.session.checkoutData && req.session.checkoutData.couponId) {
+          const couponDoc = await Coupon.findOne({ 
+            _id: req.session.checkoutData.couponId, 
+            isActive: true, 
+            expiresAt: { $gt: new Date() },
+            minCartAmount: { $lte: subtotal }
+          });
+
+          if (couponDoc) {
+            if (couponDoc.discountType === 'percentage') {
+              couponDiscount = Math.round((subtotal * couponDoc.discountAmount) / 100);
+              if (couponDoc.maxDiscount && couponDiscount > couponDoc.maxDiscount) {
+                couponDiscount = couponDoc.maxDiscount;
+              }
+            } else {
+              couponDiscount = Math.min(couponDoc.discountAmount, subtotal);
+            }
+            
+            grandTotal = subtotal - couponDiscount;
+            
+            req.session.checkoutData = {
+              ...req.session.checkoutData,
+              subtotal,
+              couponDiscount,
+              totalProductDiscount,
+              grandTotal
+            };
+          } else {
+            req.session.checkoutData = null;
+          }
+        }
+
+        if (!req.session.checkoutData) {
+          req.session.checkoutData = {
+            subtotal,
+            couponDiscount,
+            totalProductDiscount,
+            grandTotal,
+            couponId: null
+          };
+        }
+
+        res.render("user/checkout", {
+          cart: { ...cart.toObject(), items: itemsWithStock },
+          userAddress: addresses,
           subtotal,
+          coupon: finalCoupon,
+          productDiscount: totalProductDiscount,
+          grandTotal,
           couponDiscount,
-          totalProductDiscount,
-          grandTotal
-        };
-      } else {
-        req.session.checkoutData = null;
+          user,
+          product: itemsWithStock,
+          hasOutOfStock,
+          currentEmail
+        });
+      } catch (error) {
+        console.error("Checkout Error:", error.message);
+        console.error("Stack trace:", error.stack);
+        res.redirect("/user/cart?message=An error occurred. Please try again.");
       }
-    }
-
-    if (!req.session.checkoutData) {
-      req.session.checkoutData = {
-        subtotal,
-        couponDiscount,
-        totalProductDiscount,
-        grandTotal,
-        couponId: null
-      };
-    }
-
-    res.render("user/checkout", {
-      cart: { ...cart.toObject(), items: itemsWithStock },
-      userAddress: addresses,
-      subtotal,
-      coupon: finalCoupon,
-      productDiscount: totalProductDiscount,
-      grandTotal,
-      couponDiscount,
-      user,
-      product: itemsWithStock,
-      hasOutOfStock
-    });
-  } catch (error) {
-    console.error("Checkout Error:", error.message);
-    res.redirect("/user/cart?message=An error occurred. Please try again.");
-  }
     },
 
     placeOrder: async (req, res) => {
@@ -1102,7 +1091,6 @@ const productController = {
             });
             
             await order.save();
-            console.log("Failed order saved due to validation:", order.orderId);
           } catch (saveError) {
             console.error("Failed to save validation error order:", saveError);
           }
@@ -1439,7 +1427,6 @@ const productController = {
               paymentFailureReason: err.message,
               updatedAt: new Date()
             });
-            console.log("Updated existing order to failed status:", order.orderId);
           } catch (updateError) {
             console.error("Failed to update order to failed status:", updateError);
           }
@@ -1455,13 +1442,6 @@ const productController = {
     paymentFailure: async (req,res) => {
       try{
         const {orderId,razorpay_order_id,error_code,error_description} = req.body;
-
-        console.log("Payment failure reported:",{
-          orderId,
-          razorpayOrderId: razorpay_order_id,
-          errorCode: error_code,
-          errorDescription: error_description
-        });
 
         let order;
         if(mongoose.Types.ObjectId.isValid(orderId)){
@@ -1496,11 +1476,6 @@ const productController = {
 
         await restoreOrderStock(order);
 
-        console.log("Order marked as failed:",{
-          orderId: order.orderId,
-          reason: order.paymentFailureReason
-        });
-
         res.status(200).json({success: true, message:"Payment failure recorded",orderId: order.orderId});
       }catch (err){
         console.error("Error handling payment failure:",err);
@@ -1515,15 +1490,7 @@ const productController = {
       try{
         const {razorpay_payment_id,razorpay_order_id,razorpay_signature,error} = req.body;
 
-        console.log("Payment verification started:",{
-          paymentId: razorpay_payment_id,
-          orderId: razorpay_order_id,
-          hasSignature: !!razorpay_signature,
-          hasError: !!error
-        });
-
         if(error){
-          console.log("Payment failed on Razorpay side:",error);
 
           const order = await Order.findOne({transactionId: razorpay_order_id});
 
@@ -1583,7 +1550,6 @@ const productController = {
 
 
         if(order.isPaymentVerified && order.paymentStatus === "completed"){
-          console.log("Payment already verified for Order:",order._id);
           return res.status(200).json({
             success: true,
             order: {_id: order._id},
@@ -1597,12 +1563,6 @@ const productController = {
         .createHmac("sha256",process.env.RAZORPAY_KEY_SECRET)
         .update(body.toString())
         .digest("hex");
-
-        console.log("Signature verification:",{
-          expected: expectedSignature,
-          received: razorpay_signature,
-          match: expectedSignature === razorpay_signature
-        });
 
         if(expectedSignature !== razorpay_signature){
           order.paymentStatus = "failed",
@@ -1653,13 +1613,6 @@ const productController = {
         order.failureMetadata = undefined;
 
         await order.save();
-
-        console.log("Payment verified successfully:",{
-          orderId: order.orderId,
-          paymentId: razorpay_payment_id,
-          amount: order.totalAmount,
-          attempts: order.paymentAttempts
-        });
 
         res.status(200).json({
           success: true,
@@ -1720,12 +1673,7 @@ const productController = {
         if(!userId){
           return res.status(401).json({success: false, message: "User not authenticated"});
         }
-
-        console.log("Retry Payment - orderId:", orderId);
-        console.log("User ID:", userId);
         
-
-
         const order = await Order.findOne({
           _id: orderId, 
           userId,
@@ -1735,9 +1683,6 @@ const productController = {
             { paymentStatus: "pending", status: "failed" }
           ]
         });
-
-
-      console.log("Matched Order:", order);
 
         if(!order){
           return res.status(404).json({
@@ -1813,14 +1758,6 @@ const productController = {
             {$set: {"variants.$.quantity": variant.quantity}}
           );
         }
-
-        console.log("Payment retry initiated",{
-          orderId: order.orderId,
-          razorpayOrderId: razorpayOrder.id,
-          amount: order.totalAmount,
-          attempts: order.paymentAttempts
-        });
-
         res.status(200).json({
           success: true,
           order: {_id: order._id},
@@ -1842,19 +1779,17 @@ const productController = {
     orderSuccess: async (req,res) => {
       try{
         const orderId = req.query.orderId;
-        console.log("orderId:",orderId);
         res.render('user/orderSuccess',{
           orderId
         });
       }catch(error){
-        console.log("Error in order sucess Page:",error);
+        console.error("Error in order sucess Page:",error);
       }
     },
 
     orderFailure: async (req, res) => {
       try {
         const { orderId, error } = req.query;
-        console.log("ordsamnvvv:",orderId)
         res.render('user/orderFailure', {
           orderId: orderId || '',
           error: error || 'Payment failed. Please try again.'

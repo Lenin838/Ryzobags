@@ -283,6 +283,15 @@ async function applyCoupon(totalAmount) {
   }
 
   try {
+    // Reset any previously applied coupon buttons first
+    if (appliedCoupon) {
+      const prevUseButton = document.getElementById(`useButton_${appliedCoupon}`);
+      const prevCancelButton = document.getElementById(`cancelButton_${appliedCoupon}`);
+      
+      if (prevUseButton) prevUseButton.style.display = 'inline-block';
+      if (prevCancelButton) prevCancelButton.style.display = 'none';
+    }
+
     const response = await fetch('/user/applyCoupon', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

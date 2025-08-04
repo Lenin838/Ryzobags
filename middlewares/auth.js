@@ -9,7 +9,10 @@ const isAuthenticated = async(req, res, next) => {
         const userdetails= await user.findById(userId)
         console.log("isauthenticates",userdetails)
         if(userdetails.isActive===false){
-            res.redirect("/user/login")
+            req.session.destroy(()=>{
+                res.redirect("/user/login")
+            });
+            return;
         }
         req.user = userdetails;
         next()

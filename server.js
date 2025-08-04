@@ -11,7 +11,8 @@ const flash = require('connect-flash');
 
 
 app.use(express.json());
-app.use(express.urlencoded({extended:true}));   
+app.use(express.urlencoded({extended:true}));  
+
 
 app.use(session({
     secret: process.env.SESSION_SECRET || "fallback-secret", 
@@ -58,6 +59,8 @@ app.use((req, res, next) => {
     next();
 });
 
+
+
 app.get('/',(req,res)=>{
     res.render('user/landing');
 });
@@ -68,6 +71,32 @@ app.use("/auth",userRouter);
 app.use('/user',userRouter);
 app.use('/admin',adminRouter);
 
+
+app.use((req,res,next)=>{
+    res.render('404');
+    next();
+});
+
+// app.use((err,req,res,next)=>{
+//     console.error("Global Error Handler:",err.stack);
+
+//     if(res.headersSent){
+//         return next(err);
+//     }
+
+//     if(req.originalUrl.startsWith('/api')){
+//         return res.status(err.status || 500).json({
+//             success:false,
+//             message: err.message || "Internal server error",
+//         });
+//     }
+
+//     res.status(err.status || 500).json({
+//         success: false,
+//         message:err.message,
+//         error: process.env.NODE_ENV === 'development'?err:{}
+//     });
+// });
 
 
 const PORT = process.env.PORT;

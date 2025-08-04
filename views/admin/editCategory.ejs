@@ -1,50 +1,51 @@
-<div class="p-8 bg-white rounded-xl shadow-lg">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Edit Category</h2>
+<div class="p-4 sm:p-6 md:p-8 bg-white rounded-lg sm:rounded-xl shadow-md sm:shadow-lg">
+    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Edit Category</h2>
     <% if (success && success.length > 0) { %>
-      <div class="bg-green-100 text-green-700 p-2 rounded mb-4"><%= success %></div>
+      <div class="bg-green-100 text-green-700 p-2 sm:p-3 rounded mb-3 sm:mb-4 text-sm sm:text-base"><%= success %></div>
     <% } %>
     
     <% if (error && error.length > 0) { %>
-      <div class="bg-red-100 text-red-700 p-2 rounded mb-4"><%= error %></div>
+      <div class="bg-red-100 text-red-700 p-2 sm:p-3 rounded mb-3 sm:mb-4 text-sm sm:text-base"><%= error %></div>
     <% } %>
     
-    <form id="editCategoryForm" "space-y-6">
+    <form id="editCategoryForm" class="space-y-4 sm:space-y-6">
       <!-- Category Name Field -->
       <div>
-        <label for="name" class="block text-lg font-medium text-gray-700">Category Name</label>
+        <label for="name" class="block text-base sm:text-lg font-medium text-gray-700">Category Name</label>
         <input type="text" name="name" id="name" value="<%= category.name %>" required
-          class="mt-2 w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300" />
+          class="mt-1 sm:mt-2 w-full border border-gray-300 rounded-md sm:rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300 text-sm sm:text-base" />
       </div>
 
       <!-- Description Field -->
       <div>
-        <label for="description" class="block text-lg font-medium text-gray-700">Description</label>
-        <textarea name="description" id="description" rows="4" required
+        <label for="description" class="block text-base sm:text-lg font-medium text-gray-700">Description</label>
+        <textarea name="description" id="description" rows="3" required
           placeholder="Enter a brief description of the category..."
-          class="mt-2 w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300"><%= category.description %></textarea>
+          class="mt-1 sm:mt-2 w-full border border-gray-300 rounded-md sm:rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300 text-sm sm:text-base"><%= category.description %></textarea>
       </div>
 
       <!-- Discount Percentage Field -->
       <div>
-        <label for="discountPercentage" class="block text-lg font-medium text-gray-700">Discount Percentage (%)</label>
+        <label for="discountPercentage" class="block text-base sm:text-lg font-medium text-gray-700">Discount Percentage (%)</label>
         <input type="number" name="discountPercentage" id="discountPercentage" min="0" max="100" step="1" value="<%= category.offer.discountPercentage || 0 %>"
-          class="mt-2 w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300" />
+          class="mt-1 sm:mt-2 w-full border border-gray-300 rounded-md sm:rounded-lg shadow-sm py-2 px-3 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition duration-300 text-sm sm:text-base" />
       </div>
 
       <!-- Buttons -->
-      <div class="flex items-center gap-6">
+      <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 md:gap-6">
         <button type="submit"
-          class="bg-indigo-600 text-white font-medium py-2 px-5 rounded-lg shadow-md hover:bg-indigo-700 hover:shadow-lg transition duration-300">
+          class="w-full sm:w-auto bg-indigo-600 text-white font-medium py-2 px-4 sm:px-5 rounded-md sm:rounded-lg shadow-sm sm:shadow-md hover:bg-indigo-700 hover:shadow-lg transition duration-300 text-sm sm:text-base">
           Update
         </button>
         <a href="/admin/categories"
-          class="bg-gray-200 text-gray-800 font-medium py-2 px-5 rounded-lg hover:bg-gray-300 hover:text-indigo-600 transition duration-300 shadow-sm">
-          historiography
+          class="w-full sm:w-auto bg-gray-200 text-gray-800 font-medium py-2 px-4 sm:px-5 rounded-md sm:rounded-lg hover:bg-gray-300 hover:text-indigo-600 transition duration-300 shadow-sm text-sm sm:text-base text-center">
+          Cancel
         </a>
       </div>
     </form>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Original script remains completely unchanged -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   document.getElementById("editCategoryForm").addEventListener("submit", async function (e) {
@@ -99,5 +100,3 @@
     }
   });
 </script>
-
-

@@ -22,7 +22,7 @@ const productController = {
         .skip((page - 1) * perPage)
         .limit(perPage);
       
-      console.log(`Found ${products.length} products out of ${total} total`);
+      // console.log(`Found ${products.length} products out of ${total} total`);
     
       res.render('admin/layout', {
         body: 'productList',
@@ -84,7 +84,7 @@ const productController = {
 
   addProduct: async (req, res) => {
     try {
-      console.log('Add product request received');
+      // console.log('Add product request received');
 
       if (!req.files?.mainImage || !req.files?.subImages) {
         return res.status(400).json({
@@ -111,7 +111,7 @@ const productController = {
         });
       }
 
-      console.log(`Processing images: mainImage=${mainImage.originalname}, subImages=${subImages.length}`);
+      // console.log(`Processing images: mainImage=${mainImage.originalname}, subImages=${subImages.length}`);
 
       const processedMainImage = await resizeAndSaveImages([mainImage]);
       const processedSubImages = await resizeAndSaveImages(subImages);
@@ -124,7 +124,7 @@ const productController = {
           const maxDiscount = Math.max(productDiscount, categoryDiscount);
 
           const variantsObj = req.body.variants;
-          variants = Object.values(variantsObj)
+          const processedVariants = Object.values(variantsObj)
             .map((v) => {
               const regularPrice = Number(v.regularPrice);
               const discountedPrice = Math.round(regularPrice - (regularPrice * maxDiscount / 100));
@@ -136,9 +136,28 @@ const productController = {
               };
             })
             .filter((v) => v.size && !isNaN(v.regularPrice) && !isNaN(v.quantity));
+        
+
+      const sizeSet = new Set();
+      const duplicateSizes = [];
+
+      for(const variant of processedVariants){
+        const sizeKey = variant.size.toLowerCase();
+        if(sizeSet.has(sizeKey)){
+          duplicateSizes.push(variant.size);
+        }else{
+          sizeSet.add(sizeKey);
         }
+      }
 
-
+      if(duplicateSizes.length > 0){
+        return res.status(400).json({
+          success: false,
+          message: `Duplicate variant sizes found: ${duplicateSizes.join(', ')}. Each size must be unique.`
+        });
+      }
+      variants = processedVariants;
+    }
       const product = new Product({
         name: req.body.name?.trim(),
         description: req.body.description?.trim(),
@@ -238,9 +257,9 @@ const productController = {
 
       if (req.files?.mainImage) {
         try {
-          console.log('Main image file:', req.files['mainImage'][0]);
+          // console.log('Main image file:', req.files['mainImage'][0]);
           const processedMainImage = await resizeAndSaveImages([req.files['mainImage'][0]]);
-          console.log('Processed main image:', processedMainImage);
+          // console.log('Processed main image:', processedMainImage);
           
           if (!Array.isArray(processedMainImage) || !processedMainImage[0]) {
             throw new Error('Main image processing failed: Empty result');
@@ -266,13 +285,13 @@ const productController = {
           message: 'Main image is required'
         });
       }
-      console.log('Final mainImage:', mainImage);
+      // console.log('Final mainImage:', mainImage);
 
       if (req.files?.subImages) {
         try {
-          console.log('Sub image files:', req.files['subImages']);
+          // console.log('Sub image files:', req.files['subImages']);
           const processedSubImages = await resizeAndSaveImages(req.files['subImages']);
-          console.log('Processed sub images:', processedSubImages);
+          // console.log('Processed sub images:', processedSubImages);
           
           if (!Array.isArray(processedSubImages)) {
             throw new Error('Sub-image processing failed: Invalid output format');
@@ -316,7 +335,7 @@ const productController = {
         const categoryDiscount = categoryDoc?.offer?.discountPercentage || 0;
         const maxDiscount = Math.max(productDiscount, categoryDiscount);
 
-        variants = Object.values(req.body.variants)
+        const processedVariants = Object.values(req.body.variants)
           .filter(v => v.size?.trim() && !isNaN(v.regularPrice) && !isNaN(v.quantity))
           .map(v => {
             const regularPrice = Number(v.regularPrice);
@@ -328,6 +347,26 @@ const productController = {
               quantity: Number(v.quantity),
             };
           });
+
+        const sizeSet = new Set();
+        const duplicateSizes = [];
+
+        for(const variant of processedVariants){
+          const sizeKey = variant.size.toLowerCase();
+          if(sizeSet.has(sizeKey)){
+            duplicateSizes.push(variant.size);
+          }else{
+            sizeSet.add(sizeKey);
+          }
+        }
+
+        if(duplicateSizes.length > 0){
+          return res.status(400).json({
+            success: false,
+            message: `Duplicate variant sizes found: ${duplicateSizes.join(', ')}. Each size must be unique.`,
+          });
+        }
+        variants = processedVariants;
       }
 
       if (variants.length === 0) {

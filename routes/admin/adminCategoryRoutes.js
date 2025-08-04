@@ -1,14 +1,15 @@
 const express = require('express');
 const categoryRouter = express.Router();
 const categoryController = require('../../controllers/admins/categoryController');
+const { isAdminLoggedIn } = require('../../middlewares/adminAuth');
 
 
-categoryRouter.get('/categories',categoryController.getCategoryList);
-categoryRouter.get('/categories/add', categoryController.getAddCategory);
-categoryRouter.post('/categories/add', categoryController.postAddCategory);
-categoryRouter.get('/categories/edit/:id', categoryController.getEditCategory);
-categoryRouter.put('/categories/edit/:id', categoryController.postEditCategory);
-categoryRouter.patch('/categories/unlist/:id', categoryController.unlistCategory);
-categoryRouter.patch('/categories/list/:id', categoryController.listCategory);
+categoryRouter.get('/categories',isAdminLoggedIn,categoryController.getCategoryList);
+categoryRouter.get('/categories/add', isAdminLoggedIn,categoryController.getAddCategory);
+categoryRouter.post('/categories/add', isAdminLoggedIn,categoryController.postAddCategory);
+categoryRouter.get('/categories/edit/:id', isAdminLoggedIn,categoryController.getEditCategory);
+categoryRouter.put('/categories/edit/:id', isAdminLoggedIn,categoryController.postEditCategory);
+categoryRouter.patch('/categories/unlist/:id', isAdminLoggedIn,categoryController.unlistCategory);
+categoryRouter.patch('/categories/list/:id', isAdminLoggedIn,categoryController.listCategory);
 
 module.exports = categoryRouter;

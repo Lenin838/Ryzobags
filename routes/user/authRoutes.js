@@ -8,6 +8,7 @@ const { isAuthenticated, isNotAuthenticated } = require('../../middlewares/auth'
 const {upload} = require('../../middlewares/uploads');
 const profileRouter = require('../../routes/user/userProfileRoutes');
 const orderRouter = require('../../routes/user/orderRoutes');
+const {loginLimiter,otpLimiter} = require('../../middlewares/rateLimiter');
 
 userRouter.use('/',orderRouter);
 userRouter.use('/',profileRouter);
@@ -28,13 +29,13 @@ userRouter.get("/google/callback",
 userRouter.get("/google/failure",userController.googleAuthFailure);
 
 userRouter.get('/signup', isNotAuthenticated, userController.loadRegister);
-userRouter.post('/verify', isNotAuthenticated, userController.verifyRegister);
+userRouter.post('/verify', loginLimiter,isNotAuthenticated, userController.verifyRegister);
 userRouter.get("/enterOtp", isNotAuthenticated, userController.loadOtpPage);
-userRouter.post("/verify-otp", isNotAuthenticated, userController.verifyOtp);
-userRouter.post("/resend-otp", isNotAuthenticated, userController.resendOtp);
+userRouter.post("/verify-otp", otpLimiter,isNotAuthenticated, userController.verifyOtp);
+userRouter.post("/resend-otp",otpLimiter,isNotAuthenticated, userController.resendOtp);
 
 userRouter.get('/login', isNotAuthenticated, userController.loadLogin);
-userRouter.post('/login', isNotAuthenticated, userController.verifyLogin);
+userRouter.post('/login',loginLimiter,isNotAuthenticated, userController.verifyLogin);
 
 userRouter.get('/forgot-password', isNotAuthenticated, userController.loadForgotPassword);
 userRouter.post('/forgot-password', isNotAuthenticated, userController.forgotPassword);

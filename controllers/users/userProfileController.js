@@ -376,33 +376,26 @@ const userProfileController = {
     try {
       const { id } = req.params;
 
-      console.log(`🔄 Attempting to set default address for user ${req.user._id}, id: ${id}`);
-
       if (!id) {
-        console.log("❌ No ID provided");
         return res.status(400).json({ success: false, message: "Address ID is required" });
       }
 
       const addressDoc = await Address.findOne({ userId: req.user._id });
       if (!addressDoc || !addressDoc.address || addressDoc.address.length === 0) {
-        console.log("❌ No addresses found for user:", req.user._id);
         return res.status(404).json({ success: false, message: "No addresses found" });
       }
 
       const targetAddress = addressDoc.address.find(addr => addr._id.toString() === id);
       
       if (!targetAddress) {
-        console.log("❌ Address not found with ID:", id);
         return res.status(404).json({ success: false, message: "Address not found" });
       }
 
       if (targetAddress.status === "inactive") {
-        console.log("❌ Cannot set inactive address as default:", id);
         return res.status(400).json({ success: false, message: "Cannot set inactive address as default" });
       }
 
       if (targetAddress.isDefault) {
-        console.log("ℹ️ Address already default with ID:", id);
         return res.status(200).json({ success: true, message: "Address is already set as default" });
       }
 
@@ -414,11 +407,9 @@ const userProfileController = {
       addressDoc.markModified('address');
 
       await addressDoc.save();
-      console.log("💾 Default address set successfully for ID:", id);
 
       const verifyDoc = await Address.findOne({ userId: req.user._id });
       const defaultAddress = verifyDoc.address.find((addr) => addr.isDefault);
-      console.log("🔍 Verification - Default address:", defaultAddress ? defaultAddress.name : "None found");
 
       return res.status(200).json({ success: true, message: "Default address updated successfully" });
     } catch (err) {
@@ -431,12 +422,6 @@ const userProfileController = {
     try {
       const user = await User.findById(req.user._id).select("-password").lean();
       const pendingEmail = req.session.pendingEmail || user.newEmail || '';
-
-      console.log('📋 Rendering editProfile with:', {
-        userEmail: user.email,
-        pendingEmail: pendingEmail,
-        hasOTP: !!user.otp
-      });
 
       res.render("user/editProfile", {
         user,
@@ -509,40 +494,33 @@ const userProfileController = {
   initiateEmailChange: async (req, res) => {
     try {
       const { newEmail } = req.body;
-      console.log('📥 Received newEmail:', newEmail);
 
       if (!newEmail || !newEmail.trim()) {
-        console.log('❌ Validation failed: No email provided');
         return res.status(400).json({ success: false, message: "Please provide a valid email address" });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newEmail.trim())) {
-        console.log('❌ Validation failed: Invalid email format');
         return res.status(400).json({ success: false, message: "Invalid email format" });
       }
 
       const existingUser = await User.findOne({ email: newEmail.trim() });
       if (existingUser) {
-        console.log('❌ Validation failed: Email already in use');
         return res.status(400).json({ success: false, message: "Email already in use" });
       }
 
       const user = await User.findById(req.user._id);
       if (!user) {
-        console.log('❌ User not found:', req.user._id);
         return res.status(404).json({ success: false, message: "User not found" });
       }
 
       if (user.email === newEmail.trim()) {
-        console.log('❌ Validation failed: Same as current email');
         return res.status(400).json({ success: false, message: "New email cannot be the same as current email" });
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
       console.log(`🔐 Generated OTP for user ${user._id}: ${otp}`);
-      console.log(`⏰ OTP expires at: ${otpExpiresAt}`);
 
       const updatedUser = await User.findByIdAndUpdate(
         req.user._id,
@@ -579,11 +557,6 @@ const userProfileController = {
       req.session.pendingEmail = newEmail.trim();
       req.session.pendingOtp = otp;
       req.session.otpExpiresAt = otpExpiresAt.getTime();
-      console.log('📋 Session data stored:', {
-        pendingEmail: req.session.pendingEmail,
-        pendingOtp: req.session.pendingOtp,
-        otpExpiresAt: req.session.otpExpiresAt
-      });
 
       const mailOptions = {
         from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
@@ -643,13 +616,8 @@ const userProfileController = {
         `,
       };
 
-      console.log(`📧 Attempting to send email to: ${newEmail.trim()}`);
-
       try {
         const info = await transporter.sendMail(mailOptions);
-        console.log('✅ OTP email sent successfully:', info.messageId);
-        console.log('📧 Email accepted:', info.accepted);
-        console.log('📧 Email rejected:', info.rejected);
         
         return res.json({ success: true, message: `Verification email sent to ${newEmail.trim()}. Please check your inbox.` });
       } catch (emailError) {
@@ -678,32 +646,14 @@ const userProfileController = {
       console.log('📥 Received OTP for verification:', otp);
 
       if (!req.user?._id) {
-        console.log('❌ No authenticated user found');
         return res.status(401).json({ success: false, message: "Unauthorized. Please log in again." });
       }
 
       if (!otp || !otp.trim()) {
-        console.log('❌ Validation failed: No OTP provided');
         return res.status(400).json({ success: false, message: "Please enter the OTP" });
       }
 
-      console.log('🔍 Current user ID:', req.user._id);
-
       const userCheck = await User.findById(req.user._id).select('otp otpExpiresAt newEmail email');
-      console.log('🔍 User document state before verification:', {
-        userId: req.user._id,
-        storedOtp: userCheck?.otp,
-        otpExpiresAt: userCheck?.otpExpiresAt,
-        newEmail: userCheck?.newEmail,
-        email: userCheck?.email,
-        currentTime: new Date(),
-      });
-
-      console.log('🔍 Session data:', {
-        pendingEmail: req.session.pendingEmail,
-        pendingOtp: req.session.pendingOtp,
-        otpExpiresAt: req.session.otpExpiresAt
-      });
 
       let validOtp, validExpiresAt, validNewEmail;
       
@@ -711,19 +661,15 @@ const userProfileController = {
         validOtp = userCheck.otp;
         validExpiresAt = userCheck.otpExpiresAt;
         validNewEmail = userCheck.newEmail;
-        console.log('✅ Using database data for verification');
       } else if (req.session.pendingOtp && req.session.otpExpiresAt && req.session.pendingEmail) {
         validOtp = req.session.pendingOtp;
         validExpiresAt = new Date(req.session.otpExpiresAt);
         validNewEmail = req.session.pendingEmail;
-        console.log('✅ Using session data for verification');
       } else {
-        console.log('❌ No valid OTP data found in database or session');
         return res.status(400).json({ success: false, message: "No pending email verification found. Please request a new verification email." });
       }
 
       if (validExpiresAt < new Date()) {
-        console.log('❌ OTP expired');
         await User.findByIdAndUpdate(req.user._id, {
           otp: null,
           otpExpiresAt: null,
@@ -736,7 +682,6 @@ const userProfileController = {
       }
 
       if (validOtp !== otp.trim().toString()) {
-        console.log(`❌ Invalid OTP. Received: ${otp.trim().toString()}, Expected: ${validOtp}`);
         return res.status(400).json({ success: false, message: "Invalid OTP. Please check and try again." });
       }
 
@@ -746,7 +691,6 @@ const userProfileController = {
       });
       
       if (emailExists) {
-        console.log('❌ Email already taken:', validNewEmail);
         await User.findByIdAndUpdate(req.user._id, {
           otp: null,
           otpExpiresAt: null,
@@ -758,8 +702,7 @@ const userProfileController = {
         return res.status(400).json({ success: false, message: "This email is already in use by another account." });
       }
 
-      const oldEmail = userCheck.email;
-      console.log(`🔄 Attempting to change email for user ${req.user._id} from ${oldEmail} to ${validNewEmail}`);
+      const oldEmail = userCheck.email;  
 
       const updatedUser = await User.findByIdAndUpdate(
         req.user._id,
