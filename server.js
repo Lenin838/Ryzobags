@@ -8,6 +8,7 @@ const adminRouter = require('./routes/admin/adminAuthRoutes');
 const session = require('express-session');
 const passport = require("passport");
 const flash = require('connect-flash');
+const landingRouter = require('./routes/user/landingRouter');
 
 
 app.use(express.json());
@@ -61,13 +62,8 @@ app.use((req, res, next) => {
 
 
 
-app.get('/',(req,res)=>{
-    res.render('user/landing');
-});
-
-
-
 app.use("/auth",userRouter);
+app.use('/',landingRouter);
 app.use('/user',userRouter);
 app.use('/admin',adminRouter);
 

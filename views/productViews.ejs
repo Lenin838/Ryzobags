@@ -1,0 +1,917 @@
+<%- include("lHeader") %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %> | RYZO BAGS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#007D8B',
+                dark: '#006570',
+                light: '#4cacb6',
+              },
+              secondary: '#f8f9fa',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Zoom container styles */
+        .zoom-container {
+            position: relative;
+            overflow: hidden;
+            cursor: zoom-in;
+        }
+        .zoomed-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-repeat: no-repeat;
+            background-size: 200%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .zoom-container:hover .zoomed-image {
+            opacity: 1;
+        }
+
+        /* Custom scrollbar for thumbnail gallery */
+        .thumbnail-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-thumb {
+            background: #007D8B;
+            border-radius: 10px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-thumb:hover {
+            background: #006570;
+        }
+
+        /* Full height layout */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .content {
+            flex: 1 0 auto;
+        }
+        footer {
+            flex-shrink: 0;
+        }
+
+        /* Responsive image container */
+        .product-image-container {
+            max-width: 100%;
+            aspect-ratio: 1/1;
+        }
+
+        /* Ensure consistent button sizes */
+        .action-button {
+            min-height: 48px;
+        }
+
+        /* Smooth transitions for hover effects */
+        .thumbnail-item {
+            transition: border-color 0.2s ease;
+        }
+
+        @media (min-width: 640px) {
+            .thumbnail-scroll::-webkit-scrollbar {
+                height: 5px;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/productViewScript.js" defer></script>
+</head>
+<body class="bg-gray-50 font-sans">
+
+        <!-- Product Section -->
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                <!-- Product Image Gallery -->
+                <div class="flex flex-col gap-4">
+                    <div class="product-image-container zoom-container rounded-lg sm:rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+                        <img src="<%= product.mainImage %>" class="w-full h-full object-contain p-4" id="mainProductImage" alt="<%= product.name %>">
+                        <div class="zoomed-image" id="zoomedImage"></div>
+                    </div>
+                    <div class="flex overflow-x-auto thumbnail-scroll gap-2 pb-2">
+                        <% if (Array.isArray(product.subImages) && product.subImages.length > 0) { %>
+                            <% product.subImages.forEach((image, index) => { %>
+                                <div class="thumbnail-item min-w-[80px] h-20 sm:min-w-[100px] sm:h-24 rounded-lg overflow-hidden border-2 <%= index === 0 ? 'border-primary' : 'border-transparent' %> hover:border-primary transition cursor-pointer" onclick="changeImage('<%= image %>', this)">
+                                    <img src="<%= image %>" class="w-full h-full object-cover" alt="Product thumbnail">
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="thumbnail-item min-w-[80px] h-20 sm:min-w-[100px] sm:h-24 rounded-lg overflow-hidden border-2 border-primary hover:border-primary transition cursor-pointer" onclick="changeImage('<%= product.mainImage %>', this)">
+                                <img src="<%= product.mainImage %>" class="w-full h-full object-cover" alt="Product thumbnail">
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Product Details -->
+                <div class="flex flex-col">
+                    <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+                        <!-- Product Title and Rating -->
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4"><%= product.name %></h2>
+                        <div class="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                            <div class="flex text-amber-400 text-sm">
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            </div>
+                            <span class="text-gray-600 text-sm">4.5 (128 ratings)</span>
+                            <span class="text-gray-400 hidden sm:inline">|</span>
+                            <span class="text-green-600 text-sm hidden sm:inline">2,456 sold</span>
+                        </div>
+
+                        <!-- Price and Stock -->
+                        <div class="p-4 bg-primary/5 rounded-lg mb-4 sm:mb-6">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                                <span class="text-lg sm:text-xl font-bold text-primary" id="currentPrice"></span>
+                                <span class="text-green-600 font-medium text-sm flex items-center" id="stockInfo">
+                                    <i class="fa-solid fa-check mr-1"></i>
+                                    <span id="currentStock"><%= product.variants[0]?.quantity ?? 'N/A' %></span> In Stock
+                                </span>
+                            </div>
+                            <div class="mt-3 flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-truck mr-2 text-primary"></i>
+                                    Free Delivery
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-shield-halved mr-2 text-primary"></i>
+                                    Genuine Product
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Size Selection -->
+                        <div class="mb-4 sm:mb-6">
+                            <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Select Size:</label>
+                            <div class="flex flex-wrap gap-2 sm:gap-3" id="variantSelector">
+                                <% product.variants.forEach((variant, index) => { %>
+                                    <% const isOutOfStock = !variant.quantity || variant.quantity <= 0; %>
+                                    <button 
+                                        class="px-4 py-2 border-2 text-sm sm:text-base font-medium rounded-lg flex flex-col items-center <%= index === 0 ? (isOutOfStock ? 'border-red-300 text-red-600 bg-red-50' : 'border-primary text-primary bg-primary/5') : (isOutOfStock ? 'border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed' : 'border-gray-200 text-gray-700 hover:border-primary hover:text-primary') %> transition"
+                                        onclick="<%= isOutOfStock ? '' : `selectVariant('${index}')` %>"
+                                        data-variant-index="<%= index %>"
+                                        <%= isOutOfStock ? 'disabled' : '' %>
+                                    >
+                                        <span><%= variant.size %></span>
+                                        <% if (isOutOfStock) { %>
+                                            <span class="text-xs text-red-500">Out of Stock</span>
+                                        <% } else if (variant.quantity < 5) { %>
+                                            <span class="text-xs text-orange-500">Only <%= variant.quantity %> left</span>
+                                        <% } %>
+                                    </button>
+                                <% }) %>
+                            </div>
+                        </div>
+
+                        <!-- Quantity Selector -->
+                        <div class="mb-4 sm:mb-6">
+                            <label class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Quantity:</label>
+                            <div class="flex items-center gap-2">
+                                <button class="w-10 h-10 bg-gray-100 rounded-l-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition disabled:opacity-50" onclick="decrementQuantity()">
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                                <input type="number" id="quantityInput" value="1" min="1" max="<%= product.variants[0]?.quantity ?? 1 %>" class="w-16 h-10 border border-gray-200 text-center focus:outline-none text-sm sm:text-base disabled:bg-gray-100" readonly>
+                                <button class="w-10 h-10 bg-gray-100 rounded-r-lg flex items-center justify-center hover:bg-primary/10 hover:text-primary transition disabled:opacity-50" onclick="incrementQuantity()">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                                <span class="text-sm text-gray-500">
+                                    <span id="currentStock-text"><%= product.variants[0]?.quantity ?? 'N/A' %></span> items available
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3 sm:gap-4">
+                            <% const firstVariantOutOfStock = !product.variants[0]?.quantity || product.variants[0].quantity <= 0; %>
+                            <button class="action-button flex-1 py-3 px-6 <%= firstVariantOutOfStock ? 'bg-gray-400 cursor-not-allowed opacity-75' : 'bg-primary hover:bg-primary-dark' %> text-white rounded-lg font-medium transition flex items-center justify-center text-sm sm:text-base" 
+                                    onclick="addtoCart('<%= product._id %>')"
+                                    <%= firstVariantOutOfStock ? 'disabled' : '' %>>
+                                <i class="<%= firstVariantOutOfStock ? 'fa-solid fa-times' : 'fa-solid fa-cart-plus' %> mr-2"></i> 
+                                <%= firstVariantOutOfStock ? 'Out of Stock' : 'Add to Cart' %>
+                            </button>
+                            <button class="action-button p-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-primary transition" onclick="addToWishlist('<%= product._id %>')">
+                                <i class="<%= wishlist.includes(product._id.toString()) ? 'fa-solid text-red-600' : 'fa-regular' %> fa-heart"></i>
+                            </button>
+                        </div>
+
+                        <!-- Delivery & Returns -->
+                        <div class="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-truck-fast text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800 text-sm sm:text-base">Fast Delivery</h5>
+                                    <p class="text-xs sm:text-sm text-gray-500">Delivered in 2-3 days</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                    <i class="fa-solid fa-rotate-left text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-medium text-gray-800 text-sm sm:text-base">Easy Returns</h5>
+                                    <p class="text-xs sm:text-sm text-gray-500">30-day return policy</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Description & Details -->
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                    <div class="md:col-span-2">
+                        <div class="border-b border-gray-100 pb-3 mb-4">
+                            <h3 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+                                <span class="w-1 h-5 bg-primary rounded-full mr-2"></span>
+                                Product Description
+                            </h3>
+                        </div>
+                        <p class="text-sm sm:text-base text-gray-700 leading-relaxed mb-4">
+                            Crafted for both style and functionality, this premium bag blends contemporary design with timeless appeal. Featuring a spacious interior and thoughtfully placed compartments, it offers effortless organization for your daily essentials. The high-quality materials and sturdy craftsmanship ensure durability, while the sleek silhouette and refined details add a touch of elegance to any outfit.
+                        </p>
+                        <div class="mt-4">
+                            <h4 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fa-solid fa-circle-check text-primary mr-2"></i>
+                                Benefits:
+                            </h4>
+                            <ul class="space-y-2 pl-4">
+                                <li class="flex items-start text-sm sm:text-base">
+                                    <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                    Premium-quality materials for long-lasting durability
+                                </li>
+                                <li class="flex items-start text-sm sm:text-base">
+                                    <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                    Balanced blend of style, comfort, and durability
+                                </li>
+                                <li class="flex items-start text-sm sm:text-base">
+                                    <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                    Perfect for every occasion, from casual outings to formal events
+                                </li>
+                                <li class="flex items-start text-sm sm:text-base">
+                                    <i class="fa-solid fa-circle-check text-primary mt-1 mr-2"></i>
+                                    Elegant bags with premium packaging
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:border-l border-gray-100 md:pl-6">
+                        <h4 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fa-solid fa-circle-info text-primary mr-2"></i>
+                            Product Details:
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                                <p class="text-xs sm:text-sm text-gray-500">Size</p>
+                                <p class="font-medium text-gray-800 text-sm sm:text-base">Medium / Small / Large</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                                <p class="text-xs sm:text-sm text-gray-500">Type</p>
+                                <p class="font-medium text-gray-800 text-sm sm:text-base">Premium bags</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                                <p class="text-xs sm:text-sm text-gray-500">Bag Collection</p>
+                                <p class="font-medium text-gray-800 text-sm sm:text-base">Leather Luxe</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition">
+                                <p class="text-xs sm:text-sm text-gray-500">Durability</p>
+                                <p class="font-medium text-gray-800 text-sm sm:text-base">Long-lasting (8-10 years)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Reviews Section -->
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+                <div class="border-b border-gray-100 pb-3 mb-4">
+                    <h3 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+                        <span class="w-1 h-5 bg-primary rounded-full mr-2"></span>
+                        Customer Reviews
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                    <!-- Review Summary -->
+                    <div class="md:col-span-1">
+                        <div class="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
+                            <div class="text-4xl font-bold text-primary">4.5</div>
+                            <div class="flex text-amber-400 my-2">
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            </div>
+                            <p class="text-sm text-gray-600">Based on 128 reviews</p>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center">
+                                <span class="w-16 text-sm text-gray-600">5 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                    <div class="h-2 bg-primary rounded-full" style="width: 75%"></div>
+                                </div>
+                                <span class="w-8 text-sm text-gray-600">75%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-16 text-sm text-gray-600">4 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                    <div class="h-2 bg-primary rounded-full" style="width: 15%"></div>
+                                </div>
+                                <span class="w-8 text-sm text-gray-600">15%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-16 text-sm text-gray-600">3 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                    <div class="h-2 bg-primary rounded-full" style="width: 7%"></div>
+                                </div>
+                                <span class="w-8 text-sm text-gray-600">7%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-16 text-sm text-gray-600">2 stars</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                    <div class="h-2 bg-primary rounded-full" style="width: 2%"></div>
+                                </div>
+                                <span class="w-8 text-sm text-gray-600">2%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-16 text-sm text-gray-600">1 star</span>
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                    <div class="h-2 bg-primary rounded-full" style="width: 1%"></div>
+                                </div>
+                                <span class="w-8 text-sm text-gray-600">1%</span>
+                            </div>
+                        </div>
+                        <button class="mt-4 w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition text-sm">Write a Review</button>
+                    </div>
+
+                    <!-- Review List -->
+                    <div class="md:col-span-2 space-y-6">
+                        <% const reviews = [
+                            { name: 'Rahul Sharma', image: 'https://randomuser.me/api/portraits/men/32.jpg', rating: 5, text: 'Absolutely love this bag! The design is elegant and timeless. I\'ve received numerous compliments whenever I carry it. The packaging is premium, making it a perfect gift. Highly recommend!', time: '2 months ago', helpful: 24 },
+                            { name: 'Priya Patel', image: 'https://randomuser.me/api/portraits/women/44.jpg', rating: 4, text: 'The bag is beautiful and elegant, perfect for evening outings. My only complaint is that the straps could be a bit more comfortable, hence the 4 stars. Still, I find myself reaching for it often and would definitely purchase again.', time: '1 month ago', helpful: 16 },
+                            { name: 'Arjun Mehta', image: 'https://randomuser.me/api/portraits/men/67.jpg', rating: 3.5, text: 'Good bag for the price point. The design is stylish, but not as unique as I was hoping. The craftsmanship is elegant, and the zipper works smoothly. Decent durability, with regular use lasting about 6 months.', time: '3 weeks ago', helpful: 8 }
+                        ]; %>
+                        <% reviews.forEach(review => { %>
+                            <div class="border-b border-gray-100 pb-4">
+                                <div class="flex flex-col sm:flex-row justify-between gap-3">
+                                    <div class="flex items-center">
+                                        <img src="<%= review.image %>" alt="Reviewer" class="w-10 h-10 rounded-full mr-3">
+                                        <div>
+                                            <h5 class="font-medium text-gray-800 text-sm sm:text-base"><%= review.name %></h5>
+                                            <p class="text-xs sm:text-sm text-gray-500">Verified Purchase</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex text-amber-400">
+                                        <% for (let i = 0; i < 5; i++) { %>
+                                            <i class="fa-solid fa-star<%= i < Math.floor(review.rating) ? '' : (i < review.rating ? '-half-stroke' : '-regular') %>"></i>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <p class="mt-3 text-sm sm:text-base text-gray-700"><%= review.text %></p>
+                                <div class="mt-2 flex items-center text-sm text-gray-500 gap-2">
+                                    <span><%= review.time %></span>
+                                    <span>•</span>
+                                    <button class="hover:text-primary transition flex items-center">
+                                        <i class="fa-regular fa-thumbs-up mr-1"></i> Helpful (<%= review.helpful %>)
+                                    </button>
+                                </div>
+                            </div>
+                        <% }) %>
+                        <div class="text-center">
+                            <button class="px-6 py-3 border border-gray-200 rounded-lg text-gray-700 hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition text-sm">See All 128 Reviews</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Products -->
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="border-b border-gray-100 pb-3 mb-4">
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+                    <span class="w-1 h-5 bg-primary rounded-full mr-2"></span>
+                    You May Also Like
+                </h3>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <% relatedProducts.forEach(related => { %>
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition border border-gray-100">
+                        <a href="/productView/<%= related._id %>" class="block relative">
+                            <img src="<%= related.mainImage %>" class="w-full h-40 sm:h-48 object-cover hover:scale-105 transition duration-300" alt="Related Product">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="p-4">
+                                <h5 class="font-medium text-gray-800 truncate text-sm sm:text-base"><%= related.name %></h5>
+                                <div class="flex items-center mt-1">
+                                    <div class="flex text-amber-400 text-xs">
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-regular fa-star"></i>
+                                    </div>
+                                    <span class="text-xs text-gray-500 ml-1">(42)</span>
+                                </div>
+                                <div class="mt-2 flex items-center justify-between">
+                                    <div>
+                                        <span class="font-bold text-primary text-sm sm:text-base">₹<%= related.variants[0].discountedPrice %></span>
+                                        <% if (related.variants[0].discountedPrice < related.variants[0].regularPrice) { %>
+                                            <span class="text-xs line-through text-gray-500 ml-2">₹<%= related.variants[0].regularPrice %></span>
+                                            <span class="text-xs text-green-600 font-medium ml-2">
+                                                (<%= Math.round(((related.variants[0].regularPrice - related.variants[0].discountedPrice) / related.variants[0].regularPrice) * 100) %>% OFF)
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                    <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-primary/10 hover:text-primary transition">
+                                        <i class="fa-solid fa-cart-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+
+    <%- include("lFooter") %>
+
+    <!-- JavaScript remains unchanged -->
+    <script>
+        const variants = <%- JSON.stringify(product.variants.map((variant, index) => ({
+    index: index,
+    regularPrice: variant.regularPrice,
+    discountedPrice: variant.discountedPrice,
+    quantity: variant.quantity,
+    size: variant.size
+}))) %>;
+
+// Current selected variant (default to first variant)
+let currentVariantIndex = 0;
+let currentMaxQuantity = variants[0]?.quantity || 1;
+
+// Function to select a variant
+function selectVariant(index) {
+    console.log('Selecting variant with index:', index);
+
+    // Validate index
+    index = parseInt(index);
+    if (isNaN(index) || index < 0 || index >= variants.length) {
+        console.error('Invalid variant index:', index);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid variant selected. Please try again.',
+            confirmButtonColor: '#007D8B'
+        });
+        return;
+    }
+
+    // Update the current variant index
+    currentVariantIndex = index;
+    const selectedVariant = variants[index];
+    if (!selectedVariant) {
+        console.error('Selected variant not found for index:', index);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Variant data unavailable.',
+            confirmButtonColor: '#007D8B'
+        });
+        return;
+    }
+
+    currentMaxQuantity = parseInt(selectedVariant.quantity) || 1;
+
+    // Validate and parse prices
+    const regularPrice = parseFloat(selectedVariant.regularPrice);
+    const discountedPrice = parseFloat(selectedVariant.discountedPrice);
+    const hasDiscount = !isNaN(regularPrice) && !isNaN(discountedPrice) && discountedPrice < regularPrice;
+
+    // Update price (replace content instead of appending)
+    const priceElement = document.getElementById('currentPrice');
+    if (priceElement) {
+        if (hasDiscount) {
+            const discountPercent = Math.round(((regularPrice - discountedPrice) / regularPrice) * 100);
+            priceElement.innerHTML = `
+                ₹${discountedPrice.toFixed(2)}
+                <span class="text-xs md:text-sm line-through text-gray-500 font-normal ml-2">₹${regularPrice.toFixed(2)}</span>
+                <span class="text-xs text-green-600 font-medium ml-2">(${discountPercent}% OFF)</span>
+            `;
+        } else {
+            priceElement.innerHTML = `₹${isNaN(regularPrice) ? 'Price unavailable' : regularPrice.toFixed(2)}`;
+        }
+    }
+
+    // Update stock info
+    const currentStock = document.getElementById('currentStock');
+    const currentStockText = document.getElementById('currentStock-text');
+    if (currentStock && currentStockText) {
+        const stock = parseInt(selectedVariant.quantity);
+        const displayStock = isNaN(stock) || stock <= 0 ? 'Out of Stock' : stock;
+        currentStock.textContent = displayStock;
+        currentStockText.textContent = displayStock;
+    }
+
+    // Update quantity input max
+    const quantityInput = document.getElementById('quantityInput');
+    if (quantityInput) {
+        quantityInput.max = selectedVariant.quantity || 1;
+        quantityInput.disabled = !selectedVariant.quantity || selectedVariant.quantity <= 0;
+        if (parseInt(quantityInput.value) > selectedVariant.quantity || selectedVariant.quantity <= 0) {
+            quantityInput.value = selectedVariant.quantity > 0 ? 1 : 0;
+        }
+    }
+
+    // Update selected button styles
+    const buttons = document.querySelectorAll('#variantSelector button');
+    buttons.forEach(button => {
+        if (parseInt(button.dataset.variantIndex) === index) {
+            button.classList.add('border-primary', 'text-primary', 'bg-primary/5');
+            button.classList.remove('border-gray-200', 'text-gray-700');
+        } else {
+            button.classList.remove('border-primary', 'text-primary', 'bg-primary/5');
+            button.classList.add('border-gray-200', 'text-gray-700');
+        }
+    });
+
+    console.log('Selected variant:', selectedVariant);
+}
+
+// Function to increment quantity
+function incrementQuantity() {
+    const quantityInput = document.getElementById('quantityInput');
+    const currentQuantity = parseInt(quantityInput.value);
+    const maxQuantity = Math.min(currentMaxQuantity, 6); // Limit to 6 items max
+    
+    if (currentQuantity >= 6) {
+        // Show error message when trying to exceed 6 items
+        Swal.fire({
+            icon: 'warning',
+            title: 'Quantity Limit Reached',
+            text: 'One user can select maximum 6 items only.',
+            confirmButtonColor: '#007D8B',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    if (currentQuantity >= maxQuantity) {
+        // Show error message when trying to exceed available stock
+        Swal.fire({
+            icon: 'warning',
+            title: 'Stock Limit Reached',
+            text: `Only ${maxQuantity} items available in stock.`,
+            confirmButtonColor: '#007D8B',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    quantityInput.value = currentQuantity + 1;
+}
+
+// Enhanced Function to decrement quantity with validation
+function decrementQuantity() {
+    const quantityInput = document.getElementById('quantityInput');
+    const currentQuantity = parseInt(quantityInput.value);
+    
+    if (currentQuantity <= 1) {
+        // Show error message when trying to go below 1
+        Swal.fire({
+            icon: 'warning',
+            title: 'Minimum Quantity',
+            text: 'Quantity cannot be less than 1.',
+            confirmButtonColor: '#007D8B',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    quantityInput.value = currentQuantity - 1;
+}
+
+// Function to handle image changes
+function changeImage(src, thumbElement) {
+    const mainImage = document.getElementById("mainProductImage");
+    mainImage.src = src;
+    document.getElementById("zoomedImage").style.backgroundImage = `url('${src}')`;
+
+    // Update thumbnail border
+    const thumbnails = document.querySelectorAll('.thumbnail-scroll > div');
+    thumbnails.forEach(thumb => {
+        thumb.classList.remove('border-primary');
+        thumb.classList.add('border-transparent');
+    });
+    
+    thumbElement.classList.remove('border-transparent');
+    thumbElement.classList.add('border-primary');
+}
+
+// Initialize zoom functionality for the product image
+function initializeImageZoom() {
+    const mainImage = document.getElementById('mainProductImage');
+    const zoomedImage = document.getElementById('zoomedImage');
+
+    if (!mainImage || !zoomedImage) return;
+
+    // Set up zoomed image styles
+    zoomedImage.style.position = 'absolute';
+    zoomedImage.style.width = '100%';
+    zoomedImage.style.height = '100%';
+    zoomedImage.style.backgroundRepeat = 'no-repeat';
+    zoomedImage.style.backgroundSize = '200% 200%';
+    zoomedImage.style.opacity = '0';
+    zoomedImage.style.pointerEvents = 'none';
+    zoomedImage.style.transition = 'opacity 0.3s ease';
+    zoomedImage.style.top = '0';
+    zoomedImage.style.left = '0';
+    zoomedImage.style.zIndex = '10';
+
+    let lastMove = 0;
+    
+    mainImage.addEventListener('mousemove', function(e) {
+        const now = Date.now();
+        if (now - lastMove < 16) return;
+        lastMove = now;
+        
+        const rect = mainImage.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / mainImage.clientWidth * 100;
+        const y = (e.clientY - rect.top) / mainImage.clientHeight * 100;
+
+        zoomedImage.style.backgroundPosition = `${x}% ${y}%`;
+    });
+
+    mainImage.addEventListener('mouseenter', function() {
+        zoomedImage.style.backgroundImage = `url('${this.src}')`;
+        zoomedImage.style.opacity = '1';
+    });
+
+    mainImage.addEventListener('mouseleave', function() {
+        zoomedImage.style.opacity = '0';
+    });
+
+    // Touch support for mobile devices
+    mainImage.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = mainImage.getBoundingClientRect();
+        const x = (touch.clientX - rect.left) / mainImage.clientWidth * 100;
+        const y = (touch.clientY - rect.top) / mainImage.clientHeight * 100;
+        
+        zoomedImage.style.backgroundPosition = `${x}% ${y}%`;
+    });
+
+    mainImage.addEventListener('touchstart', function() {
+        zoomedImage.style.backgroundImage = `url('${this.src}')`;
+        zoomedImage.style.opacity = '1';
+    });
+
+    mainImage.addEventListener('touchend', function() {
+        zoomedImage.style.opacity = '0';
+    });
+}
+
+// Add input validation for quantity field
+document.getElementById('quantityInput').addEventListener('change', function() {
+    const value = parseInt(this.value) || 1;
+    const maxQuantity = currentMaxQuantity;
+    
+    if (value < 1) {
+        this.value = 1;
+    } else if (value > maxQuantity) {
+        this.value = maxQuantity;
+    }
+});
+
+// ===== BLOCK ALL ACTIONS & REDIRECT TO LOGIN =====
+function blockActionAndRedirect(actionName = "This action") {
+  Swal.fire({
+    icon: 'error',
+    title: 'Login Required',
+    text: `Please login or signup to ${actionName}.`,
+    confirmButtonText: 'Go to Login',
+    confirmButtonColor: '#007D8B',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  }).then(() => {
+    // Redirect to login with current page as return URL
+    window.location.href = `/user/login`;
+  });
+}
+
+// ===== OVERRIDE ALL ACTION FUNCTIONS =====
+function addtoCart() {
+  blockActionAndRedirect("add items to cart");
+}
+
+function addToWishlist() {
+  blockActionAndRedirect("add items to wishlist");
+}
+
+// ===== INITIALIZE (if needed) =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Disable all buttons if needed
+  document.querySelectorAll('[onclick*="addtoCart"], [onclick*="addToWishlist"]').forEach(button => {
+    button.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      blockActionAndRedirect("perform this action");
+    };
+  });
+});
+
+// Add to cart function
+async function addtoCart(productId) {
+    try {
+        // Validate selected variant
+        if (!variants || !variants[currentVariantIndex]) {
+            throw new Error('Please select a valid size.');
+        }
+
+        const selectedVariant = variants[currentVariantIndex];
+        const quantityInput = document.getElementById('quantityInput');
+        const quantity = parseInt(quantityInput.value);
+        const size = selectedVariant.size;
+
+        // Validate quantity
+        if (isNaN(quantity) || quantity < 1 || quantity > selectedVariant.quantity) {
+            throw new Error('Invalid quantity selected.');
+        }
+
+        // Send POST request to add to cart
+        const response = await fetch(`/user/addtoCart/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                variantIndex: currentVariantIndex,
+                size: size,
+                quantity: quantity,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Added to Cart',
+                text: result.message || 'Product added to cart successfully!',
+                confirmButtonColor: '#007D8B',
+            });
+        } else {
+            throw new Error(result.message || 'Failed to add product to cart.');
+        }
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Something went wrong. Please try again.',
+            confirmButtonColor: '#007D8B',
+        });
+    }
+}
+
+// Add to wishlist function
+async function addToWishlist(productId) {
+    try {
+        // Validate selected variant
+        if (!variants || !variants[currentVariantIndex]) {
+            throw new Error('Please select a valid size.');
+        }
+
+        const selectedVariant = variants[currentVariantIndex];
+        const size = selectedVariant.size;
+
+        // Send POST request to add to wishlist
+        const response = await fetch(`/user/addToWishlist/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                variantIndex: currentVariantIndex,
+                size: size,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Toggle heart icon to filled
+            const heartIcons = document.querySelectorAll('.fa-heart');
+            heartIcons.forEach(icon => {
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid', 'text-red-600');
+            });
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Added to Wishlist',
+                text: result.message || 'Product added to wishlist successfully!',
+                confirmButtonColor: '#007D8B',
+            });
+        } else {
+            throw new Error(result.message || 'Failed to add product to wishlist.');
+        }
+    } catch (error) {
+        console.error('Error adding to wishlist:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Something went wrong. Please try again.',
+            confirmButtonColor: '#007D8B',
+        });
+    }
+}
+
+// Check wishlist status on page load
+async function checkWishlistStatus(productId) {
+    try {
+        const response = await fetch(`/user/checkWishlist/${productId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        const result = await response.json();
+        if (result.isInWishlist) {
+            const heartIcons = document.querySelectorAll('.fa-heart');
+            heartIcons.forEach(icon => {
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid', 'text-red-600');
+            });
+        }
+    } catch (error) {
+        console.error('Error checking wishlist status:', error);
+    }
+}
+
+// Initialize everything when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+    console.log('Variants:', variants);
+
+    initializeImageZoom();
+    
+    // Initialize the first variant if available
+    if (variants && variants.length > 0) {
+        selectVariant(0); // Set initial price and variant
+    } else {
+        console.warn('No variants available');
+        const priceElement = document.getElementById('currentPrice');
+        if (priceElement) priceElement.textContent = 'Price unavailable';
+        document.getElementById('currentStock').textContent = 'N/A';
+        document.getElementById('currentStock-text').textContent = 'N/A';
+        document.getElementById('quantityInput').value = 0;
+        document.getElementById('quantityInput').disabled = true;
+    }
+
+    // Check wishlist status
+    checkWishlistStatus('<%= product._id %>');
+});
+    </script>
+</body>
+</html>

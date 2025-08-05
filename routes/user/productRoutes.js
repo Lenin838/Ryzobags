@@ -5,7 +5,7 @@ const { isAuthenticated } = require('../../middlewares/auth');
 const {paymentLimiter,couponLimiter,globalLimiter} = require('../../middlewares/rateLimiter');
 
 userProductRouter.get('/shop', isAuthenticated,globalLimiter, productController.loadShopPage);
-userProductRouter.get('/productView/:id', isAuthenticated, globalLimiter,productController.loadProductView);
+userProductRouter.get('/productView/:id',isAuthenticated, globalLimiter,productController.loadProductView);
 userProductRouter.post('/addtoCart/:id',isAuthenticated,globalLimiter, productController.addToCart);
 userProductRouter.post('/addtoWishlist/:id',isAuthenticated,globalLimiter, productController.addToWishlist);
 userProductRouter.get('/cart', isAuthenticated,globalLimiter, productController.loadCart);
