@@ -3,11 +3,21 @@ const Coupon = require("../../models/coupon");
 const couponController = {
     listCoupons: async (req,res) => {
         try{
-            const coupons = await Coupon.find().sort({createdAt:-1});
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 5;
+            const skip = (page - 1) * limit;
+
+            const coupons = await Coupon.find().sort({createdAt:-1}).skip(skip).limit(limit);
+            const totalCoupons = await Coupon.countDocuments();
             res.render('admin/layout',{
                 body: "listCoupon",
+                totalCoupons,
+                page,
+                limit,
+                totalPages: Math.ceil(totalCoupons / limit),
                 coupons,});
         }catch (err){
+            console.error("Error in listCoupons:",err);
             res.status(500).send("Failed to load coupons");
         }
     },

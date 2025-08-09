@@ -193,11 +193,9 @@ const orderController = {
                 const discountRatio = originalSubtotal > 0 ? (order.discount || 0) / originalSubtotal : 0;
                 const newDiscount = newSubtotal * discountRatio;
                 
-                // order.totalAmount = Math.max(0, newSubtotal - newDiscount);
-                // console.log("discountRatio",discountRatio)
-                // console.log(order.totalAmount)
-                // order.discount = newDiscount;
             }
+
+
 
             for (const item of order.items) {
                         if (item.productId && item.size) {
@@ -243,7 +241,6 @@ const orderController = {
                 orderId: order.orderId,
                 itemId: targetItem._id,
                 orderStatus: order.status,
-                // newTotal: order.totalAmount,
                 activeItemsCount: activeItems.length,
                 ...walletResponse
             });

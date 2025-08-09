@@ -25,7 +25,6 @@ userProfileRouter.put('/profile/address/edit/:id', isAuthenticated,globalLimiter
 userProfileRouter.post('/profile/address/delete/:id', isAuthenticated,globalLimiter, userProfileController.deleteAddress);
 userProfileRouter.put('/profile/address/set-default/:id', isAuthenticated,globalLimiter, userProfileController.setDefaultAddress);
 userProfileRouter.get('/wallet-status', isAuthenticated,globalLimiter, userProfileController.getWalletStatus);
-userProfileRouter.get('/wallet-history', isAuthenticated,globalLimiter, userProfileController.getWalletHistory);
 userProfileRouter.get('/referrals', isAuthenticated, globalLimiter,userProfileController.getReferrals);
 
 module.exports = userProfileRouter;

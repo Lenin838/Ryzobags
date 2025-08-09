@@ -11,6 +11,8 @@
   <!-- Cropper.js CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+  <!-- Razorpay CDN for payment retry -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     @media (max-width: 640px) {
       #cropperModal .max-w-lg {
@@ -187,25 +189,68 @@
                               }, 0).toFixed(2)
                             : '0.00'
                         %></td>                        
-                          <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
+                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
                           <span class="px-2 py-0.5 sm:py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
                             <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
                           </span>
                         </td>
                         <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
-                          <a href="/user/orderDetails/<%= order._id %>" class="text-indigo-600 hover:text-indigo-800">View</a>
+                          <a href="/user/orderDetails/<%= order._id %>" class="text-indigo-600 hover:text-indigo-800 mr-2">View</a>
+                          <% if (order.status === 'failed' && order.paymentMethod === 'razorpay') { %>
+                            <button onclick="retryPayment('<%= order._id %>')" class="text-blue-600 hover:text-blue-800">Retry Payment</button>
+                          <% } %>
                         </td>
                       </tr>
                     <% }) %>
                   </tbody>
                 </table>
               </div>
-              <!-- Pagination -->
-              <% if (totalPages > 1) { %>
-                <div class="mt-3 sm:mt-4 flex justify-center">
-                  <% for (let i = 1; i <= totalPages; i++) { %>
-                    <a href="/user/profile?tab=orders&page=<%= i %>&search=<%= searchQuery %>" class="<%- currentPage === i ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700' %> px-3 sm:px-4 py-1 sm:py-2 mx-0.5 sm:mx-1 rounded text-sm sm:text-base"><%= i %></a>
-                  <% } %>
+              <!-- Orders Pagination -->
+              <% if (activeTab === 'orders' && ordersTotalPages > 1) { %>
+                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+                  <p class="text-xs sm:text-sm text-gray-700 mb-2 sm:mb-0">
+                    Showing <span class="font-medium"><%= ((currentPage - 1) * ordersLimit) + 1 %></span> 
+                    to <span class="font-medium"><%= Math.min(currentPage * ordersLimit, ordersTotal) %></span> 
+                    of <span class="font-medium"><%= ordersTotal %></span> results
+                  </p>
+                  <div class="flex flex-wrap gap-1 justify-center">
+                    <% if (currentPage > 1) { %>
+                      <a href="/user/profile?tab=orders&page=1<%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        First
+                      </a>
+                      <a href="/user/profile?tab=orders&page=<%= currentPage - 1 %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        Prev
+                      </a>
+                    <% } %>
+
+                    <% const maxVisiblePages = 5;
+                      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                      let endPage = Math.min(ordersTotalPages, startPage + maxVisiblePages - 1);
+                      
+                      if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                      }
+                      
+                      for (let i = startPage; i <= endPage; i++) { %>
+                      <a href="/user/profile?tab=orders&page=<%= i %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                        class="px-2 sm:px-3 py-1 border rounded <%= i === currentPage ? 'bg-blue-600 text-white' : 'hover:bg-gray-100' %> text-xs sm:text-sm">
+                        <%= i %>
+                      </a>
+                    <% } %>
+
+                    <% if (currentPage < ordersTotalPages) { %>
+                      <a href="/user/profile?tab=orders&page=<%= currentPage + 1 %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        Next
+                      </a>
+                      <a href="/user/profile?tab=orders&page=<%= ordersTotalPages %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        Last
+                      </a>
+                    <% } %>
+                  </div>
                 </div>
               <% } %>
             <% } else { %>
@@ -247,8 +292,56 @@
                   </tbody>
                 </table>
               </div>
+              <!-- Wallet History Pagination -->
+              <% if (activeTab === 'wallet-history' && walletTotalPages > 1) { %>
+                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+                  <p class="text-xs sm:text-sm text-gray-700 mb-2 sm:mb-0">
+                    Showing <span class="font-medium"><%= ((walletCurrentPage - 1) * walletLimit) + 1 %></span> 
+                    to <span class="font-medium"><%= Math.min(walletCurrentPage * walletLimit, walletTotal) %></span> 
+                    of <span class="font-medium"><%= walletTotal %></span> transactions
+                  </p>
+                  <div class="flex flex-wrap gap-1 justify-center">
+                    <% if (walletCurrentPage > 1) { %>
+                      <a href="/user/profile?tab=wallet-history&walletPage=1"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        First
+                      </a>
+                      <a href="/user/profile?tab=wallet-history&walletPage=<%= walletCurrentPage - 1 %>"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        Prev
+                      </a>
+                    <% } %>
+
+                    <% const maxVisiblePages = 5;
+                      let startPage = Math.max(1, walletCurrentPage - Math.floor(maxVisiblePages / 2));
+                      let endPage = Math.min(walletTotalPages, startPage + maxVisiblePages - 1);
+                      
+                      if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                      }
+                      
+                      for (let i = startPage; i <= endPage; i++) { %>
+                      <a href="/user/profile?tab=wallet-history&walletPage=<%= i %>"
+                        class="px-2 sm:px-3 py-1 border rounded <%= i === walletCurrentPage ? 'bg-blue-600 text-white' : 'hover:bg-gray-100' %> text-xs sm:text-sm">
+                        <%= i %>
+                      </a>
+                    <% } %>
+
+                    <% if (walletCurrentPage < walletTotalPages) { %>
+                      <a href="/user/profile?tab=wallet-history&walletPage=<%= walletCurrentPage + 1 %>"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        Next
+                      </a>
+                      <a href="/user/profile?tab=wallet-history&walletPage=<%= walletTotalPages %>"
+                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
+                        Last
+                      </a>
+                    <% } %>
+                  </div>
+                </div>
+              <% } %>
             <% } else { %>
-              <p class="text-gray-500 text-sm sm:text-base">No wallet transactions found.</p>
+              <p class="text-gray-500 text-sm sm:text-base">No wallet history available.</p>
             <% } %>
           </div>
         <% } %>
@@ -460,6 +553,130 @@
         }
       }
       return false;
+    }
+
+    async function retryPayment(orderId) {
+      const result = await Swal.fire({
+        title: 'Retry Payment?',
+        text: 'Do you want to retry the payment for this order?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#059669',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, retry payment',
+        cancelButtonText: 'Cancel'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(`/user/retry-payment/${orderId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Initialize Razorpay checkout
+            const options = {
+              key: data.key_id,
+              amount: data.amount * 100, // Convert to paise
+              currency: 'INR',
+              order_id: data.order_id,
+              name: 'Your Store Name',
+              description: `Retry Payment for Order ${data.order._id}`,
+              handler: async function (response) {
+                // Verify payment after successful Razorpay checkout
+                const verifyResponse = await fetch('/user/verify-payment', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature
+                  })
+                });
+
+                const verifyData = await verifyResponse.json();
+
+                if (verifyData.success) {
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Payment verified successfully!',
+                    confirmButtonColor: '#059669'
+                  }).then(() => {
+                    window.location.reload();
+                  });
+                } else {
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: verifyData.message || 'Payment verification failed',
+                    confirmButtonColor: '#dc2626'
+                  });
+                }
+              },
+              modal: {
+                ondismiss: async function () {
+                  // Handle payment cancellation
+                  await fetch('/user/payment-failure', {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      orderId: data.mongoOrderId,
+                      razorpay_order_id: data.order_id,
+                      error_code: 'USER_CANCELLED',
+                      error_description: 'Payment cancelled by user'
+                    })
+                  });
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'Payment Cancelled',
+                    text: 'You cancelled the payment. Please try again.',
+                    confirmButtonColor: '#dc2626'
+                  });
+                }
+              },
+              prefill: {
+                name: '<%= user.fullname %>',
+                email: '<%= user.email %>',
+                contact: '<%= user.phoneNumber || "" %>'
+              },
+              theme: {
+                color: '#059669'
+              }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: data.message || 'Failed to initiate payment retry',
+              confirmButtonColor: '#dc2626'
+            });
+          }
+        } catch (err) {
+          console.error('Error retrying payment:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to retry payment. Please try again.',
+            confirmButtonColor: '#dc2626'
+          });
+        }
+      }
     }
 
     // Mobile menu functionality

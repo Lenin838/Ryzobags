@@ -135,7 +135,7 @@
               </button>
             <% } %>
             
-            <% if (order.status.toLowerCase() === 'delivered','partially returned') { %>
+            <% if (order.paymentStatus.toLowerCase() === 'completed' && order.items.some(item=>item.status.toLowerCase()==='delivered')) { %>
               <a href="/user/ordersDetails/<%= order._id %>/invoice" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm">
                 Download Invoice
               </a>

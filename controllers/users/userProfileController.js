@@ -92,10 +92,12 @@ const cleanExpiredOtps = async (req, res, next) => {
 const userProfileController = {
   getProfile: async (req, res) => {
     try {
-      const { tab = "profile", search, page = 1 } = req.query;
+      const { tab = "profile", search, page = 1,walletPage = 1 } = req.query;
       const user = await User.findById(req.user._id).select("-password").lean();
-      const limit = 10;
-      const skip = (page - 1) * limit;
+      const ordersLimit = 5;
+      const ordersSkip = (page - 1) * ordersLimit;
+      const walletLimit = 5;
+      const walletSkip = (walletPage - 1) * walletLimit;
 
       let ordersQuery = { userId: req.user._id };
       if (search) {
@@ -105,12 +107,12 @@ const userProfileController = {
       const orders = await Order.find(ordersQuery)
         .populate("items.productId")
         .sort({ orderDate: -1 })
-        .skip(skip)
-        .limit(limit)
+        .skip(ordersSkip)
+        .limit(ordersLimit)
         .lean();
 
-      const totalOrders = await Order.countDocuments(ordersQuery);
-      const totalPages = Math.ceil(totalOrders / limit);
+      const ordersTotal = await Order.countDocuments(ordersQuery);
+      const ordersTotalPages = Math.ceil(ordersTotal / ordersLimit);
 
       const addressDoc = await Address.findOne({ userId: req.user._id}).lean();
       // const addresses = addressDoc ? addressDoc.address : [];
@@ -126,9 +128,15 @@ const userProfileController = {
 
       const history = await WalletTransaction.find({ userId: req.user._id })
         .sort({ createdAt: -1 })
+        .skip(walletSkip)
+        .limit(walletLimit)
         .lean();
 
+      const walletTotal = await WalletTransaction.countDocuments({userId: req.user._id});
+      const walletTotalPages = Math.ceil(walletTotal / walletLimit);
+
       const referrals = [];
+
 
       res.render("user/profile", {
         user,
@@ -140,7 +148,13 @@ const userProfileController = {
         activeTab: tab,
         searchQuery: search || "",
         currentPage: parseInt(page),
-        totalPages,
+        ordersTotal,
+        ordersTotalPages,
+        ordersLimit,
+        walletCurrentPage: parseInt(walletPage),
+        walletTotal,
+        walletTotalPages,
+        walletLimit,
         success: req.flash("success"),
         error: req.flash("error"),
       });
@@ -1119,31 +1133,6 @@ const userProfileController = {
     }
   },
 
-  getWalletHistory: async (req, res) => {
-    try {
-      const history = await WalletTransaction.find({ userId: req.user._id })
-        .sort({ createdAt: -1 })
-        .lean();
-
-      const user = await User.findById(req.user._id).select("-password").lean();
-      res.render("user/profile", {
-        user,
-        history,
-        activeTab: "wallet-history",
-        addresses: [],
-        orders: [],
-        walletBalance: 0,
-        referrals: [],
-        success: req.flash("success"),
-        error: req.flash("error"),
-      });
-    } catch (err) {
-      console.error(err);
-      req.flash("error", "Unable to load wallet history");
-      res.redirect("/user/profile");
-    }
-  },
-
   getReferrals: async (req, res) => {
     try {
       const referrals = [];
@@ -1168,3 +1157,4 @@ const userProfileController = {
 };
 
 module.exports = userProfileController;
+
