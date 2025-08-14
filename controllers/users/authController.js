@@ -2,7 +2,7 @@ const User = require('../../models/User');
 const Product=require("../../models/product")
 const Brand=require("../../models/brand")
 const Category=require("../../models/category")
-const sendOtpEmail = require('./otpService');
+const sendOtpEmail = require('../../controllers/users/otpService');
 const otpGenerator = require('otp-generator');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
@@ -10,6 +10,7 @@ const nodemailer = require('nodemailer');
 const Order = require('../../models/order');
 const {upload, saveUserImage} = require('../../middlewares/uploads');
 const Coupon = require('../../models/coupon');
+const template = require('../../controllers/users/emailTemplates');
 
 
 const generateReferralCode = async () => {
@@ -158,19 +159,9 @@ const userController = {
             req.session.otpExpire = Date.now() + 1 * 60 * 1000;
 
             console.log("Generated OTP:", otpCode);
-            // console.log("Session Data:", {
-            //     fullname: req.session.fullname,
-            //     email: req.session.email,
-            //     phone: req.session.phone,
-            //     otpExpire: new Date(req.session.otpExpire),
-            //     referralCode : req.session.referralCode,
-            //     newReferralCode: req.session.newReferralCode,
-                
-            // });
 
             try {
-                await sendOtpEmail(email, otpCode);
-                // console.log("OTP email sent successfully");
+                await sendOtpEmail(email,"otp for signup for Ryzobags",template.signupOtpTemplate(otpCode,5));
             } catch (emailError) {
                 console.error('Email sending error:', emailError);
                 return res.status(500).json({ 
@@ -203,14 +194,6 @@ const userController = {
 
     verifyOtp: async (req, res) => {
         try {
-            // console.log("=== OTP VERIFICATION DEBUG ===");
-            // console.log("Stored OTP:", req.session.otp);
-            // console.log("Stored Email:", req.session.email);
-            // console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
-            // console.log("Session fullname:", req.session.fullname);
-            // console.log("Session phone:", req.session.phone);
-            // console.log("Session referralCode:", req.session.referralCode);
-            // console.log("Session newReferralCode:", req.session.newReferralCode);
 
             const { otp } = req.body;
 
@@ -250,31 +233,23 @@ const userController = {
             isVerified: true,
             };
 
-            // console.log("Creating user with data:", userData);
-
             try {
             const user = new User(userData);
             const savedUser = await user.save();
-            // console.log("User saved successfully:", savedUser._id);
 
             if (req.session.referralCode) {
                 const referrer = await User.findOne({ referralCode: req.session.referralCode });
-                // console.log("Referrer found:", referrer ? referrer._id : "No referrer found");
 
                 if (referrer && referrer.canGiveReferralRewards) {
                 try {
                     const refereeCoupon = await createReferralCoupon(savedUser._id);
-                    // console.log(`Coupon generated for referee: ${savedUser._id}, Coupon code: ${refereeCoupon.code}`);
 
                     const referrerCoupon = await createReferralCoupon(referrer._id);
-                    // console.log(`Coupon generated for referrer: ${referrer._id}, Coupon code: ${referrerCoupon.code}`);
                 } catch (couponError) {
                     console.error("Coupon creation failed:", couponError);
                 }
                 } else if (referrer) {
-                // console.log(`Referrer ${referrer._id} is not eligible to give referral rewards`);
                 } else {
-                // console.log(`No referrer found for referralCode: ${req.session.referralCode}`);
                 }
             }
 
@@ -323,8 +298,6 @@ const userController = {
 
     resendOtp: async (req, res) => {
             try {
-                // console.log("Resend OTP requested. Session email:", req.session.email);
-
                 if (!req.session.email) {
                     return res.status(400).json({ 
                         message: "Session expired. Please restart the signup process.",
@@ -339,9 +312,7 @@ const userController = {
                 console.log("New OTP generated:", newOtp);
 
                 try {
-                    await sendOtpEmail(req.session.email, newOtp);
-                    // console.log("New OTP sent to:", req.session.email);
-
+                    await sendOtpEmail(req.session.email,"Resend otp for RyzoBags",template.signupOtpTemplate(newOtp,5));
                     return res.status(200).json({ 
                         message: "A new OTP has been sent to your email.",
                         success: true 

@@ -9,6 +9,8 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const util = require("util");
+const sendOtpEmail = require("../../controllers/users/otpService");
+const template = require('../../controllers/users/emailTemplates');
 const sharp = require("sharp");
 
 const mkdir = util.promisify(fs.mkdir);
@@ -572,66 +574,9 @@ const userProfileController = {
       req.session.pendingOtp = otp;
       req.session.otpExpiresAt = otpExpiresAt.getTime();
 
-      const mailOptions = {
-        from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
-        to: newEmail.trim(),
-        subject: "Email Change Verification - RyzoBags",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #4f46e5; margin: 0;">RyzoBags</h1>
-                <p style="color: #6b7280; margin: 5px 0 0 0;">Email Verification</p>
-              </div>
-              
-              <h2 style="color: #111827; margin-bottom: 20px;">Verify Your New Email Address</h2>
-              
-              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-                You have requested to change your email address. To complete this process, please use the verification code below:
-              </p>
-              
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0;">
-                <p style="color: white; margin: 0 0 10px 0; font-size: 14px; font-weight: 500;">Your Verification Code</p>
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; display: inline-block;">
-                  <span style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                    ${otp}
-                  </span>
-                </div>
-              </div>
-              
-              <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0;">
-                <p style="color: #92400e; margin: 0; font-size: 14px;">
-                  <strong>⏰ Important:</strong> This verification code will expire in 10 minutes for security reasons.
-                </p>
-              </div>
-              
-              <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin-top: 30px;">
-                If you did not request this email change, please ignore this message and your account will remain secure.
-              </p>
-              
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-              
-              <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-                This is an automated message from RyzoBags. Please do not reply to this email.
-              </p>
-            </div>
-          </div>
-        `,
-        text: `
-          RyzoBags - Email Verification
-          
-          You have requested to change your email address.
-          
-          Verification Code: ${otp}
-          
-          This code is valid for 10 minutes.
-          
-          If you did not request this change, please ignore this email.
-        `,
-      };
 
       try {
-        const info = await transporter.sendMail(mailOptions);
+        await sendOtpEmail(newEmail,"Email Change Otp",template.emailChangingOtpTemplate(otp))
         
         return res.json({ success: true, message: `Verification email sent to ${newEmail.trim()}. Please check your inbox.` });
       } catch (emailError) {
@@ -874,71 +819,9 @@ const userProfileController = {
       req.session.passwordChangeOtp = otp;
       req.session.passwordChangeOtpExpiresAt = otpExpiresAt.getTime();
 
-      const mailOptions = {
-        from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
-        to: user.email,
-        subject: "Password Change Verification - RyzoBags",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #4f46e5; margin: 0;">RyzoBags</h1>
-                <p style="color: #6b7280; margin: 5px 0 0 0;">Password Change Verification</p>
-              </div>
-              
-              <h2 style="color: #111827; margin-bottom: 20px;">Verify Password Change Request</h2>
-              
-              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-                You have requested to change your account password. To complete this process, please use the verification code below:
-              </p>
-              
-              <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0;">
-                <p style="color: white; margin: 0 0 10px 0; font-size: 14px; font-weight: 500;">Your Verification Code</p>
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; display: inline-block;">
-                  <span style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                    ${otp}
-                  </span>
-                </div>
-              </div>
-              
-              <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0;">
-                <p style="color: #92400e; margin: 0; font-size: 14px;">
-                  <strong>⏰ Important:</strong> This verification code will expire in 10 minutes for security reasons.
-                </p>
-              </div>
-              
-              <div style="background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 15px; margin: 20px 0;">
-                <p style="color: #dc2626; margin: 0; font-size: 14px;">
-                  <strong>🔒 Security Alert:</strong> If you did not request this password change, please contact our support team immediately and change your password.
-                </p>
-              </div>
-              
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-              
-              <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-                This is an automated message from RyzoBags. Please do not reply to this email.
-              </p>
-            </div>
-          </div>
-        `,
-        text: `
-          RyzoBags - Password Change Verification
-          
-          You have requested to change your account password.
-          
-          Verification Code: ${otp}
-          
-          This code is valid for 10 minutes.
-          
-          If you did not request this change, please contact support immediately.
-        `,
-      };
-
-      console.log(`📧 Sending password change OTP to: ${user.email}`);
-
+      
       try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Password change OTP email sent successfully:', info.messageId);
+        await sendOtpEmail(user.email,"Password Change otp",template.passwordChangeOtpTemplate(otp));
         
         return res.json({ 
           success: true, 

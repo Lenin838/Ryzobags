@@ -5,6 +5,9 @@ const User = require('../../models/User');
 const WalletTransaction = require('../../models/wallet');
 const PDFDocument = require('pdfkit');
 const address = require('../../models/address');
+const nodemailer = require('nodemailer');
+const sendOtpEmail = require('../../controllers/users/otpService');
+const template = require('../../controllers/users/emailTemplates');
 
 const orderController = {
     generateTransactionId: () => {
@@ -97,7 +100,14 @@ const orderController = {
 
 
             await order.save();
-
+            try{
+             const user = await User.findById(req.user._id).select('email');
+                if(user?.email){
+                    await sendOtpEmail(user.email,"Order Cancelled ",template.cancelOrderTemplate(orderId));
+                }
+            }catch(err){
+                console.error("Error sending cancellation email:",err);
+            }
             if (refundAmount > 0 && order.paymentMethod==="razorpay") {
                 try {
                     const newBalance = await orderController.creditWallet(
@@ -107,7 +117,6 @@ const orderController = {
                         order._id.toString(),
                         productIds.join(',')
                     );
-                    
                     res.json({ 
                         success: "Order cancelled successfully and refund credited to wallet",
                         orderId: order.orderId,
@@ -164,7 +173,7 @@ const orderController = {
                 return res.status(400).json({ error: "Item cannot be cancelled" });
             }
 
-            const itemRefundAmount = (targetItem.itemSalePrice || 0) * (targetItem.quantity || 0);
+            let itemRefundAmount = (targetItem.itemSalePrice || 0) * (targetItem.quantity || 0);
             const productId = targetItem.productId.toString();
 
             targetItem.status = "cancelled";
@@ -212,10 +221,29 @@ const orderController = {
                       }
 
             await order.save();
+            try{
+                const user = await User.findById(req.user._id).select("email");
+                if(user?.email){
+                    await sendOtpEmail(user.email,"Cancel order Item",template.cancelOrderTemplate(orderId));
+                }
+            }catch(err){
+                console.error("error in sending cancel email:",err);
+            }
 
             let walletResponse = {};
             if (itemRefundAmount > 0 && order.paymentMethod==="razorpay") {
                 try {
+                    const product = await Product.findById(productId);
+                    let variant;
+                    if(product){
+                        variant = product.variants.find((v)=>v.size?.toLowerCase() === targetItem.size?.toLowerCase());
+                    }
+
+                    if(variant){
+                        if(variant && variant.quantity < 5 && product.offer.discountPercentage === 20){
+                            itemRefundAmount = (targetItem.itemSalePrice || 0)* (targetItem.quantity || 0) * 0.4; 
+                        }
+                    }
                     const newBalance = await orderController.creditWallet(
                         req.user._id,
                         itemRefundAmount,

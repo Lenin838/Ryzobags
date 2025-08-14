@@ -5,11 +5,14 @@ const mongoose = require('mongoose');
 const Cart = require('../../models/cart');
 const Wishlist = require('../../models/wishList'); 
 const Address = require('../../models/address');
+const nodemailer = require("nodemailer");
+const sendOtpEmail = require('../../controllers/users/otpService');
 const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const Coupon = require('../../models/coupon');
 const Order = require('../../models/order');
 const User = require("../../models/User");
+const template = require('../../controllers/users/emailTemplates');
 
 
 const razorpay = new Razorpay({
@@ -1053,7 +1056,7 @@ const productController = {
 
       try {
         const userId = req.session.user?._id;
-        const { addressId, payment, totalPrice, discount, coupon } = req.body;
+        const { addressId, payment, totalPrice,discount, coupon } = req.body;
 
         const validationErrors = [];
 
@@ -1354,6 +1357,10 @@ const productController = {
           order.paymentStatus = "pending";
           order.status = "processing";
           await order.save();
+          const user = await User.findById(userId).select('email');
+          if(user?.email){
+            await sendOtpEmail(user.email,"Your order is placed successfully",template.placeOrderTemplate());
+          }
           return res.status(200).json({
             success: true,
             order: { _id: order._id },
@@ -1367,6 +1374,7 @@ const productController = {
           });
           order.transactionId = razorpayOrder.id;
           await order.save();
+          await successMessage(req.session.email);
           return res.status(200).json({
             success: true,
             order: { _id: order._id },

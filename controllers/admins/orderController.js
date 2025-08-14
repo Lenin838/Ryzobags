@@ -387,7 +387,7 @@ const adminOrderController = {
         if (!order.returnRequest) {
           order.returnRequest = {
             isRequested: false,
-            reason: '',
+             reason: '',
             requestedAt: null,
             processedAt: null
           };

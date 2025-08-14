@@ -15,7 +15,6 @@ const productController = {
       if (search) {
         query.name = { $regex: new RegExp(search, 'i') };
       }
-    
       const total = await Product.countDocuments(query);
       let products = await Product.find(query)
         .sort({ createdAt: -1 })
