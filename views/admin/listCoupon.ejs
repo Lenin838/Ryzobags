@@ -112,7 +112,7 @@
                 <button onclick="openEditModal({
                   _id: '<%= coupon._id %>',
                   code: '<%= coupon.code %>',
-                  discountAmount: <%= coupon.discountAmount %>,
+                  discountAmount: '<%= coupon.discountAmount %>',
                   minCartAmount: <%= coupon.minCartAmount || 'null' %>,
                   maxDiscount: <%= coupon.maxDiscount || 'null' %>,
                   usageLimit: <%= coupon.usageLimit || 'null' %>,
@@ -131,6 +131,65 @@
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <p class="text-xs sm:text-sm text-gray-700 mb-2 sm:mb-0">
+          Showing <span class="font-medium"><%= ((page - 1) * limit) + 1 %></span> to <span class="font-medium"><%= Math.min(page * limit, totalCoupons) %></span> of <span class="font-medium"><%= totalCoupons %></span> results
+        </p>
+        <div class="flex flex-wrap gap-1 justify-center">
+          <% if (page > 1) { %>
+            <a
+              href="/admin/coupons/list?page=1"
+              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
+            >
+              First
+            </a>
+            <a
+              href="/admin/coupons/list?page=<%= page - 1 %>"
+              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
+            >
+              Prev
+            </a>
+          <% } %>
+
+          <% const maxVisiblePages = 5;
+             let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+             let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+             
+             if (endPage - startPage + 1 < maxVisiblePages) {
+               startPage = Math.max(1, endPage - maxVisiblePages + 1);
+             }
+             
+             for (let i = startPage; i <= endPage; i++) { %>
+            <a
+              href="/admin/coupons/list?page=<%= i %>"
+              class="px-2 sm:px-3 py-1 border rounded <%= i === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-100' %> text-xs sm:text-sm"
+            >
+              <%= i %>
+            </a>
+          <% } %>
+
+          <% if (page < totalPages) { %>
+            <a
+              href="/admin/coupons/list?page=<%= page + 1 %>"
+              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
+            >
+              Next
+            </a>
+            <a
+              href="/admin/coupons/list?page=<%= totalPages %>"
+              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
+            >
+              Last
+            </a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
   </div>
 </div>
 
