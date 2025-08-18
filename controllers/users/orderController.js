@@ -8,6 +8,8 @@ const address = require('../../models/address');
 const nodemailer = require('nodemailer');
 const sendOtpEmail = require('../../controllers/users/otpService');
 const template = require('../../controllers/users/emailTemplates');
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const orderController = {
     generateTransactionId: () => {
@@ -62,11 +64,11 @@ const orderController = {
             const order = await Order.findOne({ orderId, userId: req.user._id });
 
             if (!order) {
-                return res.status(404).json({ error: "Order not found" });
+                return res.status(statusCode.NOT_FOUND).json({ error: message.ORDER_NOT_FOUND });
             }
 
             if (!["pending", "processing"].includes(order.status)) {
-                return res.status(400).json({ error: "Order cannot be cancelled" });
+                return res.status(statusCode.BAD_REQUEST).json({ error: message.CANNOT_CANCEL });
             }
 
             const refundAmount = order.totalAmount || 0;
@@ -118,7 +120,7 @@ const orderController = {
                         productIds.join(',')
                     );
                     res.json({ 
-                        success: "Order cancelled successfully and refund credited to wallet",
+                        success: message.CANCEL_SUCCESS_REFUND,
                         orderId: order.orderId,
                         status: order.status,
                         refundAmount: refundAmount,
@@ -127,7 +129,7 @@ const orderController = {
                 } catch (walletError) {
                     console.error('Wallet credit failed:', walletError);
                     res.json({ 
-                        success: "Order cancelled successfully but refund failed. Please contact support.",
+                        success: message.CANCEL_REFUND_FAILED,
                         orderId: order.orderId,
                         status: order.status,
                         refundAmount: refundAmount,
@@ -136,14 +138,14 @@ const orderController = {
                 }
             } else {
                 res.json({ 
-                    success: "Order cancelled successfully",
+                    success: message.CANCEL_SUCCESS,
                     orderId: order.orderId,
                     status: order.status
                 });
             }
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Failed to cancel order" });
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({ error: message.SERVER_ERROR });
         }
     },
 
@@ -154,23 +156,23 @@ const orderController = {
             const order = await Order.findOne({ orderId, userId: req.user._id });
 
             if (!order) {
-                return res.status(404).json({ error: "Order not found" });
+                return res.status(statusCode.NOT_FOUND).json({ error: message.ORDER_NOT_FOUND });
             }
 
             if (!["pending", "processing"].includes(order.status)) {
-                return res.status(400).json({ error: "Order items cannot be cancelled" });
+                return res.status(statusCode.BAD_REQUEST).json({ error: message.CANNOT_CANCEL });
             }
 
             const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
             
             if (itemIndex === -1) {
-                return res.status(404).json({ error: "Item not found in order" });
+                return res.status(statusCode.NOT_FOUND).json({ error: message.ITEM_NOT_FOUND });
             }
 
             const targetItem = order.items[itemIndex];
 
             if (!["pending", "processing"].includes(targetItem.status)) {
-                return res.status(400).json({ error: "Item cannot be cancelled" });
+                return res.status(statusCode.BAD_REQUEST).json({ error: message.CANNOT_CANCEL });
             }
 
             let itemRefundAmount = (targetItem.itemSalePrice || 0) * (targetItem.quantity || 0);
@@ -265,7 +267,7 @@ const orderController = {
             }
 
             res.json({ 
-                success: "Item cancelled successfully" + (itemRefundAmount > 0 ? " and refund credited to wallet" : ""), 
+                success: message.ITEM_CANCEL_SUCCESS_REFUND,
                 orderId: order.orderId,
                 itemId: targetItem._id,
                 orderStatus: order.status,
@@ -274,7 +276,7 @@ const orderController = {
             });
         } catch (err) {
             console.error(err);
-            res.status(500).json({ error: "Failed to cancel item" });
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({ error:message.SERVER_ERROR});
         }
     },
 
@@ -286,48 +288,41 @@ const orderController = {
             .lean();
 
         if (!order || order.userId.toString() !== req.user._id.toString()) {
-            req.flash("error", "Order not found");
+            req.flash("error", message.ORDER_NOT_FOUND);
             return res.redirect("/user/profile?tab=orders");
         }
 
         if (!order.items || !Array.isArray(order.items)) {
             console.error(`Order ${order.orderId} has invalid items array:`, order.items);
-            req.flash("error", "Invalid order data");
+            req.flash("error", message.INVALID_ORDER);
             return res.redirect("/user/profile?tab=orders");
         }
 
-        // console.log("Order details:", order.address.toString());
 
         let selectedAddress = null;
         
         try {
             const userAddressDoc = await Address.findOne({ userId: order.userId }).lean();
-            // console.log('User address document found:', userAddressDoc);
             
             if (userAddressDoc && userAddressDoc.address && Array.isArray(userAddressDoc.address)) {
-                // console.log('Address array length:', userAddressDoc.address.length);
                 if (order.address) {
                     selectedAddress = userAddressDoc.address.find(addr => 
                         addr._id.toString() === order.address.toString()
                     );
-                    // console.log('Order-specific address found:', selectedAddress);
                 }
                 
                 if (!selectedAddress) {
                     selectedAddress = userAddressDoc.address.find(addr => 
                         addr.isDefault === true && addr.status === 'active'
                     );
-                    // console.log('Default address found:', selectedAddress);
                 }
                 
                 if (!selectedAddress) {
                     selectedAddress = userAddressDoc.address.find(addr => addr.status === 'active');
-                    // console.log('First active address found:', selectedAddress);
                 }
                 
                 if (!selectedAddress && userAddressDoc.address.length > 0) {
                     selectedAddress = userAddressDoc.address[0];
-                    // console.log('First available address used:',selectedAddress);
                 }
             }
         } catch (addressError) {
@@ -339,23 +334,15 @@ const orderController = {
                 item.status = order.status === "cancelled" ? "cancelled" : "active";
             }
             if (typeof item.itemSalePrice !== "number") {
-                // console.error(`Invalid price for item ${index} in order ${order.orderId}:`, item);
                 item.itemSalePrice = 0;
             }
             if (typeof item.quantity !== "number") {
-                // console.error(`Invalid quantity for item ${index} in order ${order.orderId}:`, item);
                 item.quantity = 0;
             }
         });
 
         const activeItemsTotal = order.amountPaid
-            // .reduce((sum, item) => {
-            //     const price = typeof item.itemSalePrice === 'number' ? item.itemSalePrice : 0;
-            //     const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-            //     return sum + (price * quantity);
-            // }, 0);
-
-        // console.log('Selected address for rendering:', selectedAddress);
+           
 
         res.render("user/orderDetails", {
             order,
@@ -379,13 +366,13 @@ const orderController = {
             const userId = req.user?._id;
             
             if (!userId) {
-                return res.status(401).json({ success: false, message: 'User not authenticated' });
+                return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: message.USER_NOT_AUTHENTICATED});
             }
             
             const order = await Order.findOne({ _id: orderId, userId: userId });
             
             if (!order) {
-                return res.status(404).json({ success: false, message: 'Order not found' });
+                return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.ORDER_NOT_FOUND });
             }
             
             const returnableItems = order.items.filter(item => 
@@ -396,9 +383,9 @@ const orderController = {
             );
             
             if (returnableItems.length === 0) {
-                return res.status(400).json({ 
+                return res.status(statusCode.BAD_REQUEST).json({ 
                     success: false, 
-                    message: 'No items available for return in this order. Items must be delivered, shipped, or processing to be returned.' 
+                    message: message.NO_RETURN_ITEMS 
                 });
             }
             
@@ -426,15 +413,15 @@ const orderController = {
             
             res.json({ 
                 success: true, 
-                message: 'Return request for available items submitted successfully',
+                message: message.RETURN_REQUEST_SUBMITTED,
                 returnedItemsCount: returnableItems.length
             });
             
         } catch (error) {
             console.error('Error processing entire order return request:', error);
-            res.status(500).json({ 
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
                 success: false, 
-                message: 'Failed to process return request: ' + error.message 
+                message: message.SERVER_ERROR + error.message 
             });
         }
     },
@@ -445,13 +432,13 @@ const orderController = {
             const userId = req.user?._id;
             
             if (!userId) {
-                return res.status(401).json({ success: false, message: 'User not authenticated' });
+                return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: message.USER_NOT_AUTHENTICATED });
             }
             
             const order = await Order.findOne({ _id: orderId, userId: userId }).populate('items.productId');
             
             if (!order) {
-                return res.status(404).json({ success: false, message: 'Order not found' });
+                return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.ORDER_NOT_FOUND });
             }
             
             const itemIndex = order.items.findIndex(item => {
@@ -464,9 +451,9 @@ const orderController = {
             });
             
             if (itemIndex === -1) {
-                return res.status(404).json({ 
+                return res.status(statusCode.BAD_REQUEST).json({ 
                     success: false, 
-                    message: 'Item not found or not eligible for return. Items must be delivered, shipped, or processing to be returned.' 
+                    message: message.NO_RETURN_ITEMS 
                 });
             }
             
@@ -488,13 +475,13 @@ const orderController = {
             
             res.json({ 
                 success: true, 
-                message: 'Return request submitted successfully',
+                message: message.RETURN_REQUEST_SUBMITTED,
                 itemIndex: itemIndex
             });
             
         } catch (error) {
             console.error('Error processing return request:', error);
-            res.status(500).json({ 
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
                 success: false, 
                 message: 'Failed to process return request: ' + error.message 
             });
@@ -507,20 +494,20 @@ const orderController = {
         const userId = req.user?._id;
 
         if (!userId) {
-            return res.status(401).send('User not authenticated');
+            return res.status(statusCode.UNAUTHORIZED).send({message: message.USER_NOT_AUTHENTICATED});
         }
 
         const order = await Order.findOne({ _id: orderId, userId: userId })
             .populate('items.productId');
 
         if (!order) {
-            return res.status(404).send('Order not found');
+            return res.status(statusCode.NOT_FOUND).send({message: message.ORDER_NOT_FOUND});
         }
 
         const deliveredItems = order.items.filter(item => item.status === 'delivered');
         
         if (deliveredItems.length === 0) {
-            return res.status(400).send('Invoice can only be downloaded for orders with delivered items');
+            return res.status(statusCode.BAD_REQUEST).send({message: message.INVOICE_NOT_AVAILABLE});
         }
 
         const doc = new PDFDocument({ 
@@ -579,17 +566,13 @@ const orderController = {
             .text('Payment Method:', col1, 225)
             .text(order.paymentMethod || 'N/A', col1 + 80, 225);
 
-        // console.log('Order address field:', order.address);
-        // console.log('Order userId:', order.userId);
         
         let selectedAddress = null;
         
         try {
             const userAddressDoc = await Address.findOne({ userId: order.userId });
-            // console.log('User address document found:', !!userAddressDoc);
             
             if (userAddressDoc && userAddressDoc.address && Array.isArray(userAddressDoc.address)) {
-                // console.log('Address array length:', userAddressDoc.address.length);
                 
                 selectedAddress = userAddressDoc.address.find(addr => 
                     addr._id.toString() === order.address.toString()
@@ -603,7 +586,6 @@ const orderController = {
                     selectedAddress = userAddressDoc.address[0];
                 }
                 
-                // console.log('Selected address found:', selectedAddress);
             }
         } catch (addressError) {
             console.error('Error fetching user address:', addressError);
@@ -725,7 +707,7 @@ const orderController = {
         doc.end();
         } catch (error) {
             console.error('Error generating invoice:', error);
-            res.status(500).send('Failed to generate invoice');
+            res.status(statusCode.INTERNAL_SERVER_ERROR).send('Failed to generate invoice');
         }
     },
 
@@ -758,7 +740,7 @@ const orderController = {
             });
         } catch (error) {
             console.error('Error getting wallet transactions:', error);
-            res.status(500).json({ success: false, error: 'Failed to get wallet transactions' });
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, error: 'Failed to get wallet transactions' });
         }
     }
 };

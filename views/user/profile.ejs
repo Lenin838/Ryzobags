@@ -273,20 +273,24 @@
             <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Wallet History</h5>
             <% if (history.length > 0) { %>
               <div class="overflow-x-auto">
-                <table class="w-full">
+                <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-100">
                     <tr>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Transaction ID</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ordered ProductId</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Type</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Amount</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-200">
+                  <tbody class="bg-white divide-y divide-gray-200">
                     <% history.forEach(tx => { %>
                       <tr>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500"><%= new Date(tx.createdAt).toLocaleDateString() %></td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500"><%= tx.type %></td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">₹<%= tx.amount.toFixed(2) %></td>
+                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap overflow-hidden overflow-ellipsis max-w-xs"><%= tx.transactionId %></td>
+                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap"><%= new Date(tx.createdAt).toDateString() %></td>
+                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap"><%= tx.productId %></td>
+                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap"><%= tx.type %></td>
+                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">₹<%= tx.amount.toFixed(2) %></td>
                       </tr>
                     <% }) %>
                   </tbody>
@@ -341,7 +345,7 @@
                 </div>
               <% } %>
             <% } else { %>
-              <p class="text-gray-500 text-sm sm:text-base">No wallet history available.</p>
+              <p class="text-gray-500 text-sm py-4">No transactions found</p>
             <% } %>
           </div>
         <% } %>

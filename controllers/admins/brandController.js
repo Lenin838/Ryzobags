@@ -1,4 +1,6 @@
 const Brand = require('../../models/brand');
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const brandController = {
     getBrandList: async (req,res) => {
@@ -30,7 +32,7 @@ const brandController = {
             });
         } catch (error) {
             console.error('Error loading brands:',error);
-            res.status(500).send('Internal server error');
+            res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.INTERNAL_SERVER_ERROR);
         }
     },
 
@@ -50,18 +52,18 @@ const brandController = {
           });
       
           if (existingBrand) {
-            req.flash('error', 'Brand with the same name already exists');
+            req.flash('error', message.BRAND_DUPLICATE);
             return res.redirect('/admin/brands/add'); 
           }
       
           const brand = new Brand({ name, description });
           await brand.save();
       
-          req.flash('success', 'Brand added successfully');
+          req.flash('success', message.BRAND_ADDED);
           res.redirect('/admin/brands');
         } catch (error) {
           console.error('Error adding brand:', error);
-          req.flash('error', 'Internal server error');
+          req.flash('error',message.INTERNAL_SERVER_ERROR);
           res.redirect('/admin/brands/add');
         }
     },
@@ -75,7 +77,7 @@ const brandController = {
             });
         } catch (error) {
             console.error('Error loading edit brand:',error);
-            res.status(500).send('Internal server error');
+            res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.INTERNAL_SERVER_ERROR);
         }
     },
 
@@ -91,7 +93,7 @@ const brandController = {
           });
       
           if (duplicate) {
-            return res.status(400).json({success: false, message:"Another brand with the same name already exists"});
+            return res.status(statusCode.BAD_REQUEST).json({success: false, message:message.BRAND_NAME_ALREADY_EXISTS});
           }
       
           await Brand.findByIdAndUpdate(brandId, {
@@ -99,30 +101,30 @@ const brandController = {
             description,
           });
       
-         return res.status(200).json({success:true,message:"Brand updated successfully"});
+         return res.status(statusCode.OK).json({success:true,message:message.BRAND_UPDATED});
         } catch (error) {
           console.error('Error updating brand:', error);
-          return res.status(500).json({success: false, message: "Internal Server error"});
+          return res.status(statusCode.INTERNAL_SERVER_ERROR).json({success: false, message: message.INTERNAL_SERVER_ERROR});
         }
     },
       
     unlistedBrand: async (req,res) => {
         try {
             await Brand.findByIdAndUpdate(req.params.id,{isActive:false});
-            return res.status(200).json({success: true});
+            return res.status(statusCode.OK).json({success: true});
         } catch (error) {
             console.error('Error unlisting brand:',error);
-            res.status(500).json({success: false,message:'Internal server error'});
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({success: false,message:message.INTERNAL_SERVER_ERROR});
         }
     },
 
     listBrand: async (req,res) => {
         try {
             await Brand.findByIdAndUpdate(req.params.id,{isActive:true});
-            return res.status(200).json({success: true})
+            return res.status(statusCode.OK).json({success: true})
         } catch (error) {
             console.error('Error listing brand:',error);
-            res.status(500).json({success:false,message:'Internal server error'});
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({success:false,message:message.INTERNAL_SERVER_ERROR});
         }
     }
 };

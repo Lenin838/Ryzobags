@@ -3,6 +3,8 @@ const User = require('../../models/User');
 const Product = require('../../models/product');
 const WalletTransaction = require('../../models/wallet');
 const nodemailer = require('nodemailer');
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -79,7 +81,7 @@ const adminOrderController = {
       } catch (err) {
         console.error('Error in getOrders:', err);
         req.flash('error', 'Unable to load orders');
-        res.status(500).render('admin/orders', {
+        res.status(statusCode.INTERNAL_SERVER_ERROR).render('admin/orders', {
           orders: [],
           currentPage: 1,
           totalPages: 0,
@@ -102,7 +104,7 @@ const adminOrderController = {
           .lean();
 
         if (!order) {
-          req.flash('error', 'Order not found');
+          req.flash('error', message.ORDER_NOT_FOUND);
           return res.redirect('/admin/orders');
         }
 
@@ -126,12 +128,12 @@ const adminOrderController = {
 
         const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'return request', 'returned', 'partially returned', 'failed'];
         if (!validStatuses.includes(status)) {
-          return res.status(400).json({ message: 'Invalid status' });
+          return res.status(statusCode.BAD_REQUEST).json({ message: message.INVALID_STATUS });
         }
 
         const order = await Order.findOne({ orderId }).populate('items.productId');
         if (!order) {
-          return res.status(404).json({ message: 'Order not found' });
+          return res.status(statusCode.NOT_FOUND).json({ message: message.ORDER_NOT_FOUND });
         }
 
         const previousStatus = order.status;
@@ -139,20 +141,20 @@ const adminOrderController = {
         if (itemId) {
           const item = order.items.id(itemId);
           if (!item) {
-            return res.status(404).json({ message: 'Item not found' });
+            return res.status(statusCode.NOT_FOUND).json({ message: message.ITEM_NOT_FOUND });
           }
 
           if (status === 'shipped' && item.status !== 'shipped') {
             const product = item.productId;
             if (!product) {
-              return res.status(404).json({ message: 'Product not found for item' });
+              return res.status(statusCode.NOT_FOUND).json({ message: message.PRODUCT_NOT_FOUND });
             }
             const variant = product.variants.find((v) => v.size === item.size);
             if (!variant) {
-              return res.status(404).json({ message: `Variant ${item.size} not found for ${product.name}` });
+              return res.status(statusCode.NOT_FOUND).json({ message: message.UPDATE_STOCK_VARIANT_NOT_FOUND });
             }
             if (variant.quantity < item.quantity) {
-              return res.status(400).json({
+              return res.status(statusCode.BAD_REQUEST).json({
                 message: `Insufficient stock for ${product.name} (Size: ${item.size}). Available: ${variant.quantity}, Required: ${item.quantity}`,
               });
             }
@@ -222,14 +224,14 @@ const adminOrderController = {
             for (const item of order.items) {
               const product = item.productId;
               if (!product) {
-                return res.status(404).json({ message: `Product not found for item` });
+                return res.status(statusCode.NOT_FOUND).json({ message: message.PRODUCT_NOT_FOUND });
               }
               const variant = product.variants.find((v) => v.size === item.size);
               if (!variant) {
-                return res.status(404).json({ message: `Variant ${item.size} not found for ${product.name}` });
+                return res.status(statusCode.NOT_FOUND).json({ message: message.UPDATE_STOCK_VARIANT_NOT_FOUND });
               }
               if (variant.quantity < item.quantity) {
-                return res.status(400).json({
+                return res.status(statusCode.BAD_REQUEST).json({
                   message: `Insufficient stock for ${product.name} (Size: ${item.size}). Available: ${variant.quantity}, Required: ${item.quantity}`,
                 });
               }
@@ -345,10 +347,10 @@ const adminOrderController = {
         }
 
         await order.save();
-        return res.json({ message: `Order status updated to ${status}`, orderStatus: order.status });
+        return res.json({ message: message.STATUS_UPDATED`${status}`, orderStatus: order.status });
       } catch (err) {
         console.error('Error in updateOrderStatus:', err);
-        return res.status(500).json({ message: 'Error updating order status' });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ message: 'Error updating order status' });
       }
     },
 
@@ -357,20 +359,17 @@ const adminOrderController = {
         const { orderId } = req.params;
         const { action } = req.body;
 
-        // console.log('Processing return request:', { orderId, action });
 
         if (!['approve', 'reject'].includes(action)) {
-          return res.status(400).json({ message: 'Invalid action' });
+          return res.status(statusCode.BAD_REQUEST).json({ message: message.INVALID_ACTION });
         }
 
         const order = await Order.findOne({ orderId: orderId }).populate('items.productId');
         
         if (!order) {
-          // console.log('Order not found:', orderId);
-          return res.status(400).json({ message: 'Order not found' });
+          return res.status(statusCode.NOT_FOUND).json({ message: message.ORDER_NOT_FOUND });
         }
 
-        // console.log('Order status:', order.status);
 
         const targetItems = order.items.filter(item => 
           item.status === 'return request' || 
@@ -379,10 +378,9 @@ const adminOrderController = {
         );
 
         if (targetItems.length === 0) {
-          return res.status(400).json({ message: 'No items found with return requests' });
+          return res.status(statusCode.BAD_REQUEST).json({ message: 'No items found with return requests' });
         }
 
-        // console.log(`Found ${targetItems.length} items with return requests`);
         
         if (!order.returnRequest) {
           order.returnRequest = {
@@ -427,7 +425,6 @@ const adminOrderController = {
                 }, {
                   arrayFilters: [{ 'variant.size': item.size }],
                 });
-                // console.log(`Inventory restored for item: ${item.productId._id || item.productId}, size: ${item.size}, quantity: ${item.quantity}`);
               } catch (inventoryError) {
                 console.error('Error updating inventory:', inventoryError);
               }
@@ -465,11 +462,7 @@ const adminOrderController = {
             });
 
             await newTransaction.save();
-            // console.log('Wallet credited successfully:', {
-            //   transactionId,
-            //   amount: refundAmount,
-            //   newBalance: currentBalance + refundAmount
-            // });
+            
 
             try {
               const user = await User.findById(order.userId);
@@ -508,13 +501,13 @@ const adminOrderController = {
             console.error('Error processing wallet transaction:', walletError);
             
             if (walletError.code === 11000) {
-              return res.status(500).json({ 
-                message: 'Transaction ID conflict. Please try again.' 
+              return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
+                message: message.TRANSACTION_CONFLICT
               });
             }
             
-            return res.status(500).json({ 
-              message: 'Error processing refund. Please try again.',
+            return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
+              message: message.REFUND_FAILED,
               error: process.env.NODE_ENV === 'development' ? walletError.message : undefined
             });
           }
@@ -573,7 +566,6 @@ const adminOrderController = {
         }
 
         await order.save();
-        // console.log('Order saved successfully');
         
         return res.json({ 
           message: `Return request ${action}d successfully for ${targetItems.length} item(s)`,
@@ -589,7 +581,7 @@ const adminOrderController = {
 
       } catch (err) {
         console.error('Error in verifyReturnRequest:', err);
-        return res.status(500).json({ 
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
           message: 'Error processing return request',
           error: process.env.NODE_ENV === 'development' ? err.message : undefined
         });

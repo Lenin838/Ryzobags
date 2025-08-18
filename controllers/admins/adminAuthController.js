@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const Admin = require('../../models/Admin');
 const User = require('../../models/User');
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 
 const adminController = {
@@ -19,9 +21,9 @@ const adminController = {
       const errors = {};
 
       if (!email || email.trim() === '') {
-        errors.email = 'Email is required.';
+        errors.email = message.EMAIL_REQUIRED;
       } else if (!/^[^\s@]+@[^\s@]+$/.test(email)) {
-        errors.email = 'Invalid email format.';
+        errors.email = message.INVALID_EMAIL;
       }
 
       if (!password || password.trim() === '') {
@@ -29,25 +31,25 @@ const adminController = {
       }
 
       if (Object.keys(errors).length > 0) {
-        return res.status(400).json({ success: false, errors });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, errors });
       }
 
       const admin = await Admin.findOne({ email });
       if (!admin) {
-        return res.status(400).json({ success: false, message: 'Admin not found.' });
+        return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.ADMIN_NOT_FOUND});
       }
 
       const isMatch = await bcrypt.compare(password, admin.password);
       if (!isMatch) {
-        return res.status(400).json({ success: false, message: 'Invalid credentials.' });
+        return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: 'Invalid credentials.' });
       }
 
       req.session.admin = admin;
-      return res.status(200).json({ success: true, message: 'Login successful!' });
+      return res.status(statusCode.OK).json({ success: true, message: message.LOGIN_SUCCESS  });
 
     } catch (error) {
       console.error('Admin login error:', error.message);
-      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+      res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message.SERVER_ERROR });
     }
   },
 
@@ -58,7 +60,7 @@ const adminController = {
       });
     } catch (error) {
       console.error('Admin logout error:', error.message);
-      res.status(500).json({ message: 'Server error' });
+      res.status(statusCode.INTERNAL_SERVER_ERROR).json({ message: message.SERVER_ERROR });
     }
   },
 
@@ -118,19 +120,19 @@ const adminController = {
           if (user) {
               return res.json({ 
                   success: true, 
-                  message: 'User blocked successfully' 
+                  message:  message.USER_BLOCKED
               });
           } else {
               return res.json({ 
                   success: false, 
-                  message: 'User not found' 
+                  message: message.USER_NOT_FOUND 
               });
           }
       } catch (error) {
           console.error('Block user error:', error.message);
           return res.json({ 
               success: false, 
-              message: 'Failed to block user' 
+              message: message.BLOCK_FAILED
           });
       }
   },
@@ -147,19 +149,19 @@ const adminController = {
           if (user) {
               return res.json({ 
                   success: true, 
-                  message: 'User unblocked successfully' 
+                  message:  message.USER_BLOCKED
               });
           } else {
               return res.json({ 
                   success: false, 
-                  message: 'User not found' 
+                  message: message.USER_NOT_FOUND
               });
           }
       } catch (error) {
           console.error('Unblock user error:', error.message);
           return res.json({ 
               success: false, 
-              message: 'Failed to unblock user' 
+              message: message.UNBLOCK_FAILED
           });
       }
   }

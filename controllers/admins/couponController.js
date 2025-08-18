@@ -1,4 +1,6 @@
 const Coupon = require("../../models/coupon");
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const couponController = {
     listCoupons: async (req,res) => {
@@ -18,7 +20,7 @@ const couponController = {
                 coupons,});
         }catch (err){
             console.error("Error in listCoupons:",err);
-            res.status(500).send("Failed to load coupons");
+            res.status(statusCode.INTERNAL_SERVER_ERROR).send("Failed to load coupons");
         }
     },
 
@@ -28,7 +30,7 @@ const couponController = {
 
             const existing = await Coupon.findOne({code: code.toUpperCase()});
             if(existing){
-                return res.status(400).json({error: "coupon code already exists"});
+                return res.status(statusCode.BAD_REQUEST).json({error: message.COUPON_EXISTS});
             }
 
             const newCoupon = new Coupon({
@@ -41,9 +43,9 @@ const couponController = {
             });
 
             await newCoupon.save();
-            res.status(201).json({message: "coupon created successfully"});
+            res.status(statusCode.CREATED).json({message: message.COUPON_CREATED});
         }catch(err){
-            res.status(500).json({error: "Failed to create coupon"});
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({error: message.COUPON_CREATE_FAILED});
         }
     },
 
@@ -54,7 +56,7 @@ const couponController = {
 
             const existingCoupon = await Coupon.findOne({code: code.toUpperCase(),_id:{$ne:id}});
             if(existingCoupon){
-                return res.status(400).json({error: "coupon code already in use by another coupon."});
+                return res.status(statusCode.BAD_REQUEST).json({error: message.COUPON_CODE_IN_USE});
             }
 
             await Coupon.findByIdAndUpdate(id,{
@@ -67,9 +69,9 @@ const couponController = {
                 isActive
             });
 
-            res.json({message: "coupon updated successfully"});
+            res.json({message: message.COUPON_UPDATED});
         }catch (err){
-            res.status(500).json({error: "Failed to update coupon"});
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({error: message.COUPON_UPDATE_FAILED});
         }
     },
     
@@ -77,9 +79,10 @@ const couponController = {
         try{
             const {id} = req.params;
             await Coupon.findByIdAndUpdate(id,{isActive: false});
-            res.json({message: "Coupon deleted sucessfully"});
+            res.json({message: message.COUPON_DELETED});
         }catch(err){
-            res.status(500).json({error: "Failed to delete coupon"});
+            res.status(statusCode.INTERNAL_SERVER_ERROR)
+            json({error: message.COUPON_DELETE_FAILED});
         }
     }
 }

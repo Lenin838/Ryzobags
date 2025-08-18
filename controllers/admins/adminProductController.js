@@ -2,6 +2,8 @@ const Product = require('../../models/product');
 const { resizeAndSaveImages } = require('../../middlewares/upload');
 const Category = require('../../models/category'); 
 const Brand = require('../../models/brand');
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages')
 
 const productController = {
   loadProductList: async (req, res) => {
@@ -21,7 +23,6 @@ const productController = {
         .skip((page - 1) * perPage)
         .limit(perPage);
       
-      // console.log(`Found ${products.length} products out of ${total} total`);
     
       res.render('admin/layout', {
         body: 'productList',
@@ -33,7 +34,7 @@ const productController = {
       });
     } catch (error) {
       console.error('Error loading product list', error.message);
-      res.status(500).send('Server error: ' + error.message);
+      res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.SERVER_ERROR + error.message);
     }
   },
 
@@ -50,7 +51,7 @@ const productController = {
       });
     } catch (error) {
       console.error('Load add product error:', error.message);
-      res.status(500).send('Server Error');
+      res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.SERVER_ERROR);
     }
   },
 
@@ -61,7 +62,7 @@ const productController = {
         .populate('brand');
       
       if (!product) {
-        return res.status(404).send('Product not found');
+        return res.status(statusCode.NOT_FOUND).send(message.PRODUCT_NOT_FOUND);
       }
 
       const categories = await Category.find({ isActive: true });
@@ -77,16 +78,15 @@ const productController = {
       });
     } catch (error) {
       console.error('Load edit product error:', error.message);
-      res.status(500).send('Server Error');
+      res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.SERVER_ERROR);
     }
   },
 
   addProduct: async (req, res) => {
     try {
-      // console.log('Add product request received');
 
       if (!req.files?.mainImage || !req.files?.subImages) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
           message: 'Missing required image fields (mainImage or subImages)',
         });
@@ -94,9 +94,9 @@ const productController = {
       const name = req.body.name?.trim();
       const productDup = await Product.findOne({ name: { $regex: name, $options: 'i' } });
       if (productDup) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Product with same name already available',
+          message: message.DUPLICATE_NAME,
         });
       }
 
@@ -104,13 +104,12 @@ const productController = {
       const subImages = req.files['subImages'];
 
       if (!mainImage || subImages.length < 2) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
           message: 'Please upload 1 main image and at least 2 sub images',
         });
       }
 
-      // console.log(`Processing images: mainImage=${mainImage.originalname}, subImages=${subImages.length}`);
 
       const processedMainImage = await resizeAndSaveImages([mainImage]);
       const processedSubImages = await resizeAndSaveImages(subImages);
@@ -150,9 +149,9 @@ const productController = {
       }
 
       if(duplicateSizes.length > 0){
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: `Duplicate variant sizes found: ${duplicateSizes.join(', ')}. Each size must be unique.`
+          message: message.DUPLICATE_SIZES`${duplicateSizes.join(', ')}. Each size must be unique.`
         });
       }
       variants = processedVariants;
@@ -172,14 +171,14 @@ const productController = {
 
       await product.save();
 
-      return res.status(200).json({
+      return res.status(statusCode.OK).json({
         success: true,
-        message: 'Product added successfully',
+        message: message.PRODUCT_ADDED_SUCCESSFULLY,
         productId: product._id,
       });
     } catch (error) {
       console.error('Add product error:', error);
-      return res.status(500).json({
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: `Server error: ${error.message}`,
       });
@@ -190,44 +189,44 @@ const productController = {
     try {
       const product = await Product.findById(req.params.id);
       if (!product) {
-        return res.status(404).json({
+        return res.status(statusCode.NOT_FOUND).json({
           success: false,
-          message: 'Product not found'
+          message: message.PRODUCT_NOT_FOUND
         });
       }
 
       const { name, description, category, brand, discountPercentage } = req.body;
 
       if (!name?.trim()) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Product name is required'
+          message: message.INVALID_NAME
         });
       }
       if (!description?.trim()) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Description is required'
+          message: message.INVALID_DESCRIPTION
         });
       }
       if (!category) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Category is required'
+          message: message.CATEGORY_REQUIRED
         });
       }
       if (!brand) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Brand is required'
+          message: message.BRAND_REQUIRED
         });
       }
 
       const parsedDiscount = parseFloat(discountPercentage);
       if (discountPercentage !== undefined && (isNaN(parsedDiscount) || parsedDiscount < 0 || parsedDiscount > 100)) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Discount percentage must be a number between 0 and 100'
+          message: message.INVALID_DISCOUNT
         });
       }
 
@@ -236,9 +235,9 @@ const productController = {
         _id: { $ne: req.params.id }
       });
       if (productDup) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Product with same name already exists'
+          message: message.DUPLICATE_NAME
         });
       }
 
@@ -247,18 +246,16 @@ const productController = {
 
       if (req.body.deleteMainImage === 'true') {
         if (!req.files?.mainImage) {
-          return res.status(400).json({
+          return res.status(statusCode.BAD_REQUEST).json({
             success: false,
-            message: 'Main image is required and cannot be deleted without uploading a new one'
+            message: message.MAIN_IMAGE_REQUIRED
           });
         }
       }
 
       if (req.files?.mainImage) {
         try {
-          // console.log('Main image file:', req.files['mainImage'][0]);
           const processedMainImage = await resizeAndSaveImages([req.files['mainImage'][0]]);
-          // console.log('Processed main image:', processedMainImage);
           
           if (!Array.isArray(processedMainImage) || !processedMainImage[0]) {
             throw new Error('Main image processing failed: Empty result');
@@ -271,7 +268,7 @@ const productController = {
           }
         } catch (error) {
           console.error('Main image processing error:', error);
-          return res.status(400).json({
+          return res.status(statusCode.BAD_REQUEST).json({
             success: false,
             message: `Failed to process main image: ${error.message}`
           });
@@ -279,18 +276,15 @@ const productController = {
       }
 
       if (!mainImage) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'Main image is required'
+          message: message.MAIN_IMAGE_REQUIRED
         });
       }
-      // console.log('Final mainImage:', mainImage);
 
       if (req.files?.subImages) {
         try {
-          // console.log('Sub image files:', req.files['subImages']);
           const processedSubImages = await resizeAndSaveImages(req.files['subImages']);
-          // console.log('Processed sub images:', processedSubImages);
           
           if (!Array.isArray(processedSubImages)) {
             throw new Error('Sub-image processing failed: Invalid output format');
@@ -306,7 +300,7 @@ const productController = {
           subImages = [...subImages, ...newSubImages];
         } catch (error) {
           console.error('Sub-images processing error:', error);
-          return res.status(400).json({
+          return res.status(statusCode.BAD_REQUEST).json({
             success: false,
             message: `Failed to process sub-images: ${error.message}`
           });
@@ -321,7 +315,7 @@ const productController = {
       }
 
       if (subImages.length < 3) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
           message: 'At least 3 sub-images are required'
         });
@@ -360,18 +354,18 @@ const productController = {
         }
 
         if(duplicateSizes.length > 0){
-          return res.status(400).json({
+          return res.status(statusCode.BAD_REQUEST).json({
             success: false,
-            message: `Duplicate variant sizes found: ${duplicateSizes.join(', ')}. Each size must be unique.`,
+            message: message.DUPLICATE_NAME`${duplicateSizes.join(', ')}. Each size must be unique.`,
           });
         }
         variants = processedVariants;
       }
 
       if (variants.length === 0) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: 'At least one variant is required'
+          message: message.VARIANT_REQUIRED
         });
       }
 
@@ -388,16 +382,16 @@ const productController = {
 
       await product.save();
 
-      return res.status(200).json({
+      return res.status(statusCode.OK).json({
         success: true,
-        message: 'Product updated successfully',
+        message: message.PRODUCT_EDITED,
         productId: product._id
       });
     } catch (error) {
       console.error('Edit product error:', error);
-      return res.status(500).json({
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: `Server error: ${error.message}`
+        message: message.SERVER_ERROR`: ${error.message}`
       });
     }
   },
@@ -407,10 +401,10 @@ const productController = {
       const product = await Product.findById(req.params.id);
       product.isListed = !product.isListed;
       await product.save();
-      return res.status(200).json({success: true});
+      return res.status(statusCode.OK).json({success: true});
     } catch (error) {
       console.error('Toggle product listing error:', error.message);
-      res.status(500).json({success: false,message: "Internal server error"});
+      res.status(statusCode.INTERNAL_SERVER_ERROR).json({success: false,message: message.INTERNAL_SERVER_ERROR});
     }
   },
 };

@@ -3,6 +3,8 @@ const excelJS = require("exceljs");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const getDeliveredOrdersWithItems = async (filter) => {
   const orders = await Order.find({
@@ -93,7 +95,7 @@ const salesController = {
       });
     } catch (err) {
       console.error("Sales report error:", err.message);
-      res.status(500).json({ message: "Failed to load sales report" });
+      res.status(statusCode.INTERNAL_SERVER_ERROR).json({ message: message.SALES_REPORT_FAILED });
     }
   },
 
@@ -161,7 +163,7 @@ const salesController = {
       res.end();
     } catch (err) {
       console.error("Excel Report error: ", err.message);
-      res.status(500).json({ message: "Failed to generate Excel report" });
+      res.status(statusCode.INTERNAL_SERVER_ERROR).json({ message: message.EXCEL_REPORT_FAILED });
     }
   },
 
@@ -418,7 +420,7 @@ const salesController = {
 
     } catch (err) {
       console.error("PDF Report error: ", err.message);
-      res.status(500).send("Failed to generate PDF report");
+      res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.PDF_REPORT_FAILED);
     }
   }
 };

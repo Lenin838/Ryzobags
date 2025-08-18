@@ -13,6 +13,8 @@ const Coupon = require('../../models/coupon');
 const Order = require('../../models/order');
 const User = require("../../models/User");
 const template = require('../../controllers/users/emailTemplates');
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 
 const razorpay = new Razorpay({
@@ -367,34 +369,34 @@ const productController = {
         const userId = req.session.user?._id;
 
         if (!userId) {
-          return res.status(401).json({ success: false, message: "User not authenticated" });
+          return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: message.USER_NOT_AUTHENTICATED});
         }
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-          return res.status(400).json({ success: false, message: "Invalid product ID" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Invalid product ID" });
         }
 
         if (!size) {
-          return res.status(400).json({ success: false, message: "Size is required" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Size is required" });
         }
 
         const parsedQuantity = parseInt(quantity);
         if (isNaN(parsedQuantity) || parsedQuantity <= 0 ) {
-          return res.status(400).json({ success: false, message: "Quantity must be a positive number" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Quantity must be a positive number" });
         }
 
         const product = await Product.findById(id);
         if (!product || product.isDeleted || !product.isListed) {
-          return res.status(404).json({ success: false, message: "Product not found or unavailable" });
+          return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.PRODUCT_NOT_FOUND });
         }
 
         const variant = product.variants.find((v) => v.size === size);
         if (!variant) {
-          return res.status(400).json({ success: false, message: "Invalid size selected" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message:message.UPDATE_STOCK_INVALID });
         }
 
         if (variant.quantity < parsedQuantity) {
-          return res.status(400).json({ success: false, message: `Only ${variant.quantity} items available in stock` });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.INSUFFICIENT_STOCK });
         }
 
         await Wishlist.findOneAndUpdate(
@@ -417,15 +419,15 @@ const productController = {
         if (existingItem) {
           const newQuantity = existingItem.quantity + parsedQuantity;
           if (newQuantity > 6) {
-            return res.status(400).json({ success: false, message: "You can only add up to 6 units of this product" });
+            return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.QUANTITY_MAX });
           }
           if (newQuantity > variant.quantity) {
-            return res.status(400).json({ success: false, message: `Only ${variant.quantity} items available in stock` });
+            return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.INSUFFICIENT_STOCK });
           }
           existingItem.quantity = newQuantity;
         } else {
           if (parsedQuantity > 6) {
-            return res.status(400).json({ success: false, message: "You can only add up to 6 units of this product" });
+            return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.QUANTITY_MAX });
           }
           cart.items.push({
             productId: id,
@@ -435,10 +437,10 @@ const productController = {
         }
 
         await cart.save();
-        return res.json({ success: true, message: "Product added to cart" });
+        return res.json({ success: true, message: message.ADD_TO_CART_SUCCESS });
       } catch (error) {
         console.error("Error adding to cart:", error.message);
-        return res.status(500).json({ success: false, message: "Failed to add product to cart" });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to add product to cart" });
       }
     },
 
@@ -448,21 +450,21 @@ const productController = {
         const productId = req.params.id;
 
         if (!userId) {
-          return res.status(401).json({ success: false, message: "User not authenticated" });
+          return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: message.USER_NOT_AUTHENTICATED});
         }
 
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-          return res.status(400).json({ success: false, message: "Invalid product ID" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Invalid product ID" });
         }
 
         const product = await Product.findById(productId);
         if (!product || product.isDeleted || !product.isListed) {
-          return res.status(404).json({ success: false, message: "Product not found or unavailable" });
+          return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.PRODUCT_NOT_FOUND });
         }
 
         const cart = await Cart.findOne({ userId });
         if (cart && cart.items.some(item => item.productId.toString() === productId.toString())) {
-          return res.status(400).json({ success: false, message: "Product is already in your cart" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.ALREADY_IN_CART });
         }
 
         const existingWishlist = await Wishlist.findOne({
@@ -471,7 +473,7 @@ const productController = {
         });
 
         if (existingWishlist) {
-          return res.status(400).json({ success: false, message: "Product is already in wishlist" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.ALREADY_IN_WISHLIST });
         }
 
         await Wishlist.findOneAndUpdate(
@@ -487,10 +489,10 @@ const productController = {
           { upsert: true, new: true }
         );
 
-        return res.status(200).json({ success: true, message: "Added to wishlist" });
+        return res.status(statusCode.OK).json({ success: true, message: message.ADD_TO_WISHLIST_SUCCESS });
       } catch (error) {
         console.error("Error adding to wishlist:", error.message);
-        return res.status(500).json({ success: false, message: "Error adding to wishlist" });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Error adding to wishlist" });
       }
     },
 
@@ -565,9 +567,9 @@ const productController = {
     try {
       const userId = req.session.user?._id;
       if (!userId) {
-        return res.status(401).json({ 
+        return res.status(statusCode.UNAUTHORIZED).json({ 
           success: false, 
-          message: "User not authenticated" 
+          message: message.USER_NOT_AUTHENTICATED 
         });
       }
 
@@ -578,15 +580,15 @@ const productController = {
       const count = wishlist && wishlist.products ? wishlist.products.length : 0;
       
       
-      res.status(200).json({ success: true, count });
+      res.status(statusCode.OK).json({ success: true, count });
       
       } catch (error) {
         console.error("Error fetching wishlist count:", error);
         
         if (!res.headersSent) {
-          res.status(500).json({ 
+          res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
-            message: "Server error" 
+            message: message.SERVER_ERROR
           });
         }
       }
@@ -596,9 +598,9 @@ const productController = {
       try {
         const userId = req.session.user?._id;
         if (!userId) {
-          return res.status(401).json({ 
+          return res.status(statusCode.UNAUTHORIZED).json({ 
             success: false, 
-            message: "User not authenticated" 
+            message: message.USER_NOT_AUTHENTICATED 
           });
         }
 
@@ -614,15 +616,15 @@ const productController = {
         }
         
         
-        res.status(200).json({ success: true, count });
+        res.status(statusCode.OK).json({ success: true, count });
         
       } catch (error) {
         console.error("Error fetching cart count:", error);
         
         if (!res.headersSent) {
-          res.status(500).json({ 
+          res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
-            message: "Server error" 
+            message: message.SERVER_ERROR 
           });
         }
       }
@@ -632,9 +634,9 @@ const productController = {
   try {
     const userId = req.session.user?._id;
     if (!userId) {
-      return res.status(401).render("user/cart", {
+      return res.status(statusCode.UNAUTHORIZED).render("user/cart", {
         cart: { items: [] },
-        error: "User not authenticated",
+        error: message.USER_NOT_AUTHENTICATED,
         hasOutOfStock: false,
         itemCount: 0,
         totalAmount: 0,
@@ -724,7 +726,7 @@ const productController = {
 
   } catch (error) {
     console.error("Error loading cart:", error.message);
-    res.status(500).render("user/cart", {
+    res.status(statusCode.INTERNAL_SERVER_ERROR).render("user/cart", {
       cart: { items: [] },
       error: "Failed to load cart data. Please try again later.",
       hasOutOfStock: false,
@@ -742,30 +744,30 @@ const productController = {
         const productId = req.params.productId;
 
         if (!userId) {
-          return res.status(401).json({ success: false, message: "User not authenticated" });
+          return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: message.USER_NOT_AUTHENTICATED });
         }
 
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-          return res.status(400).json({ success: false, message: "Invalid product ID" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Invalid product ID" });
         }
 
         const cart = await Cart.findOne({ userId });
         if (!cart) {
-          return res.status(404).json({ success: false, message: "Cart not found" });
+          return res.status(statusCode.NOT_FOUND).json({ success: false, message: "Cart not found" });
         }
 
         const initialLength = cart.items.length;
         cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
 
         if (cart.items.length === initialLength) {
-          return res.status(404).json({ success: false, message: "Item not found in cart" });
+          return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.DELETE_CART_ITEM_FAILED });
         }
 
         await cart.save();
-        return res.status(200).json({ success: true, message: "Item removed from cart" });
+        return res.status(statusCode.OK).json({ success: true, message: message.DELETE_CART_ITEM_SUCCESS });
       } catch (error) {
         console.error("Error deleting cart item:", error.message);
-        return res.status(500).json({ success: false, message: "Server error" });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message.SERVER_ERROR });
       }
     },
 
@@ -773,28 +775,28 @@ const productController = {
       try {
         const userId = req.session.user?._id;
         if (!userId) {
-          return res.status(401).json({ success: false, message: "User not authenticated" });
+          return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: message.USER_NOT_AUTHENTICATED });
         }
 
         const { productId, size, quantity } = req.body;
 
         if (!productId || !size) {
-          return res.status(400).json({ success: false, message: "Product ID and size are required" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Product ID and size are required" });
         }
 
         const parsedQuantity = parseInt(quantity);
         if (isNaN(parsedQuantity)) {
-          return res.status(400).json({ success: false, message: "Quantity must be a valid number" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.QUANTITY_MIN });
         }
 
         const product = await Product.findById(productId);
         if (!product) {
-          return res.status(404).json({ success: false, message: "Product not found" });
+          return res.status(statusCode.NOT_FOUND).json({ success: false, message: "Product not found" });
         }
 
         const cart = await Cart.findOne({ userId }).populate("items.productId");
         if (!cart) {
-          return res.status(404).json({ success: false, message: "Cart not found" });
+          return res.status(statusCode.NOT_FOUND).json({ success: false, message: "Cart not found" });
         }
 
         const itemIndex = cart.items.findIndex(
@@ -802,7 +804,7 @@ const productController = {
         );
 
         if (itemIndex === -1) {
-          return res.status(404).json({ success: false, message: "Item not found in cart" });
+          return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.DELETE_CART_ITEM_FAILED });
         }
 
         const item = cart.items[itemIndex];
@@ -810,28 +812,28 @@ const productController = {
         const stock = variant ? variant.quantity : 0;
 
         if (parsedQuantity < 1) {
-          return res.status(400).json({ success: false, message: "Quantity must be at least 1" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.QUANTITY_MIN});
         }
 
         if (parsedQuantity > 6) {
-          return res.status(400).json({ success: false, message: "Maximum quantity allowed is 6" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.QUANTITY_MAX });
         }
 
         if (parsedQuantity > stock) {
-          return res.status(400).json({ success: false, message: `Only ${stock} items available in stock` });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.INSUFFICIENT_STOCK });
         }
 
         cart.items[itemIndex].quantity = parsedQuantity;
         await cart.save();
 
-        return res.status(200).json({
+        return res.status(statusCode.OK).json({
           success: true,
-          message: "Cart updated successfully",
+          message: message.UPDATE_QUANTITY_SUCCESS,
           updatedQuantity: parsedQuantity,
         });
       } catch (error) {
         console.error("Error updating cart quantity:", error);
-        return res.status(500).json({ success: false, message: "Server error occurred while updating cart" });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error occurred while updating cart" });
       }
     },
     
@@ -841,14 +843,14 @@ const productController = {
         const productId = req.params.id;
 
         if (!userId) {
-          return res.status(401).json({ 
+          return res.status(statusCode.UNAUTHORIZED).json({ 
             success: false, 
-            message: "User not authenticated" 
+            message: message.USER_NOT_AUTHENTICATED 
           });
         }
 
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-          return res.status(400).json({ 
+          return res.status(statusCode.BAD_REQUEST).json({ 
             success: false, 
             message: "Invalid product ID" 
           });
@@ -868,22 +870,22 @@ const productController = {
         );
 
         if (!result) {
-          return res.status(404).json({ 
+          return res.status(statusCode.NOT_FOUND).json({ 
             success: false, 
-            message: "Product not found in wishlist" 
+            message: message.REMOVE_FROM_WISHLIST_FAILED 
           });
         }
 
-        return res.status(200).json({ 
+        return res.status(statusCode.OK).json({ 
           success: true, 
-          message: "Product removed from wishlist successfully"
+          message: message.REMOVE_FROM_WISHLIST_SUCCESS
         });
 
       } catch (error) {
         console.error('Error in removeFromWishlist:', error);
-        return res.status(500).json({ 
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
           success: false, 
-          message: "Internal server error"
+          message: message.INTERNAL_SERVER_ERROR
         });
       }
     },
@@ -1361,10 +1363,10 @@ const productController = {
           if(user?.email){
             await sendOtpEmail(user.email,"Your order is placed successfully",template.placeOrderTemplate());
           }
-          return res.status(200).json({
+          return res.status(statusCode.OK).json({
             success: true,
             order: { _id: order._id },
-            message: "COD order placed successfully",
+            message: message.PLACE_ORDER_SUCCESS,
           });
         } else if (payment === "razorpay") {
           const razorpayOrder = await razorpay.orders.create({
@@ -1374,8 +1376,11 @@ const productController = {
           });
           order.transactionId = razorpayOrder.id;
           await order.save();
-          await successMessage(req.session.email);
-          return res.status(200).json({
+          const user = await User.findById(req.user._id).select('email');
+          if(user?.email){
+            await sendOtpEmail(user.email," Your RazorPay Order Placed successfully",template.placeOrderTemplate());
+          }
+          return res.status(statusCode.OK).json({
             success: true,
             order: { _id: order._id },
             mongoOrderId: order._id,
@@ -1409,7 +1414,7 @@ const productController = {
           }
         }
 
-        res.status(500).json({
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: err.message || "Failed to process order",
         });
@@ -1431,7 +1436,7 @@ const productController = {
           console.error("Order not found for failure:",{
             orderId,razorpay_order_id
           });
-          return res.status(404).json({success: false,message:"Order not found"});
+          return res.status(statusCode.NOT_FOUND).json({success: false,message: message.ORDER_NOT_FOUND}); 
         }
 
         order.paymentStatus = "failed";
@@ -1453,10 +1458,10 @@ const productController = {
 
         await restoreOrderStock(order);
 
-        res.status(200).json({success: true, message:"Payment failure recorded",orderId: order.orderId});
+        res.status(statusCode.OK).json({success: true, message:"Payment failure recorded",orderId: order.orderId});
       }catch (err){
         console.error("Error handling payment failure:",err);
-        res.status(500).json({
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: "Failed to record payment failure"
         });
@@ -1490,16 +1495,16 @@ const productController = {
 
             await restoreOrderStock(order);
 
-            return res.status(400).json({
+            return res.status(statusCode.BAD_REQUEST).json({
               success:false,
-              message: error.description || "payment failed",
+              message: error.description || message.PAYMENT_FAILED,
               orderId: order.orderId
             });
           }
 
-          return res.status(400).json({
+          return res.status(statusCode.BAD_REQUEST).json({
             success: false,
-            message: "Payment failed"
+            message: message.PAYMENT_FAILED
           });
         }
 
@@ -1511,7 +1516,7 @@ const productController = {
             body: req.body
           });
 
-          return res.status(400).json({
+          return res.status(statusCode.BAD_REQUEST).json({
             success: false,
             message: "Missing payment details"
           });
@@ -1520,17 +1525,17 @@ const productController = {
         const order = await Order.findOne({transactionId: razorpay_order_id});
         if(!order){
           console.error("Order not found for transactionId:",razorpay_order_id);
-          return res.status(404).json({success: false,message: "Order not found"});
+          return res.status(statusCode.NOT_FOUND).json({success: false,message: message.ORDER_NOT_FOUND});
         }
         order.paymentAttempts = (order.paymentAttempts || 0) + 1;
         order.lastPaymentAttempt = new Date();
 
 
         if(order.isPaymentVerified && order.paymentStatus === "completed"){
-          return res.status(200).json({
+          return res.status(statusCode.OK).json({
             success: true,
             order: {_id: order._id},
-            message: "Payment already verified",
+            message: message.PAYMENT_VERIFIED,
             alreadyProcessed: true
           });
         }
@@ -1569,7 +1574,7 @@ const productController = {
             orderId: order._id
           });
 
-          return res.status(400).json({success: false, message: "Invalid payment signature",orderId: order.orderId});
+          return res.status(statusCode.BAD_REQUEST).json({success: false, message: "Invalid payment signature",orderId: order.orderId});
         }
 
         order.items.forEach(item => {
@@ -1591,10 +1596,10 @@ const productController = {
 
         await order.save();
 
-        res.status(200).json({
+        res.status(statusCode.OK).json({
           success: true,
           order: {_id: order.orderId},
-          message: "Payment verified successfully",
+          message: message.PAYMENT_VERIFIED,
         });
       }catch (err){
         console.error("Error verifying payment :",{
@@ -1630,7 +1635,7 @@ const productController = {
           console.error("Failed to update order with error: ",updateErr.message);
         }
 
-        res.status(500).json({
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: "Payment verification failed due to server error"
         });
@@ -1644,11 +1649,11 @@ const productController = {
 
         const objectId = mongoose.Types.ObjectId.isValid(orderId) ? new mongoose.Types.ObjectId(orderId) : null;
         if (!objectId) {
-          return res.status(400).json({ success: false, message: "Invalid order ID" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Invalid order ID" });
         }
 
         if(!userId){
-          return res.status(401).json({success: false, message: "User not authenticated"});
+          return res.status(statusCode.UNAUTHORIZED).json({success: false, message: message.USER_NOT_AUTHENTICATED});
         }
         
         const order = await Order.findOne({
@@ -1662,7 +1667,7 @@ const productController = {
         });
 
         if(!order){
-          return res.status(404).json({
+          return res.status(statusCode.NOT_FOUND).json({
             success: false,
             message: "Failed order not found or not eligible for retry"
           });
@@ -1671,7 +1676,7 @@ const productController = {
         for(const item of order.items){
           const product = await Product.findById(item.productId);
           if(!product){
-            return res.status(400).json({
+            return res.status(statusCode.BAD_REQUEST).json({
               success: false,
               message: `Product ${item.productId} is no longer available`
             });
@@ -1679,14 +1684,14 @@ const productController = {
 
           const variant = product.variants.find(v=>v.size === item.size);
           if(!variant){
-            return res.status(400).json({
+            return res.status(statusCode.BAD_REQUEST).json({
               success: false,
               message: `Size ${item.size} is no longer available for ${product.name}`
             });
           }
 
           if(variant.quantity < item.quantity){
-            return res.status(400).json({
+            return res.status(statusCode.BAD_REQUEST).json({
               success: false,
               message: `Insufficient stock for ${product.name} (${item.size}).Only ${variant.quantity} available`
             });
@@ -1696,7 +1701,7 @@ const productController = {
         if(order.paymentMethod === "wallet"){
           const user = await User.findById(userId);
           if(user.walletBalance < order.totalAmount){
-            return res.status(400).json({
+            return res.status(statusCode.BAD_REQUEST).json({
               success: false,
               message: "Insufficient wallet balance"
             });
@@ -1735,18 +1740,18 @@ const productController = {
             {$set: {"variants.$.quantity": variant.quantity}}
           );
         }
-        res.status(200).json({
+        res.status(statusCode.OK).json({
           success: true,
           order: {_id: order._id},
           mongoOrderId: order._id,
           key_id: process.env.RAZORPAY_KEY_ID,
           order_id: razorpayOrder.id,
           amount: order.totalAmount,
-          message: "Payment retry initiated"
+          message: message.RETRY_PAYMENT_SUCCESS
         });
       }catch (err){
         console.error("Error retrying payment: ",err);
-        res.status(500).json({
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: "Failed to retry payment"
         });
@@ -1773,7 +1778,7 @@ const productController = {
         });
       } catch (err) {
         console.error("Error rendering failure page:", err);
-        res.status(500).send("Internal Server Error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send({message: message.INTERNAL_SERVER_ERROR});
       }
     },
 
@@ -1783,30 +1788,30 @@ const productController = {
         const userId = req.session.user?._id;
 
         if(!userId){
-          return res.status(401).json({success:false, message: "user not authenticated"});
+          return res.status(statusCode.UNAUTHORIZED).json({success:false, message: message.USER_NOT_AUTHENTICATED});
         }
 
         const subtotal = parseFloat(total);
         if(isNaN(subtotal)){
-          return res.status(400).json({success: false, message:"Invalid total amount"});
+          return res.status(statusCode.BAD_REQUEST).json({success: false, message:"Invalid total amount"});
         }
 
         const couponDoc = await Coupon.findOne({code: coupon.trim().toUpperCase()});
 
         if(!couponDoc){
-          return res.status(400).json({success: false,message:"coupon not found" });
+          return res.status(statusCode.BAD_REQUEST).json({success: false,message:message.COUPON_NOT_FOUND });
         }
 
         if(!couponDoc.isActive){
-          return res.status(400).json({success:false,message:"coupon is not active"});
+          return res.status(statusCode.BAD_REQUEST).json({success:false,message:message.COUPON_INACTIVE});
         }
 
         if(couponDoc.expiresAt < new Date()){
-          return res.status(400).json({success:false,message:"Coupon has expired"});
+          return res.status(statusCode.BAD_REQUEST).json({success:false,message:message.COUPON_EXPIRED});
         }
 
         if(subtotal < couponDoc.minCartAmount){
-          return res.status(400).json({success:false,message: `Minimum cart amount of ₹${couponDoc.minCartAmount} required`});
+          return res.status(statusCode.BAD_REQUEST).json({success:false,message: `Minimum cart amount of ₹${couponDoc.minCartAmount} required`});
         }
 
         const ordersWithCoupon = await Order.countDocuments({
@@ -1816,8 +1821,8 @@ const productController = {
         });
 
         if(ordersWithCoupon > couponDoc.usageLimit ){
-          return res.status(400).json({success:false,
-            message: "you have already used this coupon maximum times"
+          return res.status(statusCode.BAD_REQUEST).json({success:false,
+            message: message.COUPON_USAGE_LIMIT
           });
         }
 
@@ -1825,8 +1830,8 @@ const productController = {
           const isUserAllowed = couponDoc.userId.includes(userId);
 
           if(isUserAllowed){
-            return res.status(400).json({success: false,
-              message: "This coupon is not available for your account"
+            return res.status(statusCode.BAD_REQUEST).json({success: false,
+              message: message.COUPON_NOT_ALLOWED
             });
           }
         }
@@ -1856,16 +1861,16 @@ const productController = {
           couponCode: coupon.trim().toUpperCase()
         };
 
-        res.status(200).json({
+        res.status(statusCode.OK).json({
           success: true,
           discount,
           grandTotal,
           couponId: couponDoc._id,
-          message: "coupon applied successfully",
+          message: message.COUPON_APPLIED,
         })
       } catch (err) {
         console.error("Error applying coupon:",err);
-        res.status(500).json({success: false, message: "Failed to  apply coupon:"+err.message});
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({success: false, message: "Failed to  apply coupon:"+err.message});
       }
     },
 };
