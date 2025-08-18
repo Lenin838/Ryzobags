@@ -9,7 +9,11 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const util = require("util");
+const sendOtpEmail = require("../../controllers/users/otpService");
+const template = require('../../controllers/users/emailTemplates');
 const sharp = require("sharp");
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const mkdir = util.promisify(fs.mkdir);
 
@@ -55,20 +59,6 @@ const saveUserImage = async (req, file) => {
   }
 };
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.ADMIN_EMAIL,
-    pass: process.env.ADMIN_EMAIL_APP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  logger: true,
-  debug: true,
-});
 
 const cleanExpiredOtps = async (req, res, next) => {
   try {
@@ -115,7 +105,6 @@ const userProfileController = {
       const ordersTotalPages = Math.ceil(ordersTotal / ordersLimit);
 
       const addressDoc = await Address.findOne({ userId: req.user._id}).lean();
-      // const addresses = addressDoc ? addressDoc.address : [];
 
       const addresses = addressDoc && addressDoc.address 
         ? addressDoc.address.filter((addr) => addr.status === "active")
@@ -161,7 +150,7 @@ const userProfileController = {
     } catch (err) {
       console.error(err);
       req.flash("error", "Server Error");
-      res.status(500).redirect("/user/profile");
+      res.status(statusCode.INTERNAL_SERVER_ERROR).redirect("/user/profile");
     }
   },
 
@@ -205,7 +194,7 @@ const userProfileController = {
       const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
 
       if (!name || !city || !state || !pincode || !phone) {
-        return res.status(400).json({success:false,message:"All required feilds must be filled"});
+        return res.status(statusCode.BAD_REQUEST).json({success:false,message:message.ALL_FIELDS_ARE_REQUIRED});
       }
 
       const addressData = {
@@ -234,10 +223,10 @@ const userProfileController = {
         });
       }
 
-      return res.status(200).json({success:true,message:"Address added successfully!"});
+      return res.status(statusCode.OK).json({success:true,message:message.ADDRESS_ADDEDD_SUCCESSFULLY});
     } catch (err) {
       console.error(err);
-      return res.status(500).json({success:false,message:"Internal server error"});
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({success:false,message:message.INTERNAL_SERVER_ERROR});
     }
   },
 
@@ -277,18 +266,18 @@ const userProfileController = {
       const { name, landMark, city, state, pincode, phone, addressType, isDefault } = req.body;
 
       if (!name || !city || !state || !pincode || !phone) {
-        return res.status(400).json({success:false,message:"All required feilds are must be filled"});
+        return res.status(statusCode.BAD_REQUEST).json({success:false,message:message.ALL_FIELDS_ARE_REQUIRED});
       }
 
       const addressDoc = await Address.findOne({ userId: req.user._id });
       if (!addressDoc) {
-        return res.status(400).json({success:false,message:"No addresses found"});
+        return res.status(statusCode.NOT_FOUND).json({success:false,message:message.ADDRESS_NOT_FOUND});
       }
 
       const addressIndex = addressDoc.address.findIndex(addr => addr._id.toString() === id);
       
       if (addressIndex === -1) {
-       return res.status(400).json({success:false,message:"Address not found"});
+       return res.status(statusCode.NOT_FOUND).json({success:false,message:message.ADDRESS_NOT_FOUND});
       }
 
       if (isDefault === "on") {
@@ -311,10 +300,10 @@ const userProfileController = {
 
       addressDoc.markModified('address');
       await addressDoc.save();
-      return res.status(200).json({success:true,message:"Address updated Successfully!"});
+      return res.status(statusCode.OK).json({success:true,message:message.ADDRESS_UPDATED_SUCCESSFULLY});
     } catch (err) {
       console.error(err);
-      return res.status(500).json({success:false,message:"Internal server error"});
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({success:false,message:message.INTERNAL_SERVER_ERROR});
     }
   },
 
@@ -325,9 +314,9 @@ const userProfileController = {
 
       if (!addressDoc) {
         if (req.headers.accept && req.headers.accept.includes('application/json')) {
-          return res.status(404).json({ 
+          return res.status(statusCode.NOT_FOUND).json({ 
             success: false, 
-            message: "No addresses found" 
+            message: message.ADDRESS_NOT_FOUND 
           });
         }
         req.flash("error", "No addresses found");
@@ -338,9 +327,9 @@ const userProfileController = {
       
       if (addressIndex === -1) {
         if (req.headers.accept && req.headers.accept.includes('application/json')) {
-          return res.status(404).json({ 
+          return res.status(statusCode.NOT_FOUND).json({ 
             success: false, 
-            message: "Address not found" 
+            message: message.ADDRESS_NOT_FOUND 
           });
         }
         req.flash("error", "Address not found");
@@ -364,7 +353,7 @@ const userProfileController = {
       if (req.headers.accept && req.headers.accept.includes('application/json')) {
         return res.json({ 
           success: true, 
-          message: "Address deleted successfully" 
+          message: message.ADDRESS_DELETED_SUCCESSFULLY
         });
       }
 
@@ -375,7 +364,7 @@ const userProfileController = {
       console.error(err);
       
       if (req.headers.accept && req.headers.accept.includes('application/json')) {
-        return res.status(500).json({ 
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
           success: false, 
           message: "Error deleting address" 
         });
@@ -391,26 +380,26 @@ const userProfileController = {
       const { id } = req.params;
 
       if (!id) {
-        return res.status(400).json({ success: false, message: "Address ID is required" });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Address ID is required" });
       }
 
       const addressDoc = await Address.findOne({ userId: req.user._id });
       if (!addressDoc || !addressDoc.address || addressDoc.address.length === 0) {
-        return res.status(404).json({ success: false, message: "No addresses found" });
+        return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.ADDRESS_NOT_FOUND });
       }
 
       const targetAddress = addressDoc.address.find(addr => addr._id.toString() === id);
       
       if (!targetAddress) {
-        return res.status(404).json({ success: false, message: "Address not found" });
+        return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.ADDRESS_NOT_FOUND });
       }
 
       if (targetAddress.status === "inactive") {
-        return res.status(400).json({ success: false, message: "Cannot set inactive address as default" });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.ADDRESS_INACTIVE });
       }
 
       if (targetAddress.isDefault) {
-        return res.status(200).json({ success: true, message: "Address is already set as default" });
+        return res.status(statusCode.OK).json({ success: true, message: message.ADDRESS_ALREADY_DEFAULT });
       }
 
       addressDoc.address.forEach((addr) => {
@@ -425,10 +414,10 @@ const userProfileController = {
       const verifyDoc = await Address.findOne({ userId: req.user._id });
       const defaultAddress = verifyDoc.address.find((addr) => addr.isDefault);
 
-      return res.status(200).json({ success: true, message: "Default address updated successfully" });
+      return res.status(statusCode.OK).json({ success: true, message: message.DEFAULT_UPDATED});
     } catch (err) {
       console.error("❌ Error setting default address:", err);
-      return res.status(500).json({ success: false, message: "Error setting default address: " + err.message });
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Error setting default address: " + err.message });
     }
   },
 
@@ -446,7 +435,7 @@ const userProfileController = {
     } catch (err) {
       console.error('❌ Error in getEditProfile:', err);
       req.flash("error", "Server error");
-      res.status(500).redirect("/user/profile");
+      res.status(statusCode.INTERNAL_SERVER_ERROR).redirect("/user/profile");
     }
   }],
 
@@ -465,10 +454,10 @@ const userProfileController = {
         }
 
         await User.findByIdAndUpdate(req.user._id, updates);
-        return res.status(200).json({success: true,message:"Profile updated successfully!"});
+        return res.status(statusCode.OK).json({success: true,message:message.PROFILE_UPDATED});
       } catch (err) {
         console.error(err);
-        return res.status(500).json({success:false,message:"Internal server error"});
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({success:false,message:message.INTERNAL_SERVER_ERROR});
       }
     },
   ],
@@ -478,12 +467,12 @@ const userProfileController = {
     async (req, res) => {
       try {
         if (!req.file) {
-          return res.status(400).json({ success: false, message: "No image provided" });
+          return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.NO_IMAGE });
         }
 
         const imagePath = await saveUserImage(req, req.file);
         if (!imagePath) {
-          return res.status(500).json({ success: false, message: "Failed to save image" });
+          return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message.IMAGE_FAILED });
         }
 
         const user = await User.findById(req.user._id);
@@ -500,7 +489,7 @@ const userProfileController = {
         res.json({ success: true, imageUrl: imagePath });
       } catch (err) {
         console.error("Error in uploadProfileImage:", err);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message.SERVER_ERROR});
       }
     },
   ],
@@ -510,26 +499,26 @@ const userProfileController = {
       const { newEmail } = req.body;
 
       if (!newEmail || !newEmail.trim()) {
-        return res.status(400).json({ success: false, message: "Please provide a valid email address" });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Please provide a valid email address" });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newEmail.trim())) {
-        return res.status(400).json({ success: false, message: "Invalid email format" });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.INVALID_EMAIL });
       }
 
       const existingUser = await User.findOne({ email: newEmail.trim() });
       if (existingUser) {
-        return res.status(400).json({ success: false, message: "Email already in use" });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Email already in use" });
       }
 
       const user = await User.findById(req.user._id);
       if (!user) {
-        return res.status(404).json({ success: false, message: "User not found" });
+        return res.status(statusCode.NOT_FOUND).json({ success: false, message: message.USER_NOT_FOUND });
       }
 
       if (user.email === newEmail.trim()) {
-        return res.status(400).json({ success: false, message: "New email cannot be the same as current email" });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: message.EMAIL_SAME });
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -551,7 +540,7 @@ const userProfileController = {
 
       if (!updatedUser) {
         console.error('❌ Failed to update user document');
-        return res.status(500).json({ success: false, message: "Failed to save user data. Please try again." });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to save user data. Please try again." });
       }
 
       console.log('✅ User updated with OTP and newEmail:', {
@@ -572,66 +561,9 @@ const userProfileController = {
       req.session.pendingOtp = otp;
       req.session.otpExpiresAt = otpExpiresAt.getTime();
 
-      const mailOptions = {
-        from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
-        to: newEmail.trim(),
-        subject: "Email Change Verification - RyzoBags",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #4f46e5; margin: 0;">RyzoBags</h1>
-                <p style="color: #6b7280; margin: 5px 0 0 0;">Email Verification</p>
-              </div>
-              
-              <h2 style="color: #111827; margin-bottom: 20px;">Verify Your New Email Address</h2>
-              
-              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-                You have requested to change your email address. To complete this process, please use the verification code below:
-              </p>
-              
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0;">
-                <p style="color: white; margin: 0 0 10px 0; font-size: 14px; font-weight: 500;">Your Verification Code</p>
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; display: inline-block;">
-                  <span style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                    ${otp}
-                  </span>
-                </div>
-              </div>
-              
-              <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0;">
-                <p style="color: #92400e; margin: 0; font-size: 14px;">
-                  <strong>⏰ Important:</strong> This verification code will expire in 10 minutes for security reasons.
-                </p>
-              </div>
-              
-              <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin-top: 30px;">
-                If you did not request this email change, please ignore this message and your account will remain secure.
-              </p>
-              
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-              
-              <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-                This is an automated message from RyzoBags. Please do not reply to this email.
-              </p>
-            </div>
-          </div>
-        `,
-        text: `
-          RyzoBags - Email Verification
-          
-          You have requested to change your email address.
-          
-          Verification Code: ${otp}
-          
-          This code is valid for 10 minutes.
-          
-          If you did not request this change, please ignore this email.
-        `,
-      };
 
       try {
-        const info = await transporter.sendMail(mailOptions);
+        await sendOtpEmail(newEmail,"Email Change Otp",template.emailChangingOtpTemplate(otp))
         
         return res.json({ success: true, message: `Verification email sent to ${newEmail.trim()}. Please check your inbox.` });
       } catch (emailError) {
@@ -646,11 +578,11 @@ const userProfileController = {
         req.session.pendingOtp = null;
         req.session.otpExpiresAt = null;
         
-        return res.status(500).json({ success: false, message: "Failed to send verification email. Please check the email address and try again." });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to send verification email. Please check the email address and try again." });
       }
     } catch (err) {
       console.error('❌ Error in initiateEmailChange:', err);
-      return res.status(500).json({ success: false, message: "Server error occurred. Please try again." });
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message.SERVER_ERROR });
     }
   },
 
@@ -660,11 +592,11 @@ const userProfileController = {
       console.log('📥 Received OTP for verification:', otp);
 
       if (!req.user?._id) {
-        return res.status(401).json({ success: false, message: "Unauthorized. Please log in again." });
+        return res.status(statusCode.UNAUTHORIZED).json({ success: false, message: message.USER_NOT_AUTHENTICATED });
       }
 
       if (!otp || !otp.trim()) {
-        return res.status(400).json({ success: false, message: "Please enter the OTP" });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Please enter the OTP" });
       }
 
       const userCheck = await User.findById(req.user._id).select('otp otpExpiresAt newEmail email');
@@ -680,7 +612,7 @@ const userProfileController = {
         validExpiresAt = new Date(req.session.otpExpiresAt);
         validNewEmail = req.session.pendingEmail;
       } else {
-        return res.status(400).json({ success: false, message: "No pending email verification found. Please request a new verification email." });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "No pending email verification found. Please request a new verification email." });
       }
 
       if (validExpiresAt < new Date()) {
@@ -692,11 +624,11 @@ const userProfileController = {
         req.session.pendingEmail = null;
         req.session.pendingOtp = null;
         req.session.otpExpiresAt = null;
-        return res.status(400).json({ success: false, message: "OTP has expired. Please request a new verification email." });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "OTP has expired. Please request a new verification email." });
       }
 
       if (validOtp !== otp.trim().toString()) {
-        return res.status(400).json({ success: false, message: "Invalid OTP. Please check and try again." });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message: "Invalid OTP. Please check and try again." });
       }
 
       const emailExists = await User.findOne({ 
@@ -713,7 +645,7 @@ const userProfileController = {
         req.session.pendingEmail = null;
         req.session.pendingOtp = null;
         req.session.otpExpiresAt = null;
-        return res.status(400).json({ success: false, message: "This email is already in use by another account." });
+        return res.status(statusCode.BAD_REQUEST).json({ success: false, message:message.EMAIL_IN_USE});
       }
 
       const oldEmail = userCheck.email;  
@@ -731,7 +663,7 @@ const userProfileController = {
 
       if (!updatedUser) {
         console.error('❌ Failed to update user email');
-        return res.status(500).json({ success: false, message: "Failed to save email update." });
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to save email update." });
       }
 
       console.log(`✅ Successfully updated email to ${validNewEmail} for user ${updatedUser._id}`);
@@ -781,10 +713,10 @@ const userProfileController = {
         console.error('⚠️ Failed to send confirmation emails:', emailError);
       }
 
-      return res.json({ success: true, message: "Email address updated successfully! You can now use your new email to log in." });
+      return res.json({ success: true, message:message.EMAIL_CHANGE_VERIFIED});
     } catch (err) {
       console.error('❌ Error in verifyEmailChange:', err);
-      return res.status(500).json({ success: false, message: "Failed to verify email. Please try again." });
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Failed to verify email. Please try again." });
     }
   },
 
@@ -792,12 +724,12 @@ const userProfileController = {
     try {
       const user = await User.findById(req.user._id).select('email newEmail otp').lean();
       if (!user.newEmail && !user.otp) {
-        return res.json({ success: true, message: 'Email updated successfully!', email: user.email });
+        return res.json({ success: true, message: message.EMAIL_CHANGE_VERIFIED, email: user.email });
       }
-      return res.json({ success: false, message: 'Email change pending.', email: user.email });
+      return res.json({ success: false, message: message.EMAIL_CHANGE_PENDING, email: user.email });
     } catch (err) {
       console.error('❌ Error in checkEmailChangeStatus:', err.message);
-      res.status(500).json({ success: false, message: 'Server error' });
+      res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message.SERVER_ERROR });
     }
   },
 
@@ -819,33 +751,33 @@ const userProfileController = {
       const { currentPassword } = req.body;
 
       if (!currentPassword) {
-        return res.status(400).json({ 
+        return res.status(statusCode.BAD_REQUEST).json({ 
           success: false, 
-          message: "Current password is required" 
+          message: message.CURRENT_PASSWORD_REQUIRED
         });
       }
 
       const user = await User.findById(req.user._id);
       if (!user) {
-        return res.status(404).json({ 
+        return res.status(statusCode.NOT_FOUND).json({ 
           success: false, 
-          message: "User not found" 
+          message: message.USER_NOT_FOUND
         });
       }
 
       if (!user.googleId) {
         if (!user.password) {
-          return res.status(400).json({ 
+          return res.status(statusCode.BAD_REQUEST).json({ 
             success: false, 
-            message: "No password set. Use forgot password to set one" 
+            message: message.NO_PASSWORD_SET
           });
         }
         
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
-          return res.status(400).json({ 
+          return res.status(statusCode.BAD_REQUEST).json({ 
             success: false, 
-            message: "Current password is incorrect" 
+            message: message.CURRENT_PASSWORD_INCORRECT 
           });
         }
       }
@@ -865,7 +797,7 @@ const userProfileController = {
       );
 
       if (!updatedUser) {
-        return res.status(500).json({ 
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
           success: false, 
           message: "Failed to save verification data" 
         });
@@ -874,71 +806,9 @@ const userProfileController = {
       req.session.passwordChangeOtp = otp;
       req.session.passwordChangeOtpExpiresAt = otpExpiresAt.getTime();
 
-      const mailOptions = {
-        from: `"RyzoBags" <${process.env.ADMIN_EMAIL}>`,
-        to: user.email,
-        subject: "Password Change Verification - RyzoBags",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #4f46e5; margin: 0;">RyzoBags</h1>
-                <p style="color: #6b7280; margin: 5px 0 0 0;">Password Change Verification</p>
-              </div>
-              
-              <h2 style="color: #111827; margin-bottom: 20px;">Verify Password Change Request</h2>
-              
-              <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-                You have requested to change your account password. To complete this process, please use the verification code below:
-              </p>
-              
-              <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 20px; text-align: center; border-radius: 8px; margin: 30px 0;">
-                <p style="color: white; margin: 0 0 10px 0; font-size: 14px; font-weight: 500;">Your Verification Code</p>
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; display: inline-block;">
-                  <span style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                    ${otp}
-                  </span>
-                </div>
-              </div>
-              
-              <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0;">
-                <p style="color: #92400e; margin: 0; font-size: 14px;">
-                  <strong>⏰ Important:</strong> This verification code will expire in 10 minutes for security reasons.
-                </p>
-              </div>
-              
-              <div style="background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 15px; margin: 20px 0;">
-                <p style="color: #dc2626; margin: 0; font-size: 14px;">
-                  <strong>🔒 Security Alert:</strong> If you did not request this password change, please contact our support team immediately and change your password.
-                </p>
-              </div>
-              
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-              
-              <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-                This is an automated message from RyzoBags. Please do not reply to this email.
-              </p>
-            </div>
-          </div>
-        `,
-        text: `
-          RyzoBags - Password Change Verification
-          
-          You have requested to change your account password.
-          
-          Verification Code: ${otp}
-          
-          This code is valid for 10 minutes.
-          
-          If you did not request this change, please contact support immediately.
-        `,
-      };
-
-      console.log(`📧 Sending password change OTP to: ${user.email}`);
-
+      
       try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Password change OTP email sent successfully:', info.messageId);
+        await sendOtpEmail(user.email,"Password Change otp",template.passwordChangeOtpTemplate(otp));
         
         return res.json({ 
           success: true, 
@@ -954,16 +824,16 @@ const userProfileController = {
         req.session.passwordChangeOtp = null;
         req.session.passwordChangeOtpExpiresAt = null;
         
-        return res.status(500).json({ 
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
           success: false, 
           message: "Failed to send verification email. Please try again." 
         });
       }
     } catch (err) {
       console.error('❌ Error in requestPasswordChangeOtp:', err);
-      return res.status(500).json({ 
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ 
         success: false, 
-        message: "Server error occurred. Please try again." 
+        message:message.SERVER_ERROR
       });
     }
   },
@@ -973,31 +843,31 @@ const userProfileController = {
       const { otp, newPassword, confirmPassword } = req.body;
 
       if (!otp || !newPassword || !confirmPassword) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: "All fields are required"
+          message: message.ALL_FIELDS_ARE_REQUIRED
         });
       }
 
       if (newPassword !== confirmPassword) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
           message: "New passwords do not match"
         });
       }
 
       if (newPassword.length < 6) {
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: "Password must be at least 6 characters long"
+          message: message.RESET_PASSWORD_TOO_SHORT
         });
       }
 
       const user = await User.findById(req.user._id).select('passwordChangeOtp passwordChangeOtpExpiresAt email');
       if (!user) {
-        return res.status(404).json({
+        return res.status(statusCode.NOT_FOUND).json({
           success: false,
-          message: "User not found"
+          message:message.USER_NOT_FOUND
         });
       }
 
@@ -1021,9 +891,9 @@ const userProfileController = {
         console.log('✅ Using session OTP data');
       } else {
         console.log('❌ No valid OTP data found');
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: "No pending password change request found. Please start over."
+          message: message.NO_PENDING_REQUEST
         });
       }
 
@@ -1036,7 +906,7 @@ const userProfileController = {
         req.session.passwordChangeOtp = null;
         req.session.passwordChangeOtpExpiresAt = null;
         
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
           message: "Verification code has expired. Please request a new one."
         });
@@ -1044,7 +914,7 @@ const userProfileController = {
 
       if (validOtp !== otp.trim()) {
         console.log(`❌ Invalid password change OTP. Provided: ${otp.trim()}, Expected: ${validOtp}`);
-        return res.status(400).json({
+        return res.status(statusCode.BAD_REQUEST).json({
           success: false,
           message: "Invalid verification code. Please check and try again."
         });
@@ -1066,7 +936,7 @@ const userProfileController = {
       );
 
       if (!updatedUser) {
-        return res.status(500).json({
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: "Failed to update password"
         });
@@ -1121,14 +991,14 @@ const userProfileController = {
 
       return res.json({
         success: true,
-        message: "Password changed successfully! Please use your new password for future logins."
+        message: message.PASSWORD_CHANGED
       });
 
     } catch (err) {
       console.error('❌ Error in verifyOtpAndChangePassword:', err);
-      return res.status(500).json({
+      return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Server error occurred. Please try again."
+        message: message.SERVER_ERROR
       });
     }
   },

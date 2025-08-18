@@ -1,4 +1,6 @@
 const Category = require('../../models/category');
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const categoryController = {
     getCategoryList: async (req, res) => {
@@ -31,7 +33,7 @@ const categoryController = {
             });
         } catch (error) {
             console.error("Error loading Categories:", error);
-            res.status(500).send('Internal server error');
+            res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.INTERNAL_SERVER_ERROR);
         }
     },
 
@@ -52,7 +54,7 @@ const categoryController = {
             });
 
             if (existingCategory) {
-                req.flash('error', 'Category with the same name already exists');
+                req.flash('error', message.CATEGORY_DUPLICATE);
                 return res.redirect('/admin/categories/add');
             }
 
@@ -64,11 +66,11 @@ const categoryController = {
             });
             await category.save();
 
-            req.flash('success', 'Category added successfully');
+            req.flash('success', message.CATEGORY_ADDED);
             res.redirect('/admin/categories');
         } catch (error) {
             console.error('Error adding category:', error);
-            req.flash('error', 'Internal server error');
+            req.flash('error', message.INTERNAL_SERVER_ERROR);
             res.redirect('/admin/categories/add');
         }
     },
@@ -82,7 +84,7 @@ const categoryController = {
             });
         } catch (error) {
             console.error('Error loading edit page:', error);
-            res.status(500).send('Internal server error');
+            res.status(statusCode.INTERNAL_SERVER_ERROR).send(message.INTERNAL_SERVER_ERROR);
         }
     },
 
@@ -100,7 +102,7 @@ const categoryController = {
             });
 
             if (duplicate) {
-                return res.status(400).json({success: false,message: "Another category with the same name already exists"});
+                return res.status(statusCode.BAD_REQUEST).json({success: false,message:message.CATEGORY_DUPLICATE});
             }
 
             await Category.findByIdAndUpdate(categoryId, {
@@ -109,30 +111,30 @@ const categoryController = {
                 offer: { discountPercentage: parsedDiscount }
             });
 
-            return res.status(200).json({success:true,message:"Category edited successfully"});
+            return res.status(statusCode.OK).json({success:true,message:message.CATEGORY_UPDATED});
         } catch (error) {
             console.error('Error updating category:', error);
-            return res.status(500).json({success: false,message: "Internal server error"});
+            return res.status(statusCode.INTERNAL_SERVER_ERROR).json({success: false,message: message.INTERNAL_SERVER_ERROR});
         }
     },
 
     unlistCategory: async (req, res) => {
         try {
             await Category.findByIdAndUpdate(req.params.id, { isActive: false });
-            return res.status(200).json({success: true})
+            return res.status(statusCode.OK).json({success: true})
         } catch (error) {
             console.error('Error unlisting category:', error);
-            res.status(500).json({success:false,message:"Internal server error"});
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({success:false,message:message.INTERNAL_SERVER_ERROR});
         }
     },
 
     listCategory: async (req, res) => {
         try {
             await Category.findByIdAndUpdate(req.params.id, { isActive: true });
-            return res.status(200).json({success: true});
+            return res.status(statusCode.OK).json({success: true});
         } catch (error) {
             console.error('Error listing category:', error);
-            res.status(500).json({success:false,message:"Internal server error"});
+            res.status(statusCode.INTERNAL_SERVER_ERROR).json({success:false,message:message.INTERNAL_SERVER_ERROR});
         }
     }
 };

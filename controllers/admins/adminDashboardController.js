@@ -4,6 +4,8 @@ const Product = require("../../models/product");
 const Category = require("../../models/category");
 const Brand = require("../../models/brand");
 const moment = require("moment");
+const statusCode = require('../../config/statusCode');
+const message = require('../../config/messages');
 
 const dashboardController = {
   getDashboardData: async (req, res) => {
@@ -32,17 +34,14 @@ const dashboardController = {
           start = moment().startOf("day").toDate();
       }
 
-      // console.log("Date range:", { start, end, filter });
 
       const orderQuery = { 
         status: { $in: ['delivered', 'processing', 'shipped', 'pending','partially returned'] }, 
         orderDate: { $gte: start, $lte: end } 
       };
       
-      // console.log("Order query:", orderQuery);
       
       const totalOrders = await Order.countDocuments(orderQuery);
-      // console.log("Total orders found:", totalOrders); 
 
       const totalProducts = await Product.countDocuments({ isListed: true });
       const totalCategories = await Category.countDocuments({ isActive: true });
@@ -79,7 +78,6 @@ const dashboardController = {
         },
       ]);
 
-      // console.log("Revenue data:", revenueData);
 
       const chartLabels = revenueData.map((data) => data._id);
       const chartValues = revenueData.map((data) => data.totalRevenue);
@@ -124,7 +122,6 @@ const dashboardController = {
         { $limit: 10 },
       ]);
 
-      // console.log("Top products:", topProducts);
 
       const topCategories = await Order.aggregate([
         {
@@ -174,7 +171,6 @@ const dashboardController = {
         { $limit: 10 },
       ]);
 
-      // console.log("Top categories:", topCategories);
 
       const topBrands = await Order.aggregate([
         {
@@ -224,7 +220,6 @@ const dashboardController = {
         { $limit: 10 },
       ]);
 
-      // console.log("Top brands:", topBrands); 
 
 
       const responseData = {
@@ -243,21 +238,13 @@ const dashboardController = {
         totalProducts: totalProducts || 0
       };
 
-      // console.log("Response data summary:", {
-      //   totalOrders: responseData.totalOrders,
-      //   totalRevenue: responseData.totalRevenue,
-      //   totalProducts: responseData.totalProducts,
-      //   totalCategories: responseData.totalCategories,
-      //   topProductsCount: responseData.topProducts.length,
-      //   topCategoriesCount: responseData.topCategories.length,
-      //   topBrandsCount: responseData.topBrands.length
-      // });
+      
 
       res.render("admin/layout", responseData);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       console.error("Error stack:", error.stack);
-      res.status(500).json({ error: "Server Error", details: error.message });
+      res.status(statusCode.INTERNAL_SERVER_ERROR).json({ error: message.SERVER_ERROR, details: error.message });
     }
   },
 };
