@@ -20,7 +20,7 @@ const orderSchema = new mongoose.Schema({
       itemSalePrice: { type: Number },
       status: { 
         type: String, 
-        enum: ["pending", "processing", "shipped", "delivered", "cancelled", "return request", "returned","failed"], 
+        enum:["pending", "processing", "shipped", "delivered", "cancelled", "return request", "returned","failed"], 
         default: "pending" 
       },
       cancelReason: { type: String },
@@ -61,7 +61,6 @@ const orderSchema = new mongoose.Schema({
     requestedAt: { type: Date },
     processedAt: { type: Date },
   },
-  
 },{timestamps: true});
 
 module.exports = mongoose.model("Order", orderSchema);

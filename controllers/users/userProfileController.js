@@ -55,21 +55,6 @@ const saveUserImage = async (req, file) => {
   }
 };
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.ADMIN_EMAIL,
-    pass: process.env.ADMIN_EMAIL_APP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  logger: true,
-  debug: true,
-});
-
 const cleanExpiredOtps = async (req, res, next) => {
   try {
     if (req.user && req.path !== '/profile/verify-email') {
@@ -115,7 +100,6 @@ const userProfileController = {
       const ordersTotalPages = Math.ceil(ordersTotal / ordersLimit);
 
       const addressDoc = await Address.findOne({ userId: req.user._id}).lean();
-      // const addresses = addressDoc ? addressDoc.address : [];
 
       const addresses = addressDoc && addressDoc.address 
         ? addressDoc.address.filter((addr) => addr.status === "active")
@@ -456,6 +440,26 @@ const userProfileController = {
       try {
         const { fullname, phoneNumber } = req.body;
         const updates = { fullname, phoneNumber };
+
+        const errors = {};
+
+        if (!fullname || fullname.trim() === "") {
+                errors.fullname = "Full Name is required.";
+            } else if (!/^[A-Za-z\s]+$/.test(fullname)) {
+                errors.fullname = "Name must contain only alphabets and spaces.";
+            } else if (fullname.length < 3) {
+                errors.fullname = "Name must be at least 3 characters.";
+            }
+        
+        if (!phoneNumber || phoneNumber.trim() === "") {
+                errors.phoneNumber = "Phone number is required.";
+            } else if (!/^\d{10}$/.test(phoneNumber)) {
+                errors.phoneNumber = "Phone number must be exactly 10 digits.";
+            }
+
+        if (Object.keys(errors).length > 0) {
+              return res.status(400).json({ errors });
+            } 
 
         if (req.file) {
           const imagePath = await saveUserImage(req, req.file);
@@ -801,8 +805,10 @@ const userProfileController = {
     }
   },
 
-  getChangePassword: (req, res) => {
+  getChangePassword: async(req, res) => {
+    const user = await User.findById(req.user._id)
     res.render("user/changePassword", {
+      user,
       activeTab: "change-password",
       success: req.flash("success"),
       error: req.flash("error"),

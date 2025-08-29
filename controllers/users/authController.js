@@ -120,16 +120,13 @@ const userController = {
                     errors.referralCode = "Invalid referral code.";
                 }
             }
-            // console.log("1",referrer)
 
             if (Object.keys(errors).length > 0) {
                 return res.status(400).json({ errors });
             }
-            // console.log(errors)
 
             try {
                 const existingUser = await User.findOne({ email });
-                // console.log("existing",existingUser)
                 if (existingUser) {
                     return res.status(400).json({ 
                         message: "User already exists. Please log in." 
@@ -144,7 +141,6 @@ const userController = {
 
             const hashedPassword = await bcrypt.hash(password, 10);
             const newReferralCode = await generateReferralCode();
-            // console.log("hashedPassword","newReferralCode",newReferralCode,hashedPassword)
             req.session.fullname = fullname;
             req.session.email = email;
             req.session.phone = phone;
@@ -158,19 +154,8 @@ const userController = {
             req.session.otpExpire = Date.now() + 1 * 60 * 1000;
 
             console.log("Generated OTP:", otpCode);
-            // console.log("Session Data:", {
-            //     fullname: req.session.fullname,
-            //     email: req.session.email,
-            //     phone: req.session.phone,
-            //     otpExpire: new Date(req.session.otpExpire),
-            //     referralCode : req.session.referralCode,
-            //     newReferralCode: req.session.newReferralCode,
-                
-            // });
-
             try {
                 await sendOtpEmail(email, otpCode);
-                // console.log("OTP email sent successfully");
             } catch (emailError) {
                 console.error('Email sending error:', emailError);
                 return res.status(500).json({ 
@@ -203,15 +188,6 @@ const userController = {
 
     verifyOtp: async (req, res) => {
         try {
-            // console.log("=== OTP VERIFICATION DEBUG ===");
-            // console.log("Stored OTP:", req.session.otp);
-            // console.log("Stored Email:", req.session.email);
-            // console.log("Stored Expiry:", req.session.otpExpire, "Current Time:", Date.now());
-            // console.log("Session fullname:", req.session.fullname);
-            // console.log("Session phone:", req.session.phone);
-            // console.log("Session referralCode:", req.session.referralCode);
-            // console.log("Session newReferralCode:", req.session.newReferralCode);
-
             const { otp } = req.body;
 
             if (!req.session.otp || !req.session.email || !req.session.fullname || !req.session.password) {

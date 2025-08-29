@@ -1,6 +1,7 @@
 const Order = require('../../models/order');
 const User = require('../../models/User');
 const Product = require('../../models/product');
+const Coupon = require('../../models/coupon');
 const WalletTransaction = require('../../models/wallet');
 const nodemailer = require('nodemailer');
 
@@ -357,8 +358,6 @@ const adminOrderController = {
         const { orderId } = req.params;
         const { action } = req.body;
 
-        // console.log('Processing return request:', { orderId, action });
-
         if (!['approve', 'reject'].includes(action)) {
           return res.status(400).json({ message: 'Invalid action' });
         }
@@ -366,11 +365,8 @@ const adminOrderController = {
         const order = await Order.findOne({ orderId: orderId }).populate('items.productId');
         
         if (!order) {
-          // console.log('Order not found:', orderId);
           return res.status(400).json({ message: 'Order not found' });
         }
-
-        // console.log('Order status:', order.status);
 
         const targetItems = order.items.filter(item => 
           item.status === 'return request' || 
@@ -382,8 +378,6 @@ const adminOrderController = {
           return res.status(400).json({ message: 'No items found with return requests' });
         }
 
-        // console.log(`Found ${targetItems.length} items with return requests`);
-        
         if (!order.returnRequest) {
           order.returnRequest = {
             isRequested: false,
@@ -394,6 +388,7 @@ const adminOrderController = {
         }
 
         if (action === 'approve') {
+          // ✅ Approve return
           targetItems.forEach((item) => {
             item.status = 'returned';
             item.itemStatus = 'returned';
@@ -419,6 +414,7 @@ const adminOrderController = {
           order.returnRequest.isRequested = false;
           order.returnRequest.processedAt = new Date();
 
+          // ✅ Restore inventory
           for (const item of targetItems) {
             if (item.productId && item.size) {
               try {
@@ -427,17 +423,34 @@ const adminOrderController = {
                 }, {
                   arrayFilters: [{ 'variant.size': item.size }],
                 });
-                // console.log(`Inventory restored for item: ${item.productId._id || item.productId}, size: ${item.size}, quantity: ${item.quantity}`);
               } catch (inventoryError) {
                 console.error('Error updating inventory:', inventoryError);
               }
             }
           }
 
-          const refundAmount = targetItems.reduce((total, item) => {
-            const itemPrice = item.itemSalePrice || (item.price || 0);
-            return total + (itemPrice * item.quantity);
-          }, 0);
+          // ✅ Refund calculation with coupon share logic
+          let adjustedRefundAmount = 0;
+
+          if (order.paymentMethod === 'razorpay') {
+            const totalDiscounted = order.items.reduce(
+              (sum, i) => sum + (i.discountedPrice || i.itemSalePrice || i.price || 0) * i.quantity,
+              0
+            );
+            const couponDiscount = order.discount || 0;
+
+            adjustedRefundAmount = targetItems.reduce((total, item) => {
+              const itemTotal = (item.discountedPrice || item.itemSalePrice || item.price || 0) * item.quantity;
+              const couponShare = totalDiscounted > 0 ? (itemTotal / totalDiscounted) * couponDiscount : 0;
+              return total + (itemTotal - couponShare);
+            }, 0);
+          } else {
+            // COD / no coupon → full refund
+            adjustedRefundAmount = targetItems.reduce((total, item) => {
+              const itemPrice = item.discountedPrice || item.itemSalePrice || item.price || 0;
+              return total + (itemPrice * item.quantity);
+            }, 0);
+          }
 
           try {
             const lastTx = await WalletTransaction.findOne({ userId: order.userId })
@@ -445,31 +458,25 @@ const adminOrderController = {
               .lean();
             
             const currentBalance = lastTx ? lastTx.wallet.balance : 0;
-
             const transactionId = `REF_${orderId}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
             const newTransaction = new WalletTransaction({
               userId: order.userId,
               transactionId: transactionId,
               productId: orderId,
-              amount: refundAmount,
+              amount: adjustedRefundAmount,
               type: 'refund',
               status: 'success',
               reference: orderId,
               description: `Refund for returned items in order ${orderId}`,
               wallet: {
-                balance: currentBalance + refundAmount,
+                balance: currentBalance + adjustedRefundAmount,
                 lastUpdated: new Date()
               },
               createdAt: new Date(),
             });
 
             await newTransaction.save();
-            // console.log('Wallet credited successfully:', {
-            //   transactionId,
-            //   amount: refundAmount,
-            //   newBalance: currentBalance + refundAmount
-            // });
 
             try {
               const user = await User.findById(order.userId);
@@ -489,8 +496,8 @@ const adminOrderController = {
                       <div style="background-color: #f3f4f6; padding: 15px; margin: 15px 0; border-radius: 5px;">
                         ${returnedItemsDetails}
                       </div>
-                      <p>A refund of <strong>₹${refundAmount}</strong> has been credited to your wallet.</p>
-                      <p>Current wallet balance: <strong>₹${newTransaction.wallet.balance}</strong></p>
+                      <p>A refund of <strong>₹${adjustedRefundAmount.toFixed(2)}</strong> has been credited to your wallet.</p>
+                      <p>Current wallet balance: <strong>₹${newTransaction.wallet.balance.toFixed(2)}</strong></p>
                       <p>Transaction ID: <strong>${transactionId}</strong></p>
                       <p style="margin-top: 30px; color: #6b7280;">
                         Best regards,<br>
@@ -506,20 +513,14 @@ const adminOrderController = {
 
           } catch (walletError) {
             console.error('Error processing wallet transaction:', walletError);
-            
             if (walletError.code === 11000) {
-              return res.status(500).json({ 
-                message: 'Transaction ID conflict. Please try again.' 
-              });
+              return res.status(500).json({ message: 'Transaction ID conflict. Please try again.' });
             }
-            
-            return res.status(500).json({ 
-              message: 'Error processing refund. Please try again.',
-              error: process.env.NODE_ENV === 'development' ? walletError.message : undefined
-            });
+            return res.status(500).json({ message: 'Error processing refund. Please try again.' });
           }
 
         } else {
+          // ❌ Reject return
           targetItems.forEach((item) => {
             if (item.status === 'return request') {
               item.status = item.originalStatus || 'delivered';
@@ -573,12 +574,14 @@ const adminOrderController = {
         }
 
         await order.save();
-        // console.log('Order saved successfully');
         
         return res.json({ 
           message: `Return request ${action}d successfully for ${targetItems.length} item(s)`,
           newStatus: order.status,
           processedItems: targetItems.length,
+          ...(action === 'approve' && {
+            refundAmount: adjustedRefundAmount
+          }),
           returnedItems: targetItems.map(item => ({
             productId: item.productId._id || item.productId,
             size: item.size,
@@ -595,6 +598,7 @@ const adminOrderController = {
         });
       }
     }
+
 };
 
 module.exports = adminOrderController;

@@ -204,33 +204,19 @@
             </div>
           </div>
 
-          <!-- Order Details -->
-          <%
-          let cartTotal = 0;
-          if (cart && cart.items && cart.items.length > 0) {
-            for (let i = 0; i < cart.items.length; i++) {
-              if (cart.items[i].productId) {
-                const product = cart.items[i].productId;
-                const variant = product.variants.find(v => v.size === cart.items[i].size);
-                const price = variant ? variant.regularPrice : 0;
-                cartTotal += price * cart.items[i].quantity;
-              }
-            }
-          }
-          %>
 
           <div class="border-t border-gray-200 pt-3 sm:pt-4 space-y-2 sm:space-y-3">
             <div class="flex justify-between text-xs sm:text-sm">
               <span class="text-gray-600">Subtotal</span>
-              <span class="text-gray-800 font-medium">₹<%= subtotal %></span>
+              <span class="text-gray-800 font-medium">₹<%= regularTotal %></span>
             </div>
             <div class="flex justify-between text-xs sm:text-sm">
-              <span class="text-gray-600">Coupon</span>
-              <span class="text-gray-800 font-medium" id="couponDiscount">₹-<%= couponDiscount %></span>
-            </div>
-            <div class="flex justify-between text-xs sm:text-sm">
-              <span class="text-gray-600">Discount</span>
+              <span class="text-gray-600">Offer Discount</span>
               <span class="text-gray-800 font-medium" id="productDiscount">₹<%= productDiscount %></span>
+            </div>
+            <div class="flex justify-between text-xs sm:text-sm">
+              <span class="text-gray-600">Coupon Discount</span>
+              <span class="text-gray-800 font-medium" id="couponDiscount">₹-<%= couponDiscount %></span>
             </div>
             <div class="flex justify-between text-sm sm:text-base font-medium pt-2 border-t border-gray-200">
               <span class="text-gray-900">Total</span>

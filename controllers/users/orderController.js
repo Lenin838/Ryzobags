@@ -4,7 +4,9 @@ const Address = require('../../models/address');
 const User = require('../../models/User');
 const WalletTransaction = require('../../models/wallet');
 const PDFDocument = require('pdfkit');
+const Coupon = require('../../models/coupon');
 const address = require('../../models/address');
+const product = require('../../models/product');
 
 const orderController = {
     generateTransactionId: () => {
@@ -140,20 +142,19 @@ const orderController = {
 
     cancelOrderItem: async (req, res) => {
         try {
-            
-            const { orderId,itemId, reason } = req.body;
+            const { orderId, itemId, reason } = req.body;
             const order = await Order.findOne({ orderId, userId: req.user._id });
 
             if (!order) {
                 return res.status(404).json({ error: "Order not found" });
             }
 
-            if (!["pending", "processing"].includes(order.status)) {
+            if (!["pending", "processing", "partially returned"].includes(order.status)) {
                 return res.status(400).json({ error: "Order items cannot be cancelled" });
             }
 
             const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
-            
+
             if (itemIndex === -1) {
                 return res.status(404).json({ error: "Item not found in order" });
             }
@@ -164,57 +165,66 @@ const orderController = {
                 return res.status(400).json({ error: "Item cannot be cancelled" });
             }
 
-            const itemRefundAmount = (targetItem.itemSalePrice || 0) * (targetItem.quantity || 0);
             const productId = targetItem.productId.toString();
+
+            let itemRefundAmount = (targetItem.itemSalePrice || 0) * (targetItem.quantity || 0);
+
+            if (order.paymentMethod === "razorpay") {
+                const totalDiscounted = order.items.reduce((sum, i) => {
+                    return sum + ((i.discountedPrice || i.itemSalePrice || 0) * (i.quantity || 0));
+                }, 0);
+
+                const couponDiscount = order.discount || 0;
+
+                const itemTotal = (targetItem.discountedPrice || targetItem.itemSalePrice || 0) * (targetItem.quantity || 0);
+                const couponShare = totalDiscounted > 0 ? (itemTotal / totalDiscounted) * couponDiscount : 0;
+
+                itemRefundAmount = itemTotal - couponShare;
+            }
 
             targetItem.status = "cancelled";
             targetItem.cancelReason = reason || "Item cancelled by user";
             targetItem.cancelledAt = new Date();
 
             const activeItems = order.items.filter(item => item.status !== "cancelled");
-            
+
             if (activeItems.length === 0) {
                 order.status = "cancelled";
                 order.cancelReason = "All items cancelled";
                 order.cancelledAt = new Date();
+                order.totalAmount = 0;
+                order.discount = 0;
             } else {
                 const newSubtotal = activeItems.reduce((sum, item) => {
                     const itemPrice = typeof item.itemSalePrice === 'number' ? item.itemSalePrice : 0;
                     const itemQuantity = typeof item.quantity === 'number' ? item.quantity : 0;
                     return sum + (itemPrice * itemQuantity);
                 }, 0);
-                
-                const originalSubtotal = order.items.reduce((sum, item) => {
-                    const itemPrice = typeof item.itemSalePrice === 'number' ? item.itemSalePrice : 0;
-                    const itemQuantity = typeof item.quantity === 'number' ? item.quantity : 0;
-                    return sum + (itemPrice * itemQuantity);
-                }, 0);
-                
-                const discountRatio = originalSubtotal > 0 ? (order.discount || 0) / originalSubtotal : 0;
-                const newDiscount = newSubtotal * discountRatio;
-                
+
+                const newDiscount = order.discount || 0;
+                const newTotalAmount = Math.max(newSubtotal - newDiscount, 0);
+
+                order.totalAmount = newTotalAmount;
             }
 
-
-
             for (const item of order.items) {
-                        if (item.productId && item.size) {
-                          try {
-                            await Product.findByIdAndUpdate(item.productId._id || item.productId, {
-                              $inc: { 'variants.$[variant].quantity': item.quantity },
-                            }, {
-                              arrayFilters: [{ 'variant.size': item.size }],
-                            });
-                          } catch (inventoryError) {
-                            console.error('Error updating inventory:', inventoryError);
-                          }
-                        }
-                      }
+                if (item.productId && item.size) {
+                    try {
+                        await Product.findByIdAndUpdate(item.productId._id || item.productId, {
+                            $inc: { 'variants.$[variant].quantity': item.quantity },
+                        }, {
+                            arrayFilters: [{ 'variant.size': item.size }],
+                        });
+                    } catch (inventoryError) {
+                        console.error('Error updating inventory:', inventoryError);
+                    }
+                }
+            }
 
             await order.save();
 
             let walletResponse = {};
-            if (itemRefundAmount > 0 && order.paymentMethod==="razorpay") {
+            if (itemRefundAmount > 0 && order.paymentMethod === "razorpay") {
                 try {
                     const newBalance = await orderController.creditWallet(
                         req.user._id,
@@ -236,12 +246,14 @@ const orderController = {
                 }
             }
 
-            res.json({ 
-                success: "Item cancelled successfully" + (itemRefundAmount > 0 ? " and refund credited to wallet" : ""), 
+            res.json({
+                success: "Item cancelled successfully" + (itemRefundAmount > 0 ? " and refund credited to wallet" : ""),
                 orderId: order.orderId,
                 itemId: targetItem._id,
                 orderStatus: order.status,
                 activeItemsCount: activeItems.length,
+                newTotalAmount: order.totalAmount,
+                couponDiscount: order.discount,
                 ...walletResponse
             });
         } catch (err) {
@@ -251,95 +263,122 @@ const orderController = {
     },
 
     getOrderDetails: async (req, res) => {
-    try {
-        const order = await Order.findById(req.params.id)
-            .populate("items.productId")
-            .populate('address.address')
-            .lean();
-
-        if (!order || order.userId.toString() !== req.user._id.toString()) {
-            req.flash("error", "Order not found");
-            return res.redirect("/user/profile?tab=orders");
-        }
-
-        if (!order.items || !Array.isArray(order.items)) {
-            console.error(`Order ${order.orderId} has invalid items array:`, order.items);
-            req.flash("error", "Invalid order data");
-            return res.redirect("/user/profile?tab=orders");
-        }
-
-        // console.log("Order details:", order.address.toString());
-
-        let selectedAddress = null;
-        
         try {
-            const userAddressDoc = await Address.findOne({ userId: order.userId }).lean();
-            // console.log('User address document found:', userAddressDoc);
-            
-            if (userAddressDoc && userAddressDoc.address && Array.isArray(userAddressDoc.address)) {
-                // console.log('Address array length:', userAddressDoc.address.length);
-                if (order.address) {
-                    selectedAddress = userAddressDoc.address.find(addr => 
-                        addr._id.toString() === order.address.toString()
-                    );
-                    // console.log('Order-specific address found:', selectedAddress);
-                }
-                
-                if (!selectedAddress) {
-                    selectedAddress = userAddressDoc.address.find(addr => 
-                        addr.isDefault === true && addr.status === 'active'
-                    );
-                    // console.log('Default address found:', selectedAddress);
-                }
-                
-                if (!selectedAddress) {
-                    selectedAddress = userAddressDoc.address.find(addr => addr.status === 'active');
-                    // console.log('First active address found:', selectedAddress);
-                }
-                
-                if (!selectedAddress && userAddressDoc.address.length > 0) {
-                    selectedAddress = userAddressDoc.address[0];
-                    // console.log('First available address used:',selectedAddress);
-                }
+            const order = await Order.findById(req.params.id)
+                .populate("items.productId")
+                .populate("address.address")
+                .lean();
+
+            if (!order || order.userId.toString() !== req.user._id.toString()) {
+                req.flash("error", "Order not found");
+                return res.redirect("/user/profile?tab=orders");
             }
-        } catch (addressError) {
-            console.error('Error fetching user address:', addressError);
-        }
 
-        order.items.forEach((item, index) => {
-            if (!item.status) {
-                item.status = order.status === "cancelled" ? "cancelled" : "active";
+            if (!order.items || !Array.isArray(order.items)) {
+                console.error(`Order ${order.orderId} has invalid items array:`, order.items);
+                req.flash("error", "Invalid order data");
+                return res.redirect("/user/profile?tab=orders");
             }
-            if (typeof item.itemSalePrice !== "number") {
-                // console.error(`Invalid price for item ${index} in order ${order.orderId}:`, item);
-                item.itemSalePrice = 0;
+
+            let selectedAddress = null;
+
+            try {
+                const userAddressDoc = await Address.findOne({ userId: order.userId }).lean();
+
+                if (userAddressDoc && userAddressDoc.address && Array.isArray(userAddressDoc.address)) {
+                    if (order.address) {
+                        selectedAddress = userAddressDoc.address.find(
+                            (addr) => addr._id.toString() === order.address.toString()
+                        );
+                    }
+
+                    if (!selectedAddress) {
+                        selectedAddress = userAddressDoc.address.find(
+                            (addr) => addr.isDefault === true && addr.status === "active"
+                        );
+                    }
+
+                    if (!selectedAddress) {
+                        selectedAddress = userAddressDoc.address.find((addr) => addr.status === "active");
+                    }
+
+                    if (!selectedAddress && userAddressDoc.address.length > 0) {
+                        selectedAddress = userAddressDoc.address[0];
+                    }
+                }
+            } catch (addressError) {
+                console.error("Error fetching user address:", addressError);
             }
-            if (typeof item.quantity !== "number") {
-                // console.error(`Invalid quantity for item ${index} in order ${order.orderId}:`, item);
-                item.quantity = 0;
+
+            order.items.forEach((item) => {
+                if (!item.status) {
+                    item.status = order.status === "cancelled" ? "cancelled" : "active";
+                }
+                if (typeof item.itemSalePrice !== "number") {
+                    item.itemSalePrice = 0;
+                }
+                if (typeof item.quantity !== "number") {
+                    item.quantity = 0;
+                }
+            });
+
+            const activeItems = order.items.filter(
+                (item) => item.status !== "cancelled" && item.status !== "returned"
+            );
+
+            const regularPriceTotal = activeItems.reduce((total, item) => {
+                const variant =
+                    item.productId && item.productId.variants
+                        ? item.productId.variants.find((v) => v.size === item.size)
+                        : null;
+                const regularPrice = variant ? variant.regularPrice : 0;
+                const qty = parseInt(item.quantity) || 0;
+                return total + regularPrice * qty;
+            }, 0);
+
+            const salePriceTotal = activeItems.reduce((total, item) => {
+                const price = parseFloat(item.itemSalePrice) || 0;
+                const qty = parseInt(item.quantity) || 0;
+                return total + price * qty;
+            }, 0);
+
+            const offerDiscount = regularPriceTotal - salePriceTotal;
+
+            let couponDiscount = 0;
+            if (order.paymentMethod === "razorpay" && order.couponId) {
+                const totalDiscounted = activeItems.reduce(
+                    (sum, i) => sum + i.itemSalePrice * i.quantity,
+                    0
+                );
+
+                couponDiscount = order.discount || 0;
+
+                activeItems.forEach((item) => {
+                    const itemTotal = item.itemSalePrice * item.quantity;
+                    const couponShare =
+                        totalDiscounted > 0 ? (itemTotal / totalDiscounted) * couponDiscount : 0;
+
+                    item.couponShare = couponShare;
+                    item.finalAmount = itemTotal - couponShare;
+                });
             }
-        });
 
-        const activeItemsTotal = order.amountPaid
-            // .reduce((sum, item) => {
-            //     const price = typeof item.itemSalePrice === 'number' ? item.itemSalePrice : 0;
-            //     const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
-            //     return sum + (price * quantity);
-            // }, 0);
+            const activeItemsTotal = order.totalAmount || salePriceTotal;
 
-        // console.log('Selected address for rendering:', selectedAddress);
-
-        res.render("user/orderDetails", {
-            order,
-            selectedAddress,
-            activeItemsTotal,
-            activeTab: "orders",
-            success: req.flash("success"),
-            error: req.flash("error"),
-        });
-
+            res.render("user/orderDetails", {
+                order,
+                selectedAddress,
+                activeItemsTotal,
+                regularPriceTotal,
+                salePriceTotal,
+                offerDiscount,
+                couponDiscount,
+                activeTab: "orders",
+                success: req.flash("success"),
+                error: req.flash("error"),
+            });
         } catch (err) {
-            console.error('Error in getOrderDetails:', err);
+            console.error("Error in getOrderDetails:", err);
             req.flash("error", "Failed to load order details");
             res.redirect("/user/profile?tab=orders");
         }
@@ -479,226 +518,373 @@ const orderController = {
         const userId = req.user?._id;
 
         if (!userId) {
-            return res.status(401).send('User not authenticated');
+        return res.status(401).send("User not authenticated");
         }
 
         const order = await Order.findOne({ _id: orderId, userId: userId })
-            .populate('items.productId');
+        .populate("items.productId")
+        .populate("couponId");
 
         if (!order) {
-            return res.status(404).send('Order not found');
+        return res.status(404).send("Order not found");
         }
 
-        const deliveredItems = order.items.filter(item => item.status === 'delivered');
-        
-        if (deliveredItems.length === 0) {
-            return res.status(400).send('Invoice can only be downloaded for orders with delivered items');
-        }
-
-        const doc = new PDFDocument({ 
-            margin: 50,
-            size: 'A4',
-            bufferPages: true
+        const doc = new PDFDocument({
+        margin: 50,
+        size: "A4",
+        bufferPages: true,
         });
-        
+
         let buffers = [];
-        doc.on('data', buffers.push.bind(buffers));
-        doc.on('end', () => {
-            const pdfData = Buffer.concat(buffers);
-            res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderId}.pdf`);
-            res.contentType('application/pdf');
-            res.send(pdfData);
+        doc.on("data", buffers.push.bind(buffers));
+        doc.on("end", () => {
+        const pdfData = Buffer.concat(buffers);
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename=invoice-${order.orderId}.pdf`
+        );
+        res.contentType("application/pdf");
+        res.send(pdfData);
         });
 
-        const primaryColor = '#4F46E5'; 
-        const secondaryColor = '#10B981'; 
-        const accentColor = '#F59E0B'; 
-        const textColor = '#374151'; 
-        const lightColor = '#F3F4F6'; 
+        // Colors
+        const primaryColor = "#3B82F6";
+        const secondaryColor = "#10B981";
+        const accentColor = "#F59E0B";
+        const textColor = "#374151";
+        const lightColor = "#F3F4F6";
+        const errorColor = "#EF4444";
+        const originalPriceColor = "#9CA3AF";
+        const discountColor = "#10B981";
 
-        doc
-            .fillColor(primaryColor)
-            .fontSize(20)
-            .text('RYZO BAGS', { align: 'left' })
-            .moveDown(0.5);
-        
-        doc
-            .fillColor(textColor)
-            .fontSize(10)
-            .text('123 Store Street, City, India', { align: 'left' })
-            .text('ZIP: 123456 | Phone: +91 9876543210')
-            .text('Email: support@ryzobags.com | Web: www.ryzobags.com')
-            .moveDown(1);
+        let totalOriginalValue = 0;
+        let totalDiscountedValue = 0;
+        let productSavings = 0;
 
-        doc
-            .fillColor(primaryColor)
-            .fontSize(18)
-            .text('TAX INVOICE', { align: 'center', underline: true })
-            .moveDown(1);
+        /**
+         * STEP 1: Calculate total order value (after product-level discounts, before coupon)
+         */
+        let totalOrderValue = order.items.reduce((sum, orderItem) => {
+        const product = orderItem.productId;
+        if (product && product.variants) {
+            const variant = product.variants.find((v) => v.size === orderItem.size);
+            if (variant) {
+            const discountedPrice =
+                variant.discountedPrice || variant.regularPrice;
+            return sum + discountedPrice * orderItem.quantity;
+            }
+        }
+        return sum;
+        }, 0);
 
-        const col1 = 50;
-        const col2 = 300;
-        
-        doc
-            .fillColor(textColor)
-            .fontSize(10)
-            .text('Invoice Number:', col1, 180)
-            .text(order.orderId, col1 + 80, 180)
-            .text('Invoice Date:', col1, 195)
-            .text(new Date(order.orderDate).toLocaleDateString(), col1 + 80, 195)
-            .text('Order Date:', col1, 210)
-            .text(new Date(order.orderDate).toLocaleDateString(), col1 + 80, 210)
-            .text('Payment Method:', col1, 225)
-            .text(order.paymentMethod || 'N/A', col1 + 80, 225);
+        /**
+         * STEP 2: Build item list with proportional coupon discount
+         */
+        const itemsWithDiscounts = order.items.map((item) => {
+        const product = item.productId;
+        let originalPrice = 0;
+        let discountedPrice = 0;
+        let couponDiscountAmount = 0;
+        let finalPrice = 0;
 
-        // console.log('Order address field:', order.address);
-        // console.log('Order userId:', order.userId);
-        
+        if (product && product.variants) {
+            const variant = product.variants.find((v) => v.size === item.size);
+            if (variant) {
+            originalPrice = variant.regularPrice;
+            discountedPrice = variant.discountedPrice || originalPrice;
+
+            // proportional coupon distribution
+            if (order.couponId && order.discount > 0 && totalOrderValue > 0) {
+                const itemValue = discountedPrice * item.quantity;
+                couponDiscountAmount =
+                (itemValue / totalOrderValue) * order.discount;
+            }
+
+            // final price per unit
+            finalPrice = Math.max(
+                discountedPrice - couponDiscountAmount / item.quantity,
+                0
+            );
+
+            totalOriginalValue += originalPrice * item.quantity;
+            totalDiscountedValue += finalPrice * item.quantity;
+            }
+        }
+
+        return {
+            ...item.toObject(),
+            originalPrice,
+            discountedPrice,
+            couponDiscountAmount, // total coupon discount for this item line
+            finalPrice,
+        };
+        });
+
+        productSavings = totalOriginalValue - totalDiscountedValue;
+
+        // Coupon info
+        let couponDiscount = 0;
+        let couponCode = "";
+        if (order.couponId) {
+        couponCode = order.couponId.code || "";
+        couponDiscount = order.discount || 0;
+        }
+
+        // Total savings
+        const totalSavings = productSavings + couponDiscount;
+
+        /**
+         * ========= PDF DESIGN =========
+         */
+        // Header background
+        doc.rect(0, 0, doc.page.width, 120).fill(primaryColor);
+
+        doc.fillColor("#FFFFFF")
+        .fontSize(24)
+        .text("RYZO BAGS", 50, 40, { align: "left" });
+
+        doc.fillColor("#E5E7EB")
+        .fontSize(12)
+        .text("Premium Bags & Accessories", 50, 70);
+
+        doc.fillColor("#FFFFFF").fontSize(20).text("INVOICE", 0, 80, {
+        align: "center",
+        });
+
+        // Invoice details
+        const boxY = 140;
+        doc.roundedRect(50, boxY, 500, 80, 5).fill(lightColor);
+
+        doc.fillColor(primaryColor).fontSize(14).text("INVOICE DETAILS", 65, boxY + 15);
+
+        doc.fillColor(textColor)
+        .fontSize(10)
+        .text(`Invoice No: ${order.orderId}`, 65, boxY + 40)
+        .text(`Date: ${new Date().toLocaleDateString()}`, 65, boxY + 55)
+        .text(
+            `Order Date: ${new Date(order.orderDate).toLocaleDateString()}`,
+            250,
+            boxY + 40
+        )
+        .text(`Payment: ${order.paymentMethod}`, 250, boxY + 55)
+        .text(`Status: ${order.status}`, 400, boxY + 40)
+        .text(`Payment: ${order.paymentStatus || "N/A"}`, 400, boxY + 55);
+
+        // Fetch Address
         let selectedAddress = null;
-        
         try {
-            const userAddressDoc = await Address.findOne({ userId: order.userId });
-            // console.log('User address document found:', !!userAddressDoc);
-            
-            if (userAddressDoc && userAddressDoc.address && Array.isArray(userAddressDoc.address)) {
-                // console.log('Address array length:', userAddressDoc.address.length);
-                
-                selectedAddress = userAddressDoc.address.find(addr => 
-                    addr._id.toString() === order.address.toString()
-                );
-                
-                if (!selectedAddress) {
-                    selectedAddress = userAddressDoc.address.find(addr => addr.status === 'active');
-                }
-                
-                if (!selectedAddress && userAddressDoc.address.length > 0) {
-                    selectedAddress = userAddressDoc.address[0];
-                }
-                
-                // console.log('Selected address found:', selectedAddress);
+        const userAddressDoc = await Address.findOne({ userId: order.userId });
+        if (userAddressDoc && Array.isArray(userAddressDoc.address)) {
+            selectedAddress = userAddressDoc.address.find(
+            (addr) => addr._id.toString() === order.address.toString()
+            );
+            if (!selectedAddress) {
+            selectedAddress = userAddressDoc.address.find(
+                (addr) => addr.status === "active"
+            );
             }
+            if (!selectedAddress && userAddressDoc.address.length > 0) {
+            selectedAddress = userAddressDoc.address[0];
+            }
+        }
         } catch (addressError) {
-            console.error('Error fetching user address:', addressError);
+        console.error("Error fetching user address:", addressError);
         }
 
-        doc
-            .fillColor(primaryColor)
-            .fontSize(12)
-            .text('Bill To:', col2, 180, { underline: true })
-            .fillColor(textColor)
-            .fontSize(10);
+        // Billing address
+        const addressY = boxY + 100;
+        doc.fillColor(primaryColor).fontSize(12).text("BILLING ADDRESS", 50, addressY);
 
+        doc.fillColor(textColor).fontSize(10);
+        let addressText = "";
         if (selectedAddress) {
-            doc
-                .text(selectedAddress.name || 'N/A', col2, 195)
-                .text(`${selectedAddress.landMark || ''}, ${selectedAddress.city || 'N/A'}`, col2, 210)
-                .text(`${selectedAddress.state || 'N/A'} - ${selectedAddress.pincode || 'N/A'}`, col2, 225)
-                .text(`Phone: ${selectedAddress.phone || 'N/A'}`, col2, 240);
-            
-            if (selectedAddress.altPhone) {
-                doc.text(`Alt Phone: ${selectedAddress.altPhone}`, col2, 255);
-            }
-            if (selectedAddress.addressType) {
-                doc.text(`Type: ${selectedAddress.addressType}`, col2, 270);
-            }
+        addressText = `${selectedAddress.name || "N/A"}\n${
+            selectedAddress.landMark || ""
+        }\n${selectedAddress.city || "N/A"}, ${
+            selectedAddress.state || "N/A"
+        } - ${selectedAddress.pincode || "N/A"}\nPhone: ${
+            selectedAddress.phone || "N/A"
+        }`;
+        if (selectedAddress.altPhone) addressText += `, ${selectedAddress.altPhone}`;
         } else {
-            doc.text('Address not available', col2, 195);
+        addressText = "Address information not available";
         }
+        doc.text(addressText, 50, addressY + 20, { width: 200, lineGap: 4 });
 
-        doc.moveDown(2);
-        const tableTop = 320; 
-        
-        doc
-            .fillColor(lightColor)
-            .rect(50, tableTop, 500, 20)
-            .fill()
-            .fillColor(primaryColor)
-            .fontSize(10)
-            .font('Helvetica-Bold')
-            .text('Product', 50, tableTop + 5)
-            .text('Size', 200, tableTop + 5)
-            .text('Qty', 250, tableTop + 5)
-            .text('Unit Price', 300, tableTop + 5)
-            .text('Amount', 450, tableTop + 5, { width: 100, align: 'right' });
+        // Order Summary Table
+        const summaryY = addressY + 100;
+        doc.fillColor(primaryColor).fontSize(12).text("ORDER SUMMARY", 50, summaryY);
 
+        const tableTop = summaryY + 20;
+        doc.roundedRect(50, tableTop, 500, 20, 3).fill(primaryColor);
+
+        doc.fillColor("#FFFFFF")
+        .fontSize(9)
+        .font("Helvetica-Bold")
+        .text("PRODUCT", 60, tableTop + 5, { width: 100 })
+        .text("SIZE", 170, tableTop + 5)
+        .text("QTY", 210, tableTop + 5)
+        .text("ORIGINAL", 240, tableTop + 5)
+        .text("DISCOUNT", 300, tableTop + 5)
+        .text("COUPON", 360, tableTop + 5)
+        .text("FINAL", 420, tableTop + 5)
+        .text("TOTAL", 470, tableTop + 5, { width: 80, align: "right" });
+
+        // Table rows
         let tablePosition = tableTop + 25;
-        doc.fillColor(textColor).font('Helvetica');
-        
-        let deliveredSubtotal = 0;
-        deliveredItems.forEach((item, index) => {
-            const rowY = tablePosition + (index * 25);
-            const totalPrice = item.quantity * item.itemSalePrice;
-            deliveredSubtotal += totalPrice;
-            
-            if (index % 2 === 0) {
-                doc.fillColor(lightColor).rect(50, rowY - 5, 500, 20).fill();
-            } else {
-                doc.fillColor('#FFFFFF').rect(50, rowY - 5, 500, 20).fill();
-            }
-            
-            doc
-                .fillColor(textColor)
-                .fontSize(10)
-                .text(item.productId.name || 'N/A', 50, rowY)
-                .text(item.size || 'N/A', 200, rowY)
-                .text(item.quantity.toString(), 250, rowY)
-                .text(`₹${item.itemSalePrice.toFixed(2)}`, 300, rowY)
-                .text(`₹${totalPrice.toFixed(2)}`, 450, rowY, { width: 100, align: 'right' });
+        doc.fillColor(textColor).font("Helvetica");
+
+        itemsWithDiscounts.forEach((item, index) => {
+        const rowY = tablePosition + index * 35;
+        const product = item.productId;
+
+        // Alternate row bg
+        doc.fillColor(index % 2 === 0 ? lightColor : "#FFFFFF")
+            .rect(50, rowY - 5, 500, 30)
+            .fill();
+
+        doc.fillColor(textColor).fontSize(8).text(product?.name || "N/A", 60, rowY, {
+            width: 100,
         });
 
-        const summaryTop = tablePosition + (deliveredItems.length * 25) + 20;
-        
-        const totalOrderAmount = order.items.reduce((sum, item) => sum + (item.quantity * item.itemSalePrice), 0);
-        const proportionalDiscount = order.discount || 0;
-        
-        doc
-            .fillColor(secondaryColor)
-            .fontSize(12)
-            .text('Subtotal:', 350, summaryTop)
-            .text(`₹${deliveredSubtotal.toFixed(2)}`, 450, summaryTop, { width: 100, align: 'right' });
-        
-        if (proportionalDiscount > 0) {
-            doc
-                .text('Discount:', 350, summaryTop + 20)
-                .text(`- ₹${proportionalDiscount.toFixed(2)}`, 450, summaryTop + 20, { width: 100, align: 'right' });
+        doc.text(item.size || "N/A", 170, rowY).text(item.quantity.toString(), 210, rowY);
+
+        doc.fillColor(originalPriceColor).text(`₹${item.originalPrice.toFixed(2)}`, 240, rowY);
+
+        doc.fillColor(
+            item.discountedPrice < item.originalPrice ? discountColor : textColor
+        ).text(`₹${item.discountedPrice.toFixed(2)}`, 300, rowY);
+
+        if (item.couponDiscountAmount > 0) {
+            doc.fillColor(secondaryColor).text(
+            `-₹${(item.couponDiscountAmount / item.quantity).toFixed(2)}`,
+            360,
+            rowY
+            );
+        } else {
+            doc.fillColor(textColor).text("-", 360, rowY);
         }
 
-        const finalAmount = deliveredSubtotal - proportionalDiscount;
-        doc
-            .fillColor(primaryColor)
-            .fontSize(14)
-            .font('Helvetica-Bold')
-            .text('Grand Total:', 350, summaryTop + 40)
-            .text(`₹${finalAmount.toFixed(2)}`, 450, summaryTop + 40, { width: 100, align: 'right' });
+        doc.fillColor(textColor).text(`₹${item.finalPrice.toFixed(2)}`, 420, rowY);
 
-        doc
-            .moveDown(1)
-            .fillColor(accentColor)
-            .fontSize(9)
-            .text('Note: This invoice includes only delivered items', { align: 'center' })
-            .moveDown(0.5);
+        const totalPrice = item.finalPrice * item.quantity;
+        doc.fillColor(textColor)
+            .font("Helvetica-Bold")
+            .text(`₹${totalPrice.toFixed(2)}`, 470, rowY, { width: 80, align: "right" });
 
-        doc
-            .fillColor(accentColor)
+        const statusColor =
+            item.status === "delivered"
+            ? secondaryColor
+            : ["cancelled", "failed"].includes(item.status)
+            ? errorColor
+            : accentColor;
+
+        doc.fillColor(statusColor).fontSize(7).text(item.status.toUpperCase(), 60, rowY + 12);
+        });
+
+        // Summary section
+        const summaryStart = tablePosition + itemsWithDiscounts.length * 35 + 20;
+        const labelCol = 300;
+        const valueCol = 450;
+        const lineHeight = 20;
+        let currentLine = 0;
+
+        doc.fillColor(textColor)
+        .fontSize(10)
+        .text("Subtotal:", labelCol, summaryStart + currentLine * lineHeight)
+        .text(`₹${totalOriginalValue.toFixed(2)}`, valueCol, summaryStart + currentLine * lineHeight, { width: 90, align: "right" });
+        currentLine++;
+
+        if (productSavings > 0) {
+        doc.fillColor(discountColor)
+            .text("Product Discount:", labelCol, summaryStart + currentLine * lineHeight)
+            .text(`- ₹${productSavings.toFixed(2)}`, valueCol, summaryStart + currentLine * lineHeight, { width: 90, align: "right" });
+        currentLine++;
+        }
+
+        const afterProductDiscount = totalOriginalValue - productSavings;
+        doc.fillColor(textColor)
+        .text("Total after Product Discounts:", labelCol, summaryStart + currentLine * lineHeight)
+        .text(`₹${afterProductDiscount.toFixed(2)}`, valueCol, summaryStart + currentLine * lineHeight, { width: 90, align: "right" });
+        currentLine++;
+
+        if (couponDiscount > 0) {
+        let displayCouponCode = couponCode;
+        if (couponCode.length > 15) {
+            displayCouponCode = couponCode.substring(0, 12) + "...";
+        }
+
+        doc.fillColor(secondaryColor)
+            .font("Helvetica-Bold")
+            .text(`Coupon (${displayCouponCode}):`, labelCol, summaryStart + currentLine * lineHeight)
+            .text(`- ₹${couponDiscount.toFixed(2)}`, valueCol, summaryStart + currentLine * lineHeight, { width: 90, align: "right" });
+        currentLine++;
+
+        if (couponCode.length > 15) {
+            doc.fillColor(textColor)
+            .fontSize(8)
+            .font("Helvetica")
+            .text(`Coupon Code: ${couponCode}`, labelCol, summaryStart + currentLine * lineHeight - 5);
+            currentLine++;
+        }
+        }
+
+        currentLine++;
+
+        const finalAmount = order.amountPaid || afterProductDiscount - couponDiscount;
+        doc.fillColor(primaryColor)
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text("Grand Total:", labelCol, summaryStart + currentLine * lineHeight)
+        .text(`₹${finalAmount.toFixed(2)}`, valueCol, summaryStart + currentLine * lineHeight, { width: 90, align: "right" });
+        currentLine++;
+
+        if (order.amountPaid && order.amountPaid !== finalAmount) {
+        doc.fillColor(textColor)
             .fontSize(10)
-            .text('Thank you for shopping with us!', { align: 'center' })
-            .moveDown(0.5)
-            .fillColor(textColor)
-            .text('For any queries, please contact support@ryzobags.com', { align: 'center' })
-            .text('Terms & Conditions apply', { align: 'center' });
+            .font("Helvetica")
+            .text("Amount Paid:", labelCol, summaryStart + currentLine * lineHeight)
+            .text(`₹${order.amountPaid.toFixed(2)}`, valueCol, summaryStart + currentLine * lineHeight, { width: 90, align: "right" });
+        currentLine++;
 
-        doc
-            .strokeColor(lightColor)
-            .lineWidth(20)
-            .moveTo(0, doc.page.height - 50)
-            .lineTo(doc.page.width, doc.page.height - 50)
-            .stroke();
+        const balance = finalAmount - order.amountPaid;
+        if (balance > 0) {
+            doc.fillColor(errorColor)
+            .text("Balance Due:", labelCol, summaryStart + currentLine * lineHeight)
+            .text(`₹${balance.toFixed(2)}`, valueCol, summaryStart + currentLine * lineHeight, { width: 90, align: "right" });
+        }
+        }
+
+        const savingsSummaryY = summaryStart + currentLine * lineHeight + 20;
+        if (totalSavings > 0) {
+        doc.roundedRect(labelCol - 10, savingsSummaryY, 220, 30, 5).fill(lightColor);
+
+        doc.fillColor(discountColor)
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .text(`You saved ₹${totalSavings.toFixed(2)} on this order!`, labelCol, savingsSummaryY + 10);
+        }
+
+        const footerY = savingsSummaryY + 50;
+        doc.fillColor(accentColor).fontSize(12).text("Thank you for your purchase!", 50, footerY, { align: "center" });
+
+        doc.fillColor(textColor)
+        .fontSize(9)
+        .text("We appreciate your business. For any questions regarding this invoice, please contact our support team.", 50, footerY + 20, { align: "center" });
+
+        doc.text("support@ryzobags.com | +91 9876543210 | www.ryzobags.com", 50, footerY + 40, { align: "center" });
+
+        doc.moveTo(50, footerY + 60).lineTo(550, footerY + 60).strokeColor(lightColor).stroke();
+
+        doc.fillColor(originalPriceColor)
+        .fontSize(8)
+        .text("This is a computer-generated invoice. No signature is required.", 50, footerY + 70, { align: "center" });
 
         doc.end();
-        } catch (error) {
-            console.error('Error generating invoice:', error);
-            res.status(500).send('Failed to generate invoice');
-        }
+    } catch (error) {
+        console.error("Error generating invoice:", error);
+        res.status(500).send("Failed to generate invoice");
+    }
     },
 
     getWalletBalance: async (req, res) => {

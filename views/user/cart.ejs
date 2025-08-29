@@ -55,31 +55,29 @@
 
     <!-- Main Content -->
     <main class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        <div class="flex flex-col md:flex-row gap-4 sm:gap-6">
-            <!-- Cart Items -->
-            <div class="md:w-3/4 bg-white rounded-lg shadow-md p-4 sm:p-6">
-                <h2 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Shopping Cart</h2>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full cart-table">
-                        <thead>
-                            <tr class="border-b">
-                                <th class="pb-3 sm:pb-4 text-left product-col">Product</th>
-                                <th class="pb-3 sm:pb-4 text-center">Price</th>
-                                <th class="pb-3 sm:pb-4 text-center">Quantity</th>
-                                <th class="pb-3 sm:pb-4 text-center">Subtotal</th>
-                                <th class="pb-3 sm:pb-4 text-center action-col">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Cart items -->
-                            <% if (cart && cart.items && cart.items.length > 0) { %>
+        <% if (cart && cart.items && cart.items.length > 0) { %>
+            <div class="flex flex-col md:flex-row gap-4 sm:gap-6">
+                <!-- Cart Items -->
+                <div class="md:w-3/4 bg-white rounded-lg shadow-md p-4 sm:p-6">
+                    <h2 class="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Shopping Cart</h2>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full cart-table">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="pb-3 sm:pb-4 text-left product-col">Product</th>
+                                    <th class="pb-3 sm:pb-4 text-center">Price</th>
+                                    <th class="pb-3 sm:pb-4 text-center">Quantity</th>
+                                    <th class="pb-3 sm:pb-4 text-center">Subtotal</th>
+                                    <th class="pb-3 sm:pb-4 text-center action-col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 <% cart.items.forEach((item, index) => { %>
                                     <% 
                                     const variant = item.productId.variants.find(s => s.size === item.size);
                                     const regularPrice = variant ? variant.regularPrice : 0;
                                     const stock = variant ? variant.quantity : 0; 
-                                    const subtotal = regularPrice * item.quantity;
                                     %>
                                     <tr class="border-b hover:bg-gray-50" data-item-id="<%= item.productId._id %>">
                                         <td class="py-3 sm:py-4 product-col">
@@ -140,361 +138,332 @@
                                         </td>
                                     </tr>
                                 <% }) %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="5" class="py-6 sm:py-8 text-center">
-                                        <div class="flex flex-col items-center">
-                                            <img src="/api/placeholder/100/100" alt="Empty Cart" class="w-20 sm:w-24 h-20 sm:h-24 mb-3 sm:mb-4">
-                                            <p class="text-base sm:text-lg font-medium text-gray-600 mb-2">Your cart is empty</p>
-                                            <p class="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Add items to your cart to continue shopping</p>
-                                            <a href="/user/shop" class="bg-blue-600 text-white py-2 px-4 sm:px-6 rounded-md hover:bg-blue-700 text-xs sm:text-sm">Continue Shopping</a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Order Summary -->
-            <%
-            let totalAmoount = 0;
-            let itemCount = 0;
-
-            if (cart && cart.items && cart.items.length > 0) {
-                cart.items.forEach(item => {
-                    const variant = item.productId.variants.find(v => v.size === item.size);
-                    const price = variant ? variant.regularPrice : 0;
-                    totalAmoount += price * item.quantity;
-                    itemCount += item.quantity;
-                });
-            }
-            %>
-            <div class="md:w-1/4 bg-white rounded-lg shadow-md p-4 sm:p-6">
-                <h2 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">PRICE DETAILS</h2>
-                <div class="border-t pt-3 sm:pt-4">
-                    <!-- Original Price -->
-                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm text-gray-500 line-through">
-                        <span>Original Price (<%= itemCount %> items)</span>
-                        <span>₹<%= originalAmount %></span>
-                    </div>
-                    <!-- Final Price -->
-                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
-                        <span class="text-gray-600">Price (<%= itemCount %> items)</span>
-                        <span>₹<span id="subtotalAmount"><%=totalAmoount %></span></span>
-                    </div>
-                    <!-- Discount -->
-                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
-                        <span class="text-gray-600">Discount</span>
-                        <span class="text-green-600">- ₹<%= totalSavings %></span>
-                    </div>
-                    <!-- Delivery -->
-                    <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
-                        <span class="text-gray-600">Delivery Charges</span>
-                        <span class="text-green-600">FREE</span>
-                    </div>
-                    <!-- Final Total -->
-                    <div class="flex justify-between py-3 sm:py-4 border-t border-dashed font-bold text-sm sm:text-base">
-                        <span>Total Amount</span>
-                        <span>₹<span id="total"><%= totalAmount %></span></span>
-                    </div>
-                    <!-- Savings Message -->
-                    <div class="text-green-600 text-xs sm:text-sm mb-3 sm:mb-4">
-                        You'll save ₹<%= totalSavings %> on this order
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <% if (!hasOutOfStock) { %>
-                    <button onclick="window.location.href='/user/checkout'" 
-                            class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 sm:py-3 rounded-md font-medium checkout-btn text-xs sm:text-sm">
-                        Proceed to Checkout
-                    </button>
-                <% } else { %>
-                    <div class="text-red-600 text-center font-medium mt-3 sm:mt-4 p-2 sm:p-3 bg-red-50 rounded-md text-xs sm:text-sm">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        Some items in your cart are out of stock. Please remove them or update quantities to continue.
+                
+                <!-- Order Summary -->
+                <div class="md:w-1/4 bg-white rounded-lg shadow-md p-4 sm:p-6">
+                    <h2 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">PRICE DETAILS</h2>
+                    <div class="border-t pt-3 sm:pt-4">
+                        <!-- Original Price -->
+                        <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm text-gray-500 line-through">
+                            <span>Original Price (<%= itemCount %> items)</span>
+                            <span>₹<%= originalAmount %></span>
+                        </div>
+                        <!-- Final Price -->
+                        <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
+                            <span class="text-gray-600">Price (<%= itemCount %> items)</span>
+                            <span>₹<span id="subtotalAmount"><%= totalAmount %></span></span>
+                        </div>
+                        <!-- Discount -->
+                        <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
+                            <span class="text-gray-600">Offer Discount</span>
+                            <span class="text-green-600">- ₹<%= totalSavings %></span>
+                        </div>
+                        <!-- Delivery -->
+                        <div class="flex justify-between py-1 sm:py-2 text-xs sm:text-sm">
+                            <span class="text-gray-600">Delivery Charges</span>
+                            <span class="text-green-600">FREE</span>
+                        </div>
+                        <!-- Final Total -->
+                        <div class="flex justify-between py-3 sm:py-4 border-t border-dashed font-bold text-sm sm:text-base">
+                            <span>Total Amount</span>
+                            <span>₹<span id="total"><%= totalAmount %></span></span>
+                        </div>
+                        <!-- Savings Message -->
+                        <div class="text-green-600 text-xs sm:text-sm mb-3 sm:mb-4">
+                            You'll save ₹<%= totalSavings %> on this order
+                        </div>
                     </div>
-                    <button disabled 
-                            class="w-full bg-gray-400 text-white py-2 sm:py-3 rounded-md font-medium cursor-not-allowed mt-2 sm:mt-3 text-xs sm:text-sm">
-                        PLACE ORDER (UNAVAILABLE)
-                    </button>
-                <% } %>
+                    <% if (!hasOutOfStock) { %>
+                        <button onclick="window.location.href='/user/checkout'" 
+                                class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 sm:py-3 rounded-md font-medium checkout-btn text-xs sm:text-sm">
+                            Proceed to Checkout
+                        </button>
+                    <% } else { %>
+                        <div class="text-red-600 text-center font-medium mt-3 sm:mt-4 p-2 sm:p-3 bg-red-50 rounded-md text-xs sm:text-sm">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Some items in your cart are out of stock. Please remove them or update quantities to continue.
+                        </div>
+                        <button disabled 
+                                class="w-full bg-gray-400 text-white py-2 sm:py-3 rounded-md font-medium cursor-not-allowed mt-2 sm:mt-3 text-xs sm:text-sm">
+                            PLACE ORDER (UNAVAILABLE)
+                        </button>
+                    <% } %>
+                </div>
             </div>
-        </div>
+        <% } else { %>
+            <!-- Empty Cart Message -->
+            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 text-center">
+                <div class="flex flex-col items-center">
+                    <img src="/api/placeholder/100/100" alt="Empty Cart" class="w-20 sm:w-24 h-20 sm:h-24 mb-3 sm:mb-4">
+                    <p class="text-base sm:text-lg font-medium text-gray-600 mb-2">Your cart is empty</p>
+                    <p class="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Add items to your cart to continue shopping</p>
+                    <a href="/user/shop" class="bg-blue-600 text-white py-2 px-4 sm:px-6 rounded-md hover:bg-blue-700 text-xs sm:text-sm">Continue Shopping</a>
+                </div>
+            </div>
+        <% } %>
     </main>
     <%- include("partials/userFooter") %>
 
     <script>
-        // Debug functions
-        function log(message) {
-            const debugLog = document.getElementById('debugLog');
-            const timestamp = new Date().toLocaleTimeString();
-            debugLog.innerHTML += `[${timestamp}] ${message}\n`;
-            debugLog.scrollTop = debugLog.scrollHeight;
-            console.log(message);
+    // Debug functions
+    function log(message) {
+        const debugLog = document.getElementById('debugLog');
+        const timestamp = new Date().toLocaleTimeString();
+        debugLog.innerHTML += `[${timestamp}] ${message}\n`;
+        debugLog.scrollTop = debugLog.scrollHeight;
+        console.log(message);
+    }
+    
+    function clearDebug() {
+        document.getElementById('debugLog').innerHTML = '';
+    }
+    
+    function toggleDebug() {
+        const debugPanel = document.getElementById('debugPanel');
+        debugPanel.classList.toggle('hidden');
+    }
+    
+    // Press D to toggle debug panel
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'd' || e.key === 'D') {
+            toggleDebug();
         }
+    });
+    
+    // Global lock to prevent multiple simultaneous requests
+    let processingRequest = false;
+    
+    // When document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        log('Page loaded successfully');
         
-        function clearDebug() {
-            document.getElementById('debugLog').innerHTML = '';
-        }
-        
-        function toggleDebug() {
-            const debugPanel = document.getElementById('debugPanel');
-            debugPanel.classList.toggle('hidden');
-        }
-        
-        // Press D to toggle debug panel
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'd' || e.key === 'D') {
-                toggleDebug();
+        // Add event listeners to all quantity buttons using event delegation
+        document.addEventListener('click', function(e) {
+            // Handling quantity change buttons
+            if (e.target.closest('.quantity-btn')) {
+                const button = e.target.closest('.quantity-btn');
+                const productId = button.getAttribute('data-product-id');
+                const size = button.getAttribute('data-size');
+                const price = parseFloat(button.getAttribute('data-price'));
+                const index = parseInt(button.getAttribute('data-index'));
+                const stock = parseInt(button.getAttribute('data-stock'));
+                const change = parseInt(button.getAttribute('data-change'));
+                
+                // Get current quantity from the input field
+                const quantityInput = document.getElementById(`cartProductQuantity${index}`);
+                const currentQuantity = parseInt(quantityInput.value);
+                
+                // Call the function with the correct parameters
+                changeQuantity(productId, size, currentQuantity, change, price, index, stock); // Fixed typo here
+            }
+            
+            // Handling remove buttons
+            if (e.target.closest('.remove-btn')) {
+                const button = e.target.closest('.remove-btn');
+                const productId = button.getAttribute('data-product-id');
+                confirmRemove(productId);
             }
         });
         
-        // Global lock to prevent multiple simultaneous requests
-        let processingRequest = false;
-        
-        // When document is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            log('Page loaded successfully');
-            
-            // Add event listeners to all quantity buttons using event delegation
-            document.addEventListener('click', function(e) {
-                // Handling quantity change buttons
-                if (e.target.closest('.quantity-btn')) {
-                    const button = e.target.closest('.quantity-btn');
-                    const productId = button.getAttribute('data-product-id');
-                    const size = button.getAttribute('data-size');
-                    const price = parseFloat(button.getAttribute('data-price'));
-                    const index = parseInt(button.getAttribute('data-index'));
-                    const stock = parseInt(button.getAttribute('data-stock'));
-                    const change = parseInt(button.getAttribute('data-change'));
-                    
-                    // Get current quantity from the input field
-                    const quantityInput = document.getElementById(`cartProductQuantity${index}`);
-                    const currentQuantity = parseInt(quantityInput.value);
-                    
-                    // Call the function with the correct parameters
-                    changeQuantity(productId, size, currentQuantity, change, price, index, stock);
-                }
-                
-                // Handling remove buttons
-                if (e.target.closest('.remove-btn')) {
-                    const button = e.target.closest('.remove-btn');
-                    const productId = button.getAttribute('data-product-id');
-                    confirmRemove(productId);
-                }
+        // Disable checkout button click after first click
+        const checkoutBtn = document.querySelector('.checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', function(e) {
+                // Disable the button to prevent double clicks
+                this.disabled = true;
+                this.classList.add('opacity-75');
+                this.innerHTML = 'Processing...';
             });
-            
-            // Disable checkout button click after first click
-            const checkoutBtn = document.querySelector('.checkout-btn');
-            if (checkoutBtn) {
-                checkoutBtn.addEventListener('click', function(e) {
-                    // Disable the button to prevent double clicks
-                    this.disabled = true;
-                    this.classList.add('opacity-75');
-                    this.innerHTML = 'Processing...';
-                });
-            }
-        });
-
-        async function changeQuantity(productId, size, currentQuantity, change, productPrice, index, productStock) {
-            // Check if we're already processing a request
-            if (processingRequest) {
-                log(`Request already in progress, ignoring change for ${productId}`);
-                return;
-            }
-            
-            processingRequest = true;
-            log(`Changing quantity for product ${productId}: ${currentQuantity} + (${change})`);
-            
-            // Get elements
-            const quantityInput = document.getElementById(`cartProductQuantity${index}`);
-            const subtotalElement = document.getElementById(`subTotal${index}`);
-            const totalElement = document.getElementById('total');
-            const subtotalAmountElement = document.getElementById('subtotalAmount');
-            
-            // Disabling buttons during processing
-            const buttons = document.querySelectorAll(`.quantity-btn[data-product-id="${productId}"]`);
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.add('opacity-50');
-            });
-            
-            // Calculate new quantity
-            const newQuantity = currentQuantity + change;
-            log(`New quantity will be: ${newQuantity}`);
-            
-            // Validation checks
-            if (newQuantity < 1) {
-                log('Error: Quantity would be less than 1');
-                Swal.fire({
-                    title: 'Minimum Quantity!',
-                    text: 'Quantity cannot be less than 1.',
-                    icon: 'warning',
-                    timer: 3000
-                });
-                processingRequest = false;
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50');
-                });
-                return;
-            }
-            
-            if (newQuantity > 6) {
-                log('Error: Quantity would exceed maximum limit of 6');
-                Swal.fire({
-                    title: 'Maximum Quantity!',
-                    text: 'You cannot add more than 6 units of this product.',
-                    icon: 'warning',
-                    timer: 3000
-                });
-                processingRequest = false;
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50');
-                });
-                return;
-            }
-            
-            if (newQuantity > productStock) {
-                log(`Error: Requested quantity (${newQuantity}) exceeds stock (${productStock})`);
-                Swal.fire({
-                    title: 'Out of Stock!',
-                    text: `Only ${productStock} items available in stock.`,
-                    icon: 'error',
-                    timer: 3000
-                });
-                processingRequest = false;
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50');
-                });
-                return;
-            }
-            
-            try {
-                log(`Sending request to update cart: productId=${productId}, size=${size}, quantity=${newQuantity}`);
-                const res = await fetch('/user/updateCartQuantity', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productId, size, quantity: newQuantity })
-                });
-                
-                const data = await res.json();
-                log(`Server response: ${JSON.stringify(data)}`);
-                
-                if (data.success) {
-                    log('Server update successful, updating UI');
-                    
-                    // Update quantity input
-                    quantityInput.value = newQuantity;
-                    
-                    // Update subtotal
-                    const newSubtotal = newQuantity * productPrice;
-                    subtotalElement.innerText = newSubtotal.toFixed(2);
-                    
-                    // Recalculate total
-                    let total = 0;
-                    document.querySelectorAll('[id^="subTotal"]').forEach(span => {
-                        total += parseFloat(span.innerText) || 0;
-                    });
-                    
-                    totalElement.innerText = total.toFixed(2);
-                    subtotalAmountElement.innerText = total.toFixed(2);
-                    
-                    log(`UI updated successfully: quantity=${newQuantity}, subtotal=${newSubtotal}, total=${total}`);
-                } else {
-                    log(`Server error: ${data.message}`);
-                    Swal.fire({
-                        title: 'Error',
-                        text: data.message || 'Failed to update quantity',
-                        icon: 'error',
-                        timer: 3000
-                    });
-                }
-            } catch (err) {
-                log(`Fetch error: ${err.message}`);
-                console.error('Fetch error:', err);
-                Swal.fire({
-                    title: 'Connection Error',
-                    text: 'Unable to connect to the server. Please try again later.',
-                    icon: 'error',
-                    timer: 3000
-                });
-            } finally {
-                // Re-enable buttons
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-50');
-                });
-                processingRequest = false;
-                log('Request processing completed');
-            }
         }
+    });
 
-        async function confirmRemove(productId) {
-            log(`Confirming removal of product ${productId}`);
+    async function changeQuantity(productId, size, currentQuantity, change, productPrice, index, productStock) {
+        // Check if we're already processing a request
+        if (processingRequest) {
+            log(`Request already in progress, ignoring change for ${productId}`);
+            return;
+        }
+        
+        processingRequest = true;
+        log(`Changing quantity for product ${productId}: ${currentQuantity} + (${change})`);
+        
+        // Get elements
+        const quantityInput = document.getElementById(`cartProductQuantity${index}`);
+        const subtotalElement = document.getElementById(`subTotal${index}`);
+        const totalElement = document.getElementById('total');
+        const subtotalAmountElement = document.getElementById('subtotalAmount');
+        
+        // Disabling buttons during processing
+        const buttons = document.querySelectorAll(`.quantity-btn[data-product-id="${productId}"]`);
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+        });
+        
+        // Calculate new quantity
+        const newQuantity = currentQuantity + change;
+        log(`New quantity will be: ${newQuantity}`);
+        
+        // Validation checks
+        if (newQuantity < 1) {
+            log('Error: Quantity would be less than 1');
             Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
+                title: 'Minimum Quantity!',
+                text: 'Quantity cannot be less than 1.',
                 icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, remove it!'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    log(`User confirmed removal of product ${productId}`);
+                timer: 3000
+            });
+            processingRequest = false;
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            });
+            return;
+        }
+        
+        if (newQuantity > 6) {
+            log('Error: Quantity would exceed maximum limit of 6');
+            Swal.fire({
+                title: 'Maximum Quantity!',
+                text: 'You cannot add more than 6 units of this product.',
+                icon: 'warning',
+                timer: 3000
+            });
+            processingRequest = false;
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            });
+            return;
+        }
+        
+        if (newQuantity > productStock) {
+            log(`Error: Requested quantity (${newQuantity}) exceeds stock (${productStock})`);
+            Swal.fire({
+                title: 'Out of Stock!',
+                text: `Only ${productStock} items available in stock.`,
+                icon: 'error',
+                timer: 3000
+            });
+            processingRequest = false;
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            });
+            return;
+        }
+        
+        try {
+            log(`Sending request to update cart: productId=${productId}, size=${size}, quantity=${newQuantity}`);
+            const res = await fetch('/user/updateCartQuantity', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, size, quantity: newQuantity })
+            });
+            
+            const data = await res.json();
+            log(`Server response: ${JSON.stringify(data)}`);
+            
+            if (data.success) {
+                log('Server update successful, updating UI');
+                
+                // Update quantity input
+                quantityInput.value = newQuantity;
+                
+                // Update subtotal
+                const newSubtotal = newQuantity * productPrice;
+                subtotalElement.innerText = newSubtotal.toFixed(2);
+                
+                // Recalculate total
+                let total = 0;
+                document.querySelectorAll('[id^="subTotal"]').forEach(span => {
+                    total += parseFloat(span.innerText) || 0;
+                });
+                
+                totalElement.innerText = total.toFixed(2);
+                subtotalAmountElement.innerText = total.toFixed(2);
+                
+                log(`UI updated successfully: quantity=${newQuantity}, subtotal=${newSubtotal}, total=${total}`);
+            } else {
+                log(`Server error: ${data.message}`);
+                Swal.fire({
+                    title: 'Error',
+                    text: data.message || 'Failed to update quantity',
+                    icon: 'error',
+                    timer: 3000
+                });
+            }
+        } catch (err) {
+            log(`Fetch error: ${err.message}`);
+            console.error('Fetch error:', err);
+            Swal.fire({
+                title: 'Connection Error',
+                text: 'Unable to connect to the server. Please try again later.',
+                icon: 'error',
+                timer: 3000
+            });
+        } finally {
+            // Re-enable buttons
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            });
+            processingRequest = false;
+            log('Request processing completed');
+        }
+    }
+
+    async function confirmRemove(productId) {
+        log(`Confirming removal of product ${productId}`);
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                log(`User confirmed removal of product ${productId}`);
+                
+                // Disable the remove button
+                const button = document.querySelector(`.remove-btn[data-product-id="${productId}"]`);
+                if (button) {
+                    button.disabled = true;
+                    button.classList.add('opacity-50');
+                }
+                
+                try {
+                    log(`Sending DELETE request for product ${productId}`);
+                    const response = await fetch(`/user/deleteCart/${productId}`, {
+                        method: "DELETE",
+                        headers: {"Content-Type": "application/json"},
+                    });
                     
-                    // Disable the remove button
-                    const button = document.querySelector(`.remove-btn[data-product-id="${productId}"]`);
-                    if (button) {
-                        button.disabled = true;
-                        button.classList.add('opacity-50');
-                    }
+                    const result = await response.json();
+                    log(`Server response: ${JSON.stringify(result)}`);
                     
-                    try {
-                        log(`Sending DELETE request for product ${productId}`);
-                        const response = await fetch(`/user/deleteCart/${productId}`, {
-                            method: "DELETE",
-                            headers: {"Content-Type": "application/json"},
+                    if (result.success) {
+                        log('Item successfully removed, reloading page');
+                        Swal.fire({
+                            title: 'Removed!',
+                            text: 'Item has been removed from your cart.',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
                         });
-                        
-                        const result = await response.json();
-                        log(`Server response: ${JSON.stringify(result)}`);
-                        
-                        if (result.success) {
-                            log('Item successfully removed, reloading page');
-                            Swal.fire({
-                                title: 'Removed!',
-                                text: 'Item has been removed from your cart.',
-                                icon: 'success',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                window.location.reload();
-                            });
-                        } else {
-                            log(`Error removing item: ${result.message}`);
-                            Swal.fire({
-                                title: 'Error',
-                                text: result.message,
-                                icon: 'error',
-                                timer: 3000
-                            });
-                            // Re-enable button
-                            if (button) {
-                                button.disabled = false;
-                                button.classList.remove('opacity-50');
-                            }
-                        }
-                    } catch (error) {
-                        log(`Error during removal: ${error.message}`);
-                        console.error(error);
+                    } else {
+                        log(`Error removing item: ${result.message}`);
                         Swal.fire({
                             title: 'Error',
-                            text: 'Something went wrong!',
+                            text: result.message,
                             icon: 'error',
                             timer: 3000
                         });
@@ -504,11 +473,26 @@
                             button.classList.remove('opacity-50');
                         }
                     }
-                } else {
-                    log('User cancelled removal');
+                } catch (error) {
+                    log(`Error during removal: ${error.message}`);
+                    console.error(error);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Something went wrong!',
+                        icon: 'error',
+                        timer: 3000
+                    });
+                    // Re-enable button
+                    if (button) {
+                        button.disabled = false;
+                        button.classList.remove('opacity-50');
+                    }
                 }
-            });
-        }
-    </script>
+            } else {
+                log('User cancelled removal');
+            }
+        });
+    }
+</script>
 </body>
 </html>
