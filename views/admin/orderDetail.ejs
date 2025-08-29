@@ -3,238 +3,503 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Order Details</title>
+  <title>Order Details - <%= order.orderId %> | Admin Panel</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- SweetAlert2 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .status-pending {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    
+    .status-processing {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .status-shipped {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    
+    .status-delivered {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+    
+    .status-cancelled, .status-failed {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+    
+    .status-return, .status-return-request, .status-returned {
+      background-color: #fdf2f8;
+      color: #9d174d;
+    }
+    
+    .table-row:hover {
+      background-color: #f9fafb;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    
+    .info-item {
+      background-color: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border-left: 3px solid #4f46e5;
+    }
+    
+    .action-btn {
+      transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-1px);
+    }
+  </style>
 </head>
-<body class="bg-gray-100">
-  <div class="container mx-auto p-4 sm:p-6">
-    <h1 class="text-xl sm:text-2xl font-bold text-indigo-600 mb-4 sm:mb-6">Order Details - <%= order.orderId %></h1>
+<body class="bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
+          <i class="fas fa-receipt mr-3 text-indigo-600"></i>
+          Order #<span class="text-indigo-600"><%= order.orderId %></span>
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+          <i class="far fa-clock mr-1"></i> 
+          Created on <%= new Date(order.orderDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+        </p>
+      </div>
+      <a href="/admin/orders" class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Back to Orders
+      </a>
+    </div>
 
-    <!-- Alert Container -->
-    <div id="alert-container" class="mb-3 sm:mb-4">
+    <!-- Alert Container (for initial page load messages) -->
+    <div id="alert-container" class="mb-6">
       <% if (success && success.length > 0) { %>
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 sm:p-4 mb-3 sm:mb-4 text-sm sm:text-base">
-          <%= success %>
+        <div class="rounded-md bg-green-50 p-4 mb-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <i class="fas fa-check-circle h-5 w-5 text-green-400"></i>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-green-800"><%= success %></p>
+            </div>
+          </div>
         </div>
       <% } %>
       <% if (error && error.length > 0) { %>
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 mb-3 sm:mb-4 text-sm sm:text-base">
-          <%= error %>
+        <div class="rounded-md bg-red-50 p-4 mb-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <i class="fas fa-exclamation-circle h-5 w-5 text-red-400"></i>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-red-800"><%= error %></p>
+            </div>
+          </div>
         </div>
       <% } %>
     </div>
 
-    <!-- Order Info -->
-    <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
-      <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Order Information</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm sm:text-base">
-        <p><strong>Order ID:</strong> <%= order.orderId %></p>
-        <p><strong>Date:</strong> <%= new Date(order.orderDate).toLocaleDateString() %></p>
-        <p><strong>User:</strong> <%= order.userId.fullname %> (<%= order.userId.email %>)</p>
-        <p><strong>Total Amount:</strong> ₹<%= 
-          order.items && order.items.length > 0 
-            ? order.items.reduce((total, item) => {
-                const price = parseFloat(item.itemSalePrice) || 0;
-                const qty = parseInt(item.quantity) || 0;
-                return total + (price * qty);
-              }, 0).toFixed(2)
-            : '0.00'
-        %></p>      
-        <p><strong>Discount:</strong> ₹<%= order.discount || 0 %></p>
-        <p><strong>Amount Paid:</strong> ₹<%= order.amountPaid || order.totalAmount %></p>
-        <p><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
-        <p><strong>Payment Status:</strong> <%= order.paymentStatus || 'N/A' %></p>
-        <p><strong>Status:</strong> <span id="order-status"><%= order.status %></span></p>
-        <% if (order.cancelReason) { %>
-          <p class="sm:col-span-2"><strong>Cancel Reason:</strong> <%= order.cancelReason %></p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Order Information Card -->
+        <div class="card bg-white p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+              <i class="fas fa-info-circle mr-2 text-indigo-500"></i>
+              Order Information
+            </h2>
+            <span id="order-status" class="status-badge status-<%= order.status %>">
+              <i class="fas 
+                <%= order.status === 'pending' ? 'fa-clock' : '' %>
+                <%= order.status === 'processing' ? 'fa-cog' : '' %>
+                <%= order.status === 'shipped' ? 'fa-shipping-fast' : '' %>
+                <%= order.status === 'delivered' ? 'fa-check-circle' : '' %>
+                <%= order.status === 'cancelled' || order.status === 'failed' ? 'fa-times-circle' : '' %>
+                <%= order.status.includes('return') ? 'fa-undo' : '' %>
+                mr-1"></i>
+              <%= order.status %>
+            </span>
+          </div>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <p class="text-xs font-medium text-gray-500">Order ID</p>
+              <p class="text-sm font-semibold text-gray-800"><%= order.orderId %></p>
+            </div>
+            
+            <div class="info-item">
+              <p class="text-xs font-medium text-gray-500">Customer</p>
+              <p class="text-sm font-semibold text-gray-800"><%= order.userId.fullname %></p>
+              <p class="text-xs text-gray-600"><%= order.userId.email %></p>
+            </div>
+            
+            <div class="info-item">
+              <p class="text-xs font-medium text-gray-500">Payment Method</p>
+              <p class="text-sm font-semibold text-gray-800 capitalize"><%= order.paymentMethod %></p>
+              <p class="text-xs text-gray-600 capitalize">Status: <%= order.paymentStatus || 'N/A' %></p>
+            </div>
+            
+            <div class="info-item">
+              <p class="text-xs font-medium text-gray-500">Order Value</p>
+              <p class="text-sm font-semibold text-gray-800">
+                ₹<%= 
+                  order.items && order.items.length > 0 
+                    ? order.items.reduce((total, item) => {
+                        const price = parseFloat(item.itemSalePrice) || 0;
+                        const qty = parseInt(item.quantity) || 0;
+                        return total + (price * qty);
+                      }, 0).toFixed(2)
+                    : '0.00'
+                %>
+              </p>
+              <p class="text-xs text-gray-600">Discount: ₹<%= order.discount || 0 %></p>
+            </div>
+          </div>
+          
+          <% if (order.cancelReason) { %>
+            <div class="mt-4 p-3 bg-red-50 rounded-md">
+              <p class="text-sm font-medium text-red-800 flex items-start">
+                <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
+                <span>Cancel Reason: <%= order.cancelReason %></span>
+              </p>
+            </div>
+          <% } %>
+          
+          <% if (order.returnRequest && order.returnRequest.isRequested) { %>
+            <div class="mt-4 p-3 bg-purple-50 rounded-md">
+              <p class="text-sm font-medium text-purple-800 flex items-start">
+                <i class="fas fa-undo mt-0.5 mr-2"></i>
+                <span>Return Request: <%= order.returnRequest.reason %></span>
+              </p>
+              <p class="text-xs text-purple-600 mt-1">
+                Requested: <%= new Date(order.returnRequest.requestedAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+              </p>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Order Items Card -->
+        <div class="card bg-white p-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-box-open mr-2 text-indigo-500"></i>
+            Order Items (<%= order.items.length %>)
+          </h2>
+          
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr class="bg-gray-50">
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Size</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Price</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <% order.items.forEach(item => { %>
+                  <tr class="table-row">
+                    <td class="px-4 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="ml-4">
+                          <div class="text-sm font-medium text-gray-900"><%= item.productId.name %></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                      <%= item.size || 'N/A' %>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <%= item.quantity %>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                      ₹<%= item.itemSalePrice || 0 %>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      ₹<%= (item.quantity * (item.itemSalePrice || 0)).toFixed(2) %>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                      <span id="item-status-<%= item._id %>" class="status-badge status-<%= item.status %>">
+                        <%= item.status %>
+                      </span>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <% if (!['delivered', 'cancelled', 'returned', 'failed'].includes(item.status)) { %>
+                        <div class="flex space-x-2">
+                          <select id="item-status-select-<%= item._id %>" class="text-xs border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                            <option value="processing" <%= item.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                            <option value="shipped" <%= item.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                            <option value="delivered" <%= item.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                            <option value="cancelled" <%= item.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                            <option value="return request" <%= item.status === 'return request' ? 'selected' : '' %>>Return Request</option>
+                            <option value="returned" <%= item.status === 'returned' ? 'selected' : '' %>>Returned</option>
+                            <option value="failed" <%= item.status === 'failed' ? 'selected' : '' %>>Failed</option>
+                          </select>
+                          <button onclick="updateItemStatus('<%= order.orderId %>', '<%= item._id %>')" class="action-btn inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="fas fa-sync-alt mr-1"></i> Update
+                          </button>
+                        </div>
+                      <% } else { %>
+                        <span class="text-xs text-gray-500">Final Status</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="space-y-6">
+        <!-- Order Status Card -->
+        <% if (!['delivered', 'cancelled', 'returned', 'partially returned', 'failed'].includes(order.status)) { %>
+          <div class="card bg-white p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <i class="fas fa-tasks mr-2 text-indigo-500"></i>
+              Update Order Status
+            </h2>
+            <div class="space-y-4">
+              <div>
+                <label for="status-select" class="block text-sm font-medium text-gray-700 mb-1">Change Status</label>
+                <select id="status-select" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                  <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                  <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                  <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                  <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                  <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                  <option value="return request" <%= order.status === 'return request' ? 'selected' : '' %>>Return Request</option>
+                  <option value="returned" <%= order.status === 'returned' ? 'selected' : '' %>>Returned</option>
+                  <option value="failed" <%= order.status === 'failed' ? 'selected' : '' %>>Failed</option>
+                </select>
+              </div>
+              <button id="update-status-btn" class="action-btn w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-paper-plane mr-2"></i> Update Status
+              </button>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="card bg-gray-50 p-6 border border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-600 mb-3 flex items-center">
+              <i class="fas fa-lock mr-2"></i>
+              Order Status
+            </h2>
+            <p class="text-sm text-gray-600">
+              This order is in a <span class="font-medium"><%= order.status %></span> state and can no longer be updated.
+            </p>
+          </div>
         <% } %>
+
+        <!-- Return Request Card -->
         <% if (order.returnRequest && order.returnRequest.isRequested) { %>
-          <p class="sm:col-span-2"><strong>Return Request:</strong> <%= order.returnRequest.reason %> (Requested: <%= new Date(order.returnRequest.requestedAt).toLocaleDateString() %>)</p>
+          <div id="return-request-section" class="card bg-white p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <i class="fas fa-undo-alt mr-2 text-indigo-500"></i>
+              Return Request
+            </h2>
+            <div class="space-y-4">
+              <div>
+                <label for="return-action-select" class="block text-sm font-medium text-gray-700 mb-1">Action</label>
+                <select id="return-action-select" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                  <option value="approve">Approve Return</option>
+                  <option value="reject">Reject Return</option>
+                </select>
+              </div>
+              <button id="verify-return-btn" class="action-btn w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-check-circle mr-2"></i> Submit Decision
+              </button>
+            </div>
+          </div>
         <% } %>
-      </div>
-    </div>
 
-    <!-- Update Order Status -->
-    <% if (!['delivered', 'cancelled', 'returned', 'partially returned', 'failed'].includes(order.status)) { %>
-      <div class="bg-white shadow rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
-        <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Update Order Status</h2>
-        <div class="flex flex-col sm:flex-row gap-3">
-          <select id="status-select" class="p-2 border rounded w-full sm:w-1/3 text-sm sm:text-base">
-            <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
-            <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
-            <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-            <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-            <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-            <option value="return request" <%= order.status === 'return request' ? 'selected' : '' %>>Return Request</option>
-            <option value="returned" <%= order.status === 'returned' ? 'selected' : '' %>>Returned</option>
-            <option value="failed" <%= order.status === 'failed' ? 'selected' : '' %>>Failed</option>
-          </select>
-          <button id="update-status-btn" class="bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700 text-sm sm:text-base">Update Order Status</button>
+        <!-- Order Summary Card -->
+        <div class="card bg-white p-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-receipt mr-2 text-indigo-500"></i>
+            Order Summary
+          </h2>
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Subtotal</span>
+              <span class="text-sm font-medium text-gray-900">
+                ₹<%= 
+                  order.items && order.items.length > 0 
+                    ? order.items.reduce((total, item) => {
+                        const price = parseFloat(item.itemSalePrice) || 0;
+                        const qty = parseInt(item.quantity) || 0;
+                        return total + (price * qty);
+                      }, 0).toFixed(2)
+                    : '0.00'
+                %>
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-600">Discount</span>
+              <span class="text-sm font-medium text-green-600">-₹<%= order.discount || 0 %></span>
+            </div>
+            <div class="flex justify-between pt-2 border-t border-gray-200">
+              <span class="text-base font-medium text-gray-900">Total</span>
+              <span class="text-base font-bold text-indigo-600">₹<%= order.amountPaid || order.totalAmount %></span>
+            </div>
+          </div>
         </div>
       </div>
-    <% } else { %>
-      <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
-        <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-600">Order Status</h2>
-        <p class="text-gray-700 text-sm sm:text-base">This order is in a final state (<strong><%= order.status %></strong>) and cannot be updated.</p>
-      </div>
-    <% } %>
-
-    <!-- Return Request -->
-    <% if (order.returnRequest.isRequested === true) { %>
-      <div id="return-request-section" class="bg-white shadow rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
-        <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Verify Return Request</h2>
-        <div class="flex flex-col sm:flex-row gap-3">
-          <select id="return-action-select" class="p-2 border rounded w-full sm:w-1/3 text-sm sm:text-base">
-            <option value="approve">Approve Return</option>
-            <option value="reject">Reject Return</option>
-          </select>
-          <button id="verify-return-btn" class="bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700 text-sm sm:text-base">Submit</button>
-        </div>
-      </div>
-    <% } %>
-
-    <!-- Order Items -->
-    <div class="bg-white shadow rounded-lg p-4 sm:p-6 overflow-x-auto">
-      <h2 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Order Items</h2>
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Size</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Price</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Update</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <% order.items.forEach(item => { %>
-            <tr>
-              <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <%= item.productId.name %>
-              </td>
-              <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                <%= item.size || 'N/A' %>
-              </td>
-              <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <%= item.quantity %>
-              </td>
-              <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                ₹<%= item.itemSalePrice || 0 %>
-              </td>
-              <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ₹<%= (item.quantity * (item.itemSalePrice || 0)).toFixed(2) %>
-              </td>
-              <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <span id="item-status-<%= item._id %>"><%= item.status %></span>
-              </td>
-              <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <% if (!['delivered', 'cancelled', 'returned', 'failed'].includes(item.status)) { %>
-                  <div class="flex flex-col sm:flex-row gap-1 sm:gap-2">
-                    <select id="item-status-select-<%= item._id %>" class="p-1 border rounded w-full sm:w-32 text-xs sm:text-sm">
-                      <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                      <option value="processing" <%= item.status === 'processing' ? 'selected' : '' %>>Processing</option>
-                      <option value="shipped" <%= item.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                      <option value="delivered" <%= item.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                      <option value="cancelled" <%= item.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-                      <option value="return request" <%= item.status === 'return request' ? 'selected' : '' %>>Return Request</option>
-                      <option value="returned" <%= item.status === 'returned' ? 'selected' : '' %>>Returned</option>
-                      <option value="failed" <%= item.status === 'failed' ? 'selected' : '' %>>Failed</option>
-                    </select>
-                    <button onclick="updateItemStatus('<%= order.orderId %>', '<%= item._id %>')" class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700 text-xs">Update</button>
-                  </div>
-                <% } else { %>
-                  <span class="text-gray-500 text-xs sm:text-sm">Final Status</span>
-                <% } %>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
     </div>
-
-    <a href="/admin/orders" class="mt-4 sm:mt-6 inline-block bg-gray-500 text-white p-2 rounded hover:bg-gray-600 text-sm sm:text-base">Back to Orders</a>
   </div>
 
+  <!-- SweetAlert2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-    // Function to show alerts
+    // Initialize SweetAlert2 with custom settings
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 4000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+      }
+    });
+
+    // Function to show alerts using SweetAlert2
     function showAlert(message, type) {
-      const alertContainer = document.getElementById('alert-container');
-      alertContainer.innerHTML = `
-        <div class="bg-${type === 'success' ? 'green' : 'red'}-100 border-l-4 border-${type === 'success' ? 'green' : 'red'}-500 text-${type === 'success' ? 'green' : 'red'}-700 p-3 sm:p-4 mb-3 sm:mb-4 text-sm sm:text-base">
-          ${message}
-        </div>
-      `;
-      setTimeout(() => {
-        alertContainer.innerHTML = '';
-      }, 5000);
+      Toast.fire({
+        icon: type,
+        title: message
+      });
     }
 
     // Update Item Status
     async function updateItemStatus(orderId, itemId) {
-      const status = document.getElementById(`item-status-select-${itemId}`).value;
-      const csrfToken = '<%= csrfToken %>';
+      const selectElement = document.getElementById(`item-status-select-${itemId}`);
+      if (!selectElement) {
+        showAlert('Cannot update status: Item selector not found.', 'error');
+        return;
+      }
+      const status = selectElement.value;
 
       try {
         const response = await fetch(`/admin/orders/update-status/${orderId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'CSRF-Token': csrfToken,
           },
           body: JSON.stringify({ status, itemId }),
         });
 
         const result = await response.json();
         if (response.ok) {
-          document.getElementById(`item-status-${itemId}`).textContent = status;
-          document.getElementById('order-status').textContent = result.orderStatus || status;
+          const statusElement = document.getElementById(`item-status-${itemId}`);
+          if (statusElement) {
+            statusElement.textContent = status;
+            statusElement.className = `status-badge status-${status}`;
+          }
+          const orderStatusElement = document.getElementById('order-status');
+          if (orderStatusElement) {
+            orderStatusElement.textContent = result.orderStatus || status;
+            orderStatusElement.className = `status-badge status-${result.orderStatus || status}`;
+          }
           showAlert(result.message || 'Item status updated successfully', 'success');
-          
+
           // If item status is now final, reload page to update UI
           if (['delivered', 'cancelled', 'returned', 'failed'].includes(status)) {
             setTimeout(() => {
               window.location.reload();
-            }, 2000);
+            }, 1000);
           }
         } else {
-          showAlert(result.message || 'Error updating item status', 'error');
+          console.error('Error response:', { status: response.status, result });
+          showAlert(result.message || 'Failed to update item status', 'error');
         }
       } catch (err) {
-        console.error('Error updating item status:', err);
-        showAlert('Server error occurred', 'error');
+        console.error('Network error updating item status:', err);
+        showAlert('Network error occurred. Please try again.', 'error');
       }
     }
 
     // Update Order Status
     document.getElementById('update-status-btn')?.addEventListener('click', async () => {
-      const status = document.getElementById('status-select').value;
+      const selectElement = document.getElementById('status-select');
+      if (!selectElement) {
+        showAlert('Cannot update status: Status selector not found.', 'error');
+        return;
+      }
+      const status = selectElement.value;
       const orderId = '<%= order.orderId %>';
-      const csrfToken = '<%= csrfToken %>';
 
       try {
         const response = await fetch(`/admin/orders/update-status/${orderId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'CSRF-Token': csrfToken,
           },
           body: JSON.stringify({ status }),
         });
 
         const result = await response.json();
         if (response.ok) {
-          document.getElementById('order-status').textContent = status;
+          const orderStatusElement = document.getElementById('order-status');
+          if (orderStatusElement) {
+            orderStatusElement.textContent = status;
+            orderStatusElement.className = `status-badge status-${status}`;
+          }
           showAlert(result.message || 'Order status updated successfully', 'success');
-          
+
           // If status is now final, reload page to hide update section
           if (['delivered', 'cancelled', 'returned', 'failed'].includes(status)) {
             setTimeout(() => {
               window.location.reload();
-            }, 2000);
+            }, 1000);
           }
-          
+
           // Show/hide return section based on status
           const returnSection = document.getElementById('return-request-section');
           if (status !== 'delivered' && status !== 'return request' && returnSection) {
@@ -243,50 +508,59 @@
             window.location.reload();
           }
         } else {
-          showAlert(result.message || 'Error updating order status', 'error');
+          console.error('Error response:', { status: response.status, result });
+          showAlert(result.message || 'Failed to update order status', 'error');
         }
       } catch (err) {
-        console.error('Error updating status:', err);
-        showAlert('Server error occurred', 'error');
+        console.error('Network error updating order status:', err);
+        showAlert('Network error occurred. Please try again.', 'error');
       }
     });
 
     // Verify Return Request
     document.getElementById('verify-return-btn')?.addEventListener('click', async () => {
-      const action = document.getElementById('return-action-select').value;
+      const selectElement = document.getElementById('return-action-select');
+      if (!selectElement) {
+        showAlert('Cannot process return: Action selector not found.', 'error');
+        return;
+      }
+      const action = selectElement.value;
       const orderId = '<%= order.orderId %>';
-      const csrfToken = '<%= csrfToken %>';
 
       try {
         const response = await fetch(`/admin/orders/verify-return/${orderId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'CSRF-Token': csrfToken,
           },
           body: JSON.stringify({ action }),
         });
 
         const result = await response.json();
         if (response.ok) {
-          if (action === 'approve') {
-            document.getElementById('order-status').textContent = 'returned';
-            document.getElementById('return-request-section').remove();
-          } else {
-            document.getElementById('order-status').textContent = 'delivered';
+          const orderStatusElement = document.getElementById('order-status');
+          if (orderStatusElement) {
+            const newStatus = action === 'approve' ? 'returned' : 'delivered';
+            orderStatusElement.textContent = newStatus;
+            orderStatusElement.className = `status-badge status-${newStatus}`;
+          }
+          const returnSection = document.getElementById('return-request-section');
+          if (returnSection && action === 'approve') {
+            returnSection.remove();
           }
           showAlert(result.message || `Return request ${action}d successfully`, 'success');
-          
-          // Reload page after 2 seconds to reflect final state
+
+          // Reload page after 1 second to reflect final state
           setTimeout(() => {
             window.location.reload();
-          }, 2000);
+          }, 1000);
         } else {
-          showAlert(result.message || 'Error processing return request', 'error');
+          console.error('Error response:', { status: response.status, result });
+          showAlert(result.message || 'Failed to process return request', 'error');
         }
       } catch (err) {
-        console.error('Error verifying return:', err);
-        showAlert('Server error occurred', 'error');
+        console.error('Network error verifying return:', err);
+        showAlert('Network error occurred. Please try again.', 'error');
       }
     });
   </script>

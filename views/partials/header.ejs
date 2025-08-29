@@ -1,30 +1,59 @@
-<header class="bg-gradient-to-r from-indigo-600 to-indigo-700 shadow-lg p-4 flex justify-between items-center">
-    <div class="flex items-center">
-        <div class="bg-white rounded-md p-2 mr-3">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="9" height="9" rx="2" fill="#4F46E5"/>
-                <rect x="13" y="2" width="9" height="9" rx="2" fill="#818CF8"/>
-                <rect x="2" y="13" width="9" height="9" rx="2" fill="#818CF8"/>
-                <rect x="13" y="13" width="9" height="9" rx="2" fill="#4F46E5"/>
-            </svg>
-        </div>
-        <h1 class="text-2xl font-bold text-white">RYZO BAGS</h1>
-    </div>
+<div class="brand-bg text-gray-900">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
+    <div class="h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-md bg-white bg-opacity-70 hover:bg-opacity-90 focus:ring-2 ring-brand"
+          aria-label="Open sidebar"
+          @click="sidebarOpen = true"
+        >
+          <svg class="h-5 w-5 text-gray-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
 
-    <div class="flex items-center space-x-4">
-        <div class="flex items-center">
-            <div class="bg-indigo-500 rounded-full p-1 mr-2">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-            </div>
-            <span class="text-white font-medium">Welcome, LENIN</span>
-        </div>
-        <a href="/admin/logout" class="bg-white text-indigo-700 px-4 py-2 rounded font-medium hover:bg-indigo-100 transition shadow-sm flex items-center">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        <div class="flex items-center gap-2">
+          <div class="h-8 w-8 rounded-md bg-white flex items-center justify-center">
+            <svg class="w-5 h-5 text-gray-900" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="2" y="2" width="9" height="9" rx="2" fill="currentColor" />
+              <rect x="13" y="2" width="9" height="9" rx="2" fill="currentColor" opacity="0.6" />
+              <rect x="2" y="13" width="9" height="9" rx="2" fill="currentColor" opacity="0.6" />
+              <rect x="13" y="13" width="9" height="9" rx="2" fill="currentColor" />
             </svg>
-            Logout
+          </div>
+          <h1 class="text-base sm:text-lg font-semibold tracking-tight">
+            <span class="sr-only">Admin</span>
+            RYZO BAGS Admin
+          </h1>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="hidden md:flex items-center gap-2 text-sm">
+          <div class="h-8 w-8 rounded-full bg-white bg-opacity-70 flex items-center justify-center">
+            <svg class="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5.121 17.804A10 10 0 1118.879 4.196 7 7 0 005.12 17.804z"/>
+            </svg>
+          </div>
+          <span class="font-medium">
+            Welcome, <%= typeof adminName !== 'undefined' ? adminName : 'Admin' %>
+          </span>
+        </div>
+
+        <a
+          href="/admin/logout"
+          class="inline-flex items-center gap-2 rounded-md bg-white bg-opacity-80 hover:bg-opacity-100 px-3 py-2 text-sm font-semibold text-gray-900 focus:ring-2 ring-brand"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Logout
         </a>
+      </div>
     </div>
-</header>
+  </div>
+</div>

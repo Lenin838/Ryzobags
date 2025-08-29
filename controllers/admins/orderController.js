@@ -387,8 +387,9 @@ const adminOrderController = {
           };
         }
 
+        let adjustedRefundAmount = 0;
+        
         if (action === 'approve') {
-          // ✅ Approve return
           targetItems.forEach((item) => {
             item.status = 'returned';
             item.itemStatus = 'returned';
@@ -414,7 +415,6 @@ const adminOrderController = {
           order.returnRequest.isRequested = false;
           order.returnRequest.processedAt = new Date();
 
-          // ✅ Restore inventory
           for (const item of targetItems) {
             if (item.productId && item.size) {
               try {
@@ -428,9 +428,6 @@ const adminOrderController = {
               }
             }
           }
-
-          // ✅ Refund calculation with coupon share logic
-          let adjustedRefundAmount = 0;
 
           if (order.paymentMethod === 'razorpay') {
             const totalDiscounted = order.items.reduce(
