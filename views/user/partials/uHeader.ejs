@@ -1,70 +1,94 @@
-<header class="bg-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 shadow flex justify-between items-center fixed w-full top-0 z-50">
-  <div class="flex items-center gap-4 sm:gap-6">
-    <!-- Mobile menu toggle -->
-    <button type="button" class="sm:hidden mr-2 sm:mr-4 text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" id="mobile-menu-toggle" aria-controls="mobile-menu" aria-expanded="false">
-      <span class="sr-only">Open menu</span>
-      <svg class="h-5 sm:h-6 w-5 sm:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
-    </button>
-    <!-- Brand or title -->
-    <h1 class="text-lg sm:text-xl font-semibold tracking-tight sm:tracking-wide">User Dashboard</h1>
+<header class="bg-teal-700 text-white shadow px-4 sm:px-6 py-3 sm:py-4 fixed inset-x-0 top-0 z-50">
+  <div class="mx-auto max-w-7xl flex items-center justify-between">
+    <div class="flex items-center gap-3 sm:gap-5">
+      <button
+        type="button"
+        id="mobile-menu-toggle"
+        aria-controls="mobile-menu"
+        aria-expanded="false"
+        class="sm:hidden -ml-1 rounded-md p-2 text-white hover:bg-teal-600/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
+      >
+        <span class="sr-only">Open menu</span>
+        <svg class="h-5 w-5 sm:h-6 sm:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
 
-    <!-- Top navigation links (Desktop) -->
-    <nav class="hidden sm:flex gap-2 sm:gap-4 ml-4 sm:ml-6 text-xs sm:text-sm">
-      <a href="/user/home" class="hover:underline">Home</a>
-      <a href="/user/shop" class="hover:underline">Shop</a>
-      <a href="/user/wishlist" class="hover:underline">Wishlist</a>
-      <a href="/user/cart" class="hover:underline">Cart</a>
-      <a href="/user/profile" class="hover:underline">Profile</a>
-    </nav>
+      <a href="/user/home" class="inline-flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700 rounded">
+
+        <h1 class="text-lg sm:text-xl font-semibold tracking-tight text-balance">User Dashboard</h1>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-1 sm:gap-2 ml-2 sm:ml-4 text-sm" aria-label="Primary">
+        <a href="/user/home" class="rounded-md px-3 py-2 hover:bg-teal-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Home</a>
+        <a href="/user/shop" class="rounded-md px-3 py-2 hover:bg-teal-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Shop</a>
+        <a href="/user/wishlist" class="rounded-md px-3 py-2 hover:bg-teal-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Wishlist</a>
+        <a href="/user/cart" class="rounded-md px-3 py-2 hover:bg-teal-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Cart</a>
+        <a href="/user/profile" class="rounded-md px-3 py-2 hover:bg-teal-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Profile</a>
+      </nav>
+    </div>
+
+    <div class="flex items-center gap-3 sm:gap-4">
+      <span class="hidden lg:block text-xs sm:text-sm text-teal-50/90">Welcome, <%= user.fullname %></span>
+
+      <% if (user.profileImage) { %>
+        <img
+          src="/Uploads/ProfileImages/<%= user.profileImage.split('/').pop() %>"
+          alt="Profile"
+          class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white/80 shadow"
+        />
+      <% } else { %>
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-xs sm:text-sm font-medium ring-1 ring-white/30">
+          <%= user.fullname.charAt(0).toUpperCase() %>
+        </div>
+      <% } %>
+
+      <form action="/user/logout" method="POST" class="inline">
+        <button
+          type="submit"
+          class="rounded-md px-3 py-2 text-xs sm:text-sm font-medium text-white/90 bg-white/10 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-700"
+        >
+          Logout
+        </button>
+      </form>
+    </div>
   </div>
 
-  <div class="flex items-center gap-2 sm:gap-4">
-    <span class="hidden lg:block text-xs sm:text-sm">Welcome, <%= user.fullname %></span>
-    <% if (user.profileImage) { %>
-      <img src="/Uploads/ProfileImages/<%= user.profileImage.split('/').pop() %>" alt="Profile" class="w-8 sm:w-10 h-8 sm:h-10 rounded-full object-cover ring-2 ring-white shadow" />
-    <% } else { %>
-      <div class="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs sm:text-sm font-medium">
-        <%= user.fullname.charAt(0).toUpperCase() %>
-      </div>
-    <% } %>
-    <form action="/user/logout" method="POST" class="inline">
-      <button type="submit" class="text-white hover:text-gray-200 text-xs sm:text-sm font-medium">Logout</button>
-    </form>
-  </div>
-
-  <!-- Mobile menu -->
-  <nav id="mobile-menu" class="hidden sm:hidden flex-col gap-4 text-sm bg-indigo-700 px-4 py-6 absolute top-full left-0 w-full shadow-lg">
-    <a href="/user/home" class="hover:underline">Home</a>
-    <a href="/user/shop" class="hover:underline">Shop</a>
-    <a href="/user/wishlist" class="hover:underline">Wishlist</a>
-    <a href="/user/cart" class="hover:underline">Cart</a>
-    <a href="/user/profile" class="hover:underline">Profile</a>
+  <nav
+    id="mobile-menu"
+    class="hidden sm:hidden flex-col gap-2 text-sm bg-teal-800/95 px-4 py-4 absolute top-full left-0 w-full shadow-lg"
+    aria-label="Mobile Primary"
+  >
+    <a href="/user/home" class="rounded-md px-3 py-2 hover:bg-teal-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Home</a>
+    <a href="/user/shop" class="rounded-md px-3 py-2 hover:bg-teal-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Shop</a>
+    <a href="/user/wishlist" class="rounded-md px-3 py-2 hover:bg-teal-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Wishlist</a>
+    <a href="/user/cart" class="rounded-md px-3 py-2 hover:bg-teal-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Cart</a>
+    <a href="/user/profile" class="rounded-md px-3 py-2 hover:bg-teal-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">Profile</a>
   </nav>
 </header>
 
 <style>
   #mobile-menu {
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    transform: translateY(-100%);
+    transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+    transform: translateY(-8px);
     opacity: 0;
   }
   #mobile-menu.active {
     transform: translateY(0);
     opacity: 1;
   }
-  @media (max-width: 640px) {
-    #mobile-menu {
-      text-align: center;
-    }
-  }
 </style>
 
 <script>
-  document.getElementById('mobile-menu-toggle').addEventListener('click', function () {
-    const mobileMenu = document.getElementById('mobile-menu');
-    mobileMenu.classList.toggle('hidden');
-    mobileMenu.classList.toggle('active');
-  });
+  const menuBtn = document.getElementById('mobile-menu-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener('click', function () {
+      mobileMenu.classList.toggle('hidden');
+      mobileMenu.classList.toggle('active');
+      const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+      menuBtn.setAttribute('aria-expanded', (!expanded).toString());
+    });
+  }
 </script>

@@ -1,54 +1,178 @@
-<aside class="w-64 bg-white shadow-lg p-4 fixed top-16 left-0 h-screen z-40 transition-transform duration-300 ease-in-out transform md:translate-x-0 -translate-x-full md:w-64 sm:w-56 w-full" id="sidebar">
-  <!-- Hamburger menu for mobile -->
-  <div class="flex justify-between items-center mb-4 md:hidden">
-    <h2 class="text-lg font-bold text-indigo-600">My Account</h2>
-    <button id="close-sidebar" class="text-gray-600 hover:text-indigo-600 focus:outline-none">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<aside
+  id="sidebar"
+  aria-label="Account navigation"
+  class="fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-full sm:w-56 md:w-64 bg-slate-50 border-r border-slate-200 shadow-sm p-4 transition-transform duration-300 ease-in-out transform -translate-x-full md:translate-x-0"
+>  <div class="md:hidden flex items-center justify-between mb-3">
+    <h2 class="text-base font-semibold text-teal-700">My Account</h2>
+    <button
+      id="close-sidebar"
+      class="rounded-md p-2 text-slate-700 hover:text-teal-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+      aria-label="Close sidebar"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
       </svg>
     </button>
   </div>
 
-  <ul class="space-y-2">
-    <li><a href="/user/profile" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'profile' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Profile</a></li>
-    <li><a href="/user/profile/edit" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'edit' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Edit Profile</a></li>
-    <li><a href="/user/change-password" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'change-password' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Change Password</a></li>
-    <li><a href="/user/profile?tab=addresses" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'addresses' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Addresses</a></li>
-    <li><a href="/user/profile?tab=orders" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'orders' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Orders</a></li>
-    <li><a href="/user/wallet-status" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'wallet-status' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Wallet</a></li>
-    <li><a href="/user/profile?tab=wallet-history" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'wallet-history' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Wallet History</a></li>
-    <li><a href="/user/referrals" class="block py-2 px-4 rounded hover:bg-gray-100 <%= activeTab === 'referrals' ? 'bg-gray-100 text-indigo-600' : 'text-gray-600' %>">Referrals</a></li>
-  </ul>
+  <nav class="overflow-y-auto h-full pr-2" aria-label="Sidebar">
+    <ul class="space-y-1">
+      <li>
+        <a
+          href="/user/profile"
+          aria-current="<%= activeTab === 'profile' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'profile' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 12a5 5 0 100-10 5 5 0 000 10zM3 21a9 9 0 1118 0H3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Profile
+        </a>
+      </li>
+
+      <li>
+        <a
+          href="/user/profile/edit"
+          aria-current="<%= activeTab === 'edit' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'edit' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15.232 5.232l3.536 3.536M4 20h4.5L20 8.5 15.5 4 4 15.5V20z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Edit Profile
+        </a>
+      </li>
+
+      <li>
+        <a
+          href="/user/change-password"
+          aria-current="<%= activeTab === 'change-password' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'change-password' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 10V7a5 5 0 1110 0v3M6 10h12v10H6V10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Change Password
+        </a>
+      </li>
+
+      <li>
+        <a
+          href="/user/profile?tab=addresses"
+          aria-current="<%= activeTab === 'addresses' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'addresses' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.686 2 6 4.686 6 8c0 4.5 6 12 6 12s6-7.5 6-12c0-3.314-2.686-6-6-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+          Addresses
+        </a>
+      </li>
+
+      <li>
+        <a
+          href="/user/profile?tab=orders"
+          aria-current="<%= activeTab === 'orders' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'orders' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 7h18M6 3h12v4H6V3zM6 11h12v8H6v-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Orders
+        </a>
+      </li>
+
+      <li>
+        <a
+          href="/user/wallet-status"
+          aria-current="<%= activeTab === 'wallet-status' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'wallet-status' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 7h16a2 2 0 012 2v6a2 2 0 01-2 2H3V7zM3 7V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Wallet
+        </a>
+      </li>
+
+      <li>
+        <a
+          href="/user/profile?tab=wallet-history"
+          aria-current="<%= activeTab === 'wallet-history' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'wallet-history' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 8v5l3 2M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Wallet History
+        </a>
+      </li>
+
+      <li>
+        <a
+          href="/user/referrals"
+          aria-current="<%= activeTab === 'referrals' ? 'page' : 'false' %>"
+          class="flex items-center gap-3 rounded-md px-3 py-2 text-sm
+            <%= activeTab === 'referrals' ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'text-slate-700 hover:bg-slate-100' %>"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 20v-6M7 20v-6m0-4a4 4 0 118 0v4H7v-4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Referrals
+        </a>
+      </li>
+    </ul>
+  </nav>
 </aside>
 
-<!-- Hamburger menu button for mobile (outside sidebar) -->
-<button id="open-sidebar" class="md:hidden fixed top-16 left-4 z-50 text-gray-600 hover:text-indigo-600 focus:outline-none">
-  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<button
+  id="open-sidebar"
+  class="md:hidden fixed top-16 left-4 z-50 rounded-md p-2 text-white bg-teal-600 hover:bg-teal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-600"
+  aria-controls="sidebar"
+  aria-expanded="false"
+  aria-label="Open sidebar"
+>
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
   </svg>
 </button>
 
 <script>
-  // JavaScript to toggle sidebar visibility
+  // Keeps original logic; adds ARIA updates
   const sidebar = document.getElementById('sidebar');
   const openSidebarBtn = document.getElementById('open-sidebar');
   const closeSidebarBtn = document.getElementById('close-sidebar');
 
-  openSidebarBtn.addEventListener('click', () => {
-    sidebar.classList.remove('-translate-x-full');
-    sidebar.classList.add('translate-x-0');
-  });
+  if (openSidebarBtn && sidebar) {
+    openSidebarBtn.addEventListener('click', () => {
+      sidebar.classList.remove('-translate-x-full');
+      sidebar.classList.add('translate-x-0');
+      openSidebarBtn.setAttribute('aria-expanded', 'true');
+    });
+  }
 
-  closeSidebarBtn.addEventListener('click', () => {
-    sidebar.classList.remove('translate-x-0');
-    sidebar.classList.add('-translate-x-full');
-  });
+  if (closeSidebarBtn && sidebar) {
+    closeSidebarBtn.addEventListener('click', () => {
+      sidebar.classList.remove('translate-x-0');
+      sidebar.classList.add('-translate-x-full');
+      openSidebarBtn.setAttribute('aria-expanded', 'false');
+    });
+  }
 
-  // Close sidebar when clicking outside on mobile
+  // Close sidebar when clicking outside on mobile (kept from original)
   document.addEventListener('click', (event) => {
     if (!sidebar.contains(event.target) && !openSidebarBtn.contains(event.target) && !sidebar.classList.contains('-translate-x-full')) {
       sidebar.classList.remove('translate-x-0');
       sidebar.classList.add('-translate-x-full');
+      openSidebarBtn.setAttribute('aria-expanded', 'false');
     }
   });
 </script>

@@ -1,723 +1,678 @@
 <%- include("partials/uHeader") %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Profile</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Cropper.js CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-  <!-- Razorpay CDN for payment retry -->
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <style>
-    @media (max-width: 640px) {
-      #cropperModal .max-w-lg {
-        max-width: 90%;
-      }
-      #imageToCrop {
-        max-height: 50vh;
-      }
-    }
-  </style>
-</head>
-<body class="bg-gray-50">
-  <div class="flex min-h-screen">
-    <%- include("partials/userSidebar", { activeTab: activeTab }) %>
-    <div class="flex-1 ml-0 md:ml-64 pt-12 sm:pt-16">
-      <div class="max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6">
-        <% if (success && success.length) { %>
-          <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
-            <p class="text-sm sm:text-base"><%= success %></p>
-          </div>
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: '<%= success %>',
-                confirmButtonColor: '#059669'
-              });
+<%- include("partials/userSidebar", { activeTab: activeTab }) %>
+
+<div class="flex min-h-screen bg-slate-50">
+  <div class="flex-1 ml-0 md:ml-64 pt-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <% if (success && success.length) { %>
+        <div class="bg-teal-100 border-l-4 border-teal-600 text-teal-800 p-4 mb-4 rounded-md" role="alert">
+          <p class="text-sm sm:text-base"><%= success %></p>
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: '<%= success %>',
+              confirmButtonColor: '#0d9488'
             });
-          </script>
-        <% } %>
-        <% if (error && error.length) { %>
-          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
-            <p class="text-sm sm:text-base"><%= error %></p>
-          </div>
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: '<%= error %>',
-                confirmButtonColor: '#dc2626'
-              });
-            });
-          </script>
-        <% } %>
-
-        <!-- Profile Tab -->
-        <% if (activeTab === 'profile') { %>
-          <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mt-4 sm:mt-6">
-            <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Profile Details</h5>
-            <div class="flex flex-col sm:flex-row items-center mb-4 sm:mb-6">
-              <div class="relative mb-3 sm:mb-0 sm:mr-4">
-                <img src="<%= user.profileImage || '/images/default-profile.png' %>" alt="Profile" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover" id="profileImage">
-                <button onclick="document.getElementById('imageInput').click()" class="absolute bottom-0 right-0 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full hover:bg-indigo-700">Change</button>
-                <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="openCropperModal(event)">
-              </div>
-              <div>
-                <p class="text-sm sm:text-base"><strong>Name:</strong> <%= user.fullname %></p>
-                <p class="text-sm sm:text-base"><strong>Email:</strong> <%= user.email %></p>
-                <p class="text-sm sm:text-base"><strong>Phone:</strong> <%= user.phoneNumber || 'Not set' %></p>
-              </div>
-            </div>
-
-            <!-- Addresses Section -->
-            <h6 class="text-sm sm:text-md font-semibold mb-2 sm:mb-3">Your Addresses</h6>
-            <% if (addresses.length > 0) { %>
-              <div class="space-y-3 sm:space-y-4">
-                <% addresses.forEach((address, index) => { %>
-                  <div class="border rounded-lg p-3 sm:p-4 <%= address.isDefault ? 'border-green-500 bg-green-50' : 'border-gray-200' %>">
-                    <div>
-                      <%- address.isDefault ? "<span class=' bg-green-100 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full'>Default</span>" : "" %>
-                      <p class="font-medium text-sm sm:text-base"><%= address.name %></p>
-                      <p class="text-xs sm:text-sm text-gray-600">
-                        <%= address.landMark ? address.landMark + ', ' : '' %>
-                        <%= address.city %>, <%= address.state %>, <%= address.pincode %>
-                      </p>
-                      <p class="text-xs sm:text-sm text-gray-600">Phone: <%= address.phone %></p>
-                      <p class="text-xs sm:text-sm text-gray-600">Type: <%= address.addressType %></p>
-                    </div>
-                  </div>
-                <% }) %>
-              </div>
-            <% } else { %>
-              <p class="text-gray-500 text-sm sm:text-base mb-3 sm:mb-4">No addresses found.</p>
-            <% } %>
-          </div>
-
-          <!-- Cropper Modal -->
-          <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md sm:max-w-lg">
-              <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Crop Image</h3>
-              <div class="mb-3 sm:mb-4">
-                <img id="imageToCrop" class="max-w-full h-auto">
-              </div>
-              <div class="flex justify-end space-x-2">
-                <button onclick="closeCropperModal()" class="bg-gray-300 text-gray-700 px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-gray-400 text-sm sm:text-base">Cancel</button>
-                <button onclick="cropAndUpload()" class="bg-indigo-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-indigo-700 text-sm sm:text-base">Save</button>
-              </div>
-            </div>
-          </div>
-        <% } %>
-
-        <!-- Addresses Tab -->
-        <% if (activeTab === 'addresses') { %>
-          <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mt-4 sm:mt-6">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-3 sm:mb-4">
-              <h5 class="text-base sm:text-lg font-semibold mb-2 sm:mb-0">Your Addresses</h5>
-              <a href="/user/profile/address/add" class="bg-indigo-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-indigo-700 text-sm sm:text-base">Add New Address</a>
-            </div>
-            <% if (addresses.length > 0) { %>
-              <div class="space-y-3 sm:space-y-4">
-                <% addresses.forEach((address, index) => { %>
-                  <div class="border rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center <%= address.isDefault ? 'border-green-500 bg-green-50' : 'border-gray-200' %>">
-                    <div class="mb-2 sm:mb-0">
-                      <p class="font-medium text-sm sm:text-base"><%= address.name %> <%-address.isDefault ? '<span class="text-green-600 text-xs sm:text-sm">(Default)</span>' : '' %></p>
-                      <p class="text-xs sm:text-sm text-gray-600">
-                        <%= address.landMark ? address.landMark + ', ' : '' %>
-                        <%= address.city %>, <%= address.state %>, <%= address.pincode %>
-                      </p>
-                      <p class="text-xs sm:text-sm text-gray-600">Phone: <%= address.phone %></p>
-                      <p class="text-xs sm:text-sm text-gray-600">Type: <%= address.addressType %></p>
-                    </div>
-                    <div class="flex space-x-2">
-                      <% if (!address.isDefault) { %>
-                        <button onclick="setDefaultAddress('<%= address._id %>')" class="text-green-600 hover:text-green-800 text-xs sm:text-sm">Set as Default</button>
-                      <% } %>
-                      <a href="/user/profile/address/edit/<%= address._id %>" class="text-indigo-600 hover:text-indigo-800 text-xs sm:text-sm">Edit</a>
-                      <form action="/user/profile/address/delete/<%= address._id %>" method="POST" onsubmit="return deleteAddress(event, '<%= address._id %>')">
-                        <button type="submit" class="text-red-600 hover:text-red-800 text-xs sm:text-sm">Delete</button>
-                      </form>
-                    </div>
-                  </div>
-                <% }) %>
-              </div>
-            <% } else { %>
-              <p class="text-gray-500 text-sm sm:text-base">No addresses found. Add one now!</p>
-            <% } %>
-          </div>
-        <% } %>
-
-        <!-- Orders Tab -->
-        <% if (activeTab === 'orders') { %>
-          <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mt-4 sm:mt-6">
-            <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Your Orders</h5>
-            <form action="/user/profile" method="GET" class="mb-3 sm:mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <input type="hidden" name="tab" value="orders">
-              <input type="text" name="search" value="<%= searchQuery %>" placeholder="Search by Order ID" class="border rounded px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base">
-              <button type="submit" class="bg-indigo-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-indigo-700 text-sm sm:text-base">Search</button>
-            </form>
-            <% if (orders.length > 0) { %>
-              <div class="overflow-x-auto">
-                <table class="w-full">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th class="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-gray-200">
-                    <% orders.forEach(order => { %>
-                      <tr>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500"><%= order.orderId %></td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500"><%= new Date(order.orderDate).toLocaleDateString() %></td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">₹<%= 
-                          order.items && order.items.length > 0 
-                            ? order.items.reduce((total, item) => {
-                                const price = parseFloat(item.itemSalePrice) || 0;
-                                const qty = parseInt(item.quantity) || 0;
-                                return total + (price * qty);
-                              }, 0).toFixed(2)
-                            : '0.00'
-                        %></td>                        
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
-                          <span class="px-2 py-0.5 sm:py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
-                            <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
-                          </span>
-                        </td>
-                        <td class="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">
-                          <a href="/user/orderDetails/<%= order._id %>" class="text-indigo-600 hover:text-indigo-800 mr-2">View</a>
-                          <% if (order.status === 'failed' && order.paymentMethod === 'razorpay') { %>
-                            <button onclick="retryPayment('<%= order._id %>')" class="text-blue-600 hover:text-blue-800">Retry Payment</button>
-                          <% } %>
-                        </td>
-                      </tr>
-                    <% }) %>
-                  </tbody>
-                </table>
-              </div>
-              <!-- Orders Pagination -->
-              <% if (activeTab === 'orders' && ordersTotalPages > 1) { %>
-                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
-                  <p class="text-xs sm:text-sm text-gray-700 mb-2 sm:mb-0">
-                    Showing <span class="font-medium"><%= ((currentPage - 1) * ordersLimit) + 1 %></span> 
-                    to <span class="font-medium"><%= Math.min(currentPage * ordersLimit, ordersTotal) %></span> 
-                    of <span class="font-medium"><%= ordersTotal %></span> results
-                  </p>
-                  <div class="flex flex-wrap gap-1 justify-center">
-                    <% if (currentPage > 1) { %>
-                      <a href="/user/profile?tab=orders&page=1<%= searchQuery ? `&search=${searchQuery}` : '' %>"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        First
-                      </a>
-                      <a href="/user/profile?tab=orders&page=<%= currentPage - 1 %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        Prev
-                      </a>
-                    <% } %>
-
-                    <% const maxVisiblePages = 5;
-                      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-                      let endPage = Math.min(ordersTotalPages, startPage + maxVisiblePages - 1);
-                      
-                      if (endPage - startPage + 1 < maxVisiblePages) {
-                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                      }
-                      
-                      for (let i = startPage; i <= endPage; i++) { %>
-                      <a href="/user/profile?tab=orders&page=<%= i %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
-                        class="px-2 sm:px-3 py-1 border rounded <%= i === currentPage ? 'bg-blue-600 text-white' : 'hover:bg-gray-100' %> text-xs sm:text-sm">
-                        <%= i %>
-                      </a>
-                    <% } %>
-
-                    <% if (currentPage < ordersTotalPages) { %>
-                      <a href="/user/profile?tab=orders&page=<%= currentPage + 1 %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        Next
-                      </a>
-                      <a href="/user/profile?tab=orders&page=<%= ordersTotalPages %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        Last
-                      </a>
-                    <% } %>
-                  </div>
-                </div>
-              <% } %>
-            <% } else { %>
-              <p class="text-gray-500 text-sm sm:text-base">No orders found.</p>
-            <% } %>
-          </div>
-        <% } %>
-
-        <!-- Wallet Status Tab -->
-        <% if (activeTab === 'wallet-status') { %>
-          <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mt-4 sm:mt-6">
-            <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Wallet Status</h5>
-            <p class="text-sm sm:text-base"><strong>Balance:</strong> ₹<%= walletBalance.toFixed(2) %></p>
-          </div>
-        <% } %>
-
-        <!-- Wallet History Tab -->
-        <% if (activeTab === 'wallet-history') { %>
-          <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mt-4 sm:mt-6">
-            <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Wallet History</h5>
-            <% if (history.length > 0) { %>
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Transaction ID</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ordered ProductId</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Type</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    <% history.forEach(tx => { %>
-                      <tr>
-                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap overflow-hidden overflow-ellipsis max-w-xs"><%= tx.transactionId %></td>
-                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap"><%= new Date(tx.createdAt).toDateString() %></td>
-                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap"><%= tx.productId %></td>
-                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap"><%= tx.type %></td>
-                        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">₹<%= tx.amount.toFixed(2) %></td>
-                      </tr>
-                    <% }) %>
-                  </tbody>
-                </table>
-              </div>
-              <!-- Wallet History Pagination -->
-              <% if (activeTab === 'wallet-history' && walletTotalPages > 1) { %>
-                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
-                  <p class="text-xs sm:text-sm text-gray-700 mb-2 sm:mb-0">
-                    Showing <span class="font-medium"><%= ((walletCurrentPage - 1) * walletLimit) + 1 %></span> 
-                    to <span class="font-medium"><%= Math.min(walletCurrentPage * walletLimit, walletTotal) %></span> 
-                    of <span class="font-medium"><%= walletTotal %></span> transactions
-                  </p>
-                  <div class="flex flex-wrap gap-1 justify-center">
-                    <% if (walletCurrentPage > 1) { %>
-                      <a href="/user/profile?tab=wallet-history&walletPage=1"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        First
-                      </a>
-                      <a href="/user/profile?tab=wallet-history&walletPage=<%= walletCurrentPage - 1 %>"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        Prev
-                      </a>
-                    <% } %>
-
-                    <% const maxVisiblePages = 5;
-                      let startPage = Math.max(1, walletCurrentPage - Math.floor(maxVisiblePages / 2));
-                      let endPage = Math.min(walletTotalPages, startPage + maxVisiblePages - 1);
-                      
-                      if (endPage - startPage + 1 < maxVisiblePages) {
-                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                      }
-                      
-                      for (let i = startPage; i <= endPage; i++) { %>
-                      <a href="/user/profile?tab=wallet-history&walletPage=<%= i %>"
-                        class="px-2 sm:px-3 py-1 border rounded <%= i === walletCurrentPage ? 'bg-blue-600 text-white' : 'hover:bg-gray-100' %> text-xs sm:text-sm">
-                        <%= i %>
-                      </a>
-                    <% } %>
-
-                    <% if (walletCurrentPage < walletTotalPages) { %>
-                      <a href="/user/profile?tab=wallet-history&walletPage=<%= walletCurrentPage + 1 %>"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        Next
-                      </a>
-                      <a href="/user/profile?tab=wallet-history&walletPage=<%= walletTotalPages %>"
-                        class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">
-                        Last
-                      </a>
-                    <% } %>
-                  </div>
-                </div>
-              <% } %>
-            <% } else { %>
-              <p class="text-gray-500 text-sm py-4">No transactions found</p>
-            <% } %>
-          </div>
-        <% } %>
-
-        <!-- Referrals Tab -->
-        <% if (activeTab === 'referrals') { %>
-          <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mt-4 sm:mt-6">
-            <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Referrals</h5>
-            <p class="text-sm sm:text-base text-gray-500">No referrals available.</p>
-          </div>
-        <% } %>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let cropper;
-
-    function openCropperModal(event) {
-      const file = event.target.files[0];
-      console.log('Selected file:', file);
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const image = document.getElementById('imageToCrop');
-        image.src = e.target.result;
-        document.getElementById('cropperModal').classList.remove('hidden');
-
-        if (cropper) cropper.destroy();
-        cropper = new Cropper(image, {
-          aspectRatio: 1,
-          viewMode: 1,
-          autoCropArea: 0.8,
-          responsive: true,
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function closeCropperModal() {
-      document.getElementById('cropperModal').classList.add('hidden');
-      if (cropper) cropper.destroy();
-      document.getElementById('imageInput').value = ''; // Reset file input
-    }
-
-    function cropAndUpload() {
-      if (!cropper) return;
-
-      cropper.getCroppedCanvas({ width: 200, height: 200 }).toBlob((blob) => {
-        console.log('Cropped blob:', blob);
-        const formData = new FormData();
-        formData.append('profileImage', blob, 'profile.jpg');
-
-        fetch('/user/profile/upload-image', {
-          method: 'PUT',
-          body: formData,
-        })
-          .then((res) => {
-            if (!res.ok) {
-              throw new Error(`HTTP error! Status: ${res.status}`);
-            }
-            return res.json();
-          })
-          .then((data) => {
-            if (data.success) {
-              document.getElementById('profileImage').src = data.imageUrl;
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Profile image updated successfully!',
-                confirmButtonColor: '#059669'
-              });
-              closeCropperModal();
-            } else {
-              console.error('Upload failed:', data);
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message || 'Failed to upload image',
-                confirmButtonColor: '#dc2626'
-              });
-            }
-          })
-          .catch((err) => {
-            console.error('Error uploading image:', err);
+          });
+        </script>
+      <% } %>
+      <% if (error && error.length) { %>
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-md" role="alert">
+          <p class="text-sm sm:text-base"><%= error %></p>
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: 'Error uploading image: ' + err.message,
+              text: '<%= error %>',
               confirmButtonColor: '#dc2626'
             });
           });
-      }, 'image/jpeg', 0.8);
+        </script>
+      <% } %>
 
-      document.getElementById('imageInput').value = ''; // Reset file input
+      <!-- Profile Tab -->
+      <% if (activeTab === 'profile') { %>
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+          <h5 class="text-lg sm:text-xl font-semibold mb-4 text-teal-700">Profile Details</h5>
+          <div class="flex flex-col sm:flex-row items-center mb-6">
+            <div class="relative mb-4 sm:mb-0 sm:mr-6">
+              <img src="<%= user.profileImage || '/images/default-profile.png' %>" alt="Profile" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover ring-2 ring-teal-200" id="profileImage">
+              <button onclick="document.getElementById('imageInput').click()" class="absolute bottom-0 right-0 bg-teal-600 text-white text-xs px-3 py-1.5 rounded-full hover:bg-teal-700 transition">Change</button>
+              <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="openCropperModal(event)">
+            </div>
+            <div>
+              <p class="text-base sm:text-lg text-slate-700"><strong>Name:</strong> <%= user.fullname %></p>
+              <p class="text-base sm:text-lg text-slate-700"><strong>Email:</strong> <%= user.email %></p>
+              <p class="text-base sm:text-lg text-slate-700"><strong>Phone:</strong> <%= user.phoneNumber || 'Not set' %></p>
+            </div>
+          </div>
+
+          <!-- Addresses Section -->
+          <h6 class="text-md sm:text-lg font-semibold mb-3 text-teal-700">Your Addresses</h6>
+          <% if (addresses.length > 0) { %>
+            <div class="space-y-4">
+              <% addresses.forEach((address, index) => { %>
+                <div class="border rounded-lg p-4 <%= address.isDefault ? 'border-teal-500 bg-teal-50' : 'border-slate-200' %> transition hover:shadow-md">
+                  <div>
+                    <%- address.isDefault ? "<span class='bg-teal-100 text-teal-700 text-xs font-semibold px-2 py-0.5 rounded-full'>Default</span>" : "" %>
+                    <p class="font-medium text-base sm:text-lg text-slate-700"><%= address.name %></p>
+                    <p class="text-sm text-slate-600">
+                      <%= address.landMark ? address.landMark + ', ' : '' %>
+                      <%= address.city %>, <%= address.state %>, <%= address.pincode %>
+                    </p>
+                    <p class="text-sm text-slate-600">Phone: <%= address.phone %></p>
+                    <p class="text-sm text-slate-600">Type: <%= address.addressType %></p>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <p class="text-slate-500 text-base mb-4">No addresses found.</p>
+          <% } %>
+        </div>
+
+        <!-- Cropper Modal (Unchanged) -->
+        <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+          <div class="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md sm:max-w-lg">
+            <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Crop Image</h3>
+            <div class="mb-3 sm:mb-4">
+              <img id="imageToCrop" class="max-w-full h-auto">
+            </div>
+            <div class="flex justify-end space-x-2">
+              <button onclick="closeCropperModal()" class="bg-gray-300 text-gray-700 px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-gray-400 text-sm sm:text-base">Cancel</button>
+              <button onclick="cropAndUpload()" class="bg-indigo-600 text-white px-3 sm:px-4 py-1 sm:py-2 rounded hover:bg-indigo-700 text-sm sm:text-base">Save</button>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Addresses Tab -->
+      <% if (activeTab === 'addresses') { %>
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+          <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+            <h5 class="text-lg sm:text-xl font-semibold mb-2 sm:mb-0 text-teal-700">Your Addresses</h5>
+            <a href="/user/profile/address/add" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition text-base">Add New Address</a>
+          </div>
+          <% if (addresses.length > 0) { %>
+            <div class="space-y-4">
+              <% addresses.forEach((address, index) => { %>
+                <div class="border rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center <%= address.isDefault ? 'border-teal-500 bg-teal-50' : 'border-slate-200' %> transition hover:shadow-md">
+                  <div class="mb-2 sm:mb-0">
+                    <p class="font-medium text-base sm:text-lg text-slate-700"><%= address.name %> <%-address.isDefault ? '<span class="text-teal-600 text-sm">(Default)</span>' : '' %></p>
+                    <p class="text-sm text-slate-600">
+                      <%= address.landMark ? address.landMark + ', ' : '' %>
+                      <%= address.city %>, <%= address.state %>, <%= address.pincode %>
+                    </p>
+                    <p class="text-sm text-slate-600">Phone: <%= address.phone %></p>
+                    <p class="text-sm text-slate-600">Type: <%= address.addressType %></p>
+                  </div>
+                  <div class="flex space-x-3">
+                    <% if (!address.isDefault) { %>
+                      <button onclick="setDefaultAddress('<%= address._id %>')" class="text-teal-600 hover:text-teal-800 text-sm transition">Set as Default</button>
+                    <% } %>
+                    <a href="/user/profile/address/edit/<%= address._id %>" class="text-teal-600 hover:text-teal-800 text-sm transition">Edit</a>
+                    <form action="/user/profile/address/delete/<%= address._id %>" method="POST" onsubmit="return deleteAddress(event, '<%= address._id %>')">
+                      <button type="submit" class="text-red-600 hover:text-red-800 text-sm transition">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <p class="text-slate-500 text-base">No addresses found. Add one now!</p>
+          <% } %>
+        </div>
+      <% } %>
+
+      <!-- Orders Tab -->
+      <% if (activeTab === 'orders') { %>
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+          <h5 class="text-lg sm:text-xl font-semibold mb-4 text-teal-700">Your Orders</h5>
+          <form action="/user/profile" method="GET" class="mb-4 flex flex-col sm:flex-row gap-3">
+            <input type="hidden" name="tab" value="orders">
+            <input type="text" name="search" value="<%= searchQuery %>" placeholder="Search by Order ID" class="border border-slate-300 rounded-md px-4 py-2 text-base w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <button type="submit" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition text-base">Search</button>
+          </form>
+          <% if (orders.length > 0) { %>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-slate-100">
+                  <tr>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase">Order ID</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase">Total</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  <% orders.forEach(order => { %>
+                    <tr class="hover:bg-teal-50 transition">
+                      <td class="py-3 px-4 text-sm text-slate-600"><%= order.orderId %></td>
+                      <td class="py-3 px-4 text-sm text-slate-600"><%= new Date(order.orderDate).toLocaleDateString() %></td>
+                      <td class="py-3 px-4 text-sm text-slate-600">₹<%= 
+                        order.items && order.items.length > 0 
+                          ? order.items.reduce((total, item) => {
+                              const price = parseFloat(item.itemSalePrice) || 0;
+                              const qty = parseInt(item.quantity) || 0;
+                              return total + (price * qty);
+                            }, 0).toFixed(2)
+                          : '0.00'
+                      %></td>
+                      <td class="py-3 px-4 text-sm text-slate-600">
+                        <span class="px-2 py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-teal-100 text-teal-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800' %>">
+                          <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-sm text-slate-600">
+                        <a href="/user/orderDetails/<%= order._id %>" class="text-teal-600 hover:text-teal-800 mr-3 transition">View</a>
+                        <% if (order.status === 'failed' && order.paymentMethod === 'razorpay') { %>
+                          <button onclick="retryPayment('<%= order._id %>')" class="text-teal-600 hover:text-teal-800 transition">Retry Payment</button>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+            <!-- Orders Pagination -->
+            <% if (activeTab === 'orders' && ordersTotalPages > 1) { %>
+              <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p class="text-sm text-slate-600">
+                  Showing <span class="font-medium"><%= ((currentPage - 1) * ordersLimit) + 1 %></span> 
+                  to <span class="font-medium"><%= Math.min(currentPage * ordersLimit, ordersTotal) %></span> 
+                  of <span class="font-medium"><%= ordersTotal %></span> results
+                </p>
+                <div class="flex flex-wrap gap-2 justify-center">
+                  <% if (currentPage > 1) { %>
+                    <a href="/user/profile?tab=orders&page=1<%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      First
+                    </a>
+                    <a href="/user/profile?tab=orders&page=<%= currentPage - 1 %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      Prev
+                    </a>
+                  <% } %>
+
+                  <% const maxVisiblePages = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(ordersTotalPages, startPage + maxVisiblePages - 1);
+                    
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+                    
+                    for (let i = startPage; i <= endPage; i++) { %>
+                    <a href="/user/profile?tab=orders&page=<%= i %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md <%= i === currentPage ? 'bg-teal-600 text-white' : 'hover:bg-teal-50 text-teal-600' %> text-sm transition">
+                      <%= i %>
+                    </a>
+                  <% } %>
+
+                  <% if (currentPage < ordersTotalPages) { %>
+                    <a href="/user/profile?tab=orders&page=<%= currentPage + 1 %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      Next
+                    </a>
+                    <a href="/user/profile?tab=orders&page=<%= ordersTotalPages %><%= searchQuery ? `&search=${searchQuery}` : '' %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      Last
+                    </a>
+                  <% } %>
+                </div>
+              </div>
+            <% } %>
+          <% } else { %>
+            <p class="text-slate-500 text-base">No orders found.</p>
+          <% } %>
+        </div>
+      <% } %>
+
+      <!-- Wallet Status Tab -->
+      <% if (activeTab === 'wallet-status') { %>
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+          <h5 class="text-lg sm:text-xl font-semibold mb-4 text-teal-700">Wallet Status</h5>
+          <p class="text-base sm:text-lg text-slate-700"><strong>Balance:</strong> ₹<%= walletBalance.toFixed(2) %></p>
+        </div>
+      <% } %>
+
+      <!-- Wallet History Tab -->
+      <% if (activeTab === 'wallet-history') { %>
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+          <h5 class="text-lg sm:text-xl font-semibold mb-4 text-teal-700">Wallet History</h5>
+          <% if (history.length > 0) { %>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-100">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Transaction ID</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Date</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Ordered ProductId</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Type</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Amount</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  <% history.forEach(tx => { %>
+                    <tr class="hover:bg-teal-50 transition">
+                      <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap overflow-hidden overflow-ellipsis max-w-xs"><%= tx.transactionId %></td>
+                      <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap"><%= new Date(tx.createdAt).toDateString() %></td>
+                      <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap"><%= tx.productId %></td>
+                      <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap"><%= tx.type %></td>
+                      <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">₹<%= tx.amount.toFixed(2) %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+            <!-- Wallet History Pagination -->
+            <% if (activeTab === 'wallet-history' && walletTotalPages > 1) { %>
+              <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p class="text-sm text-slate-600">
+                  Showing <span class="font-medium"><%= ((walletCurrentPage - 1) * walletLimit) + 1 %></span> 
+                  to <span class="font-medium"><%= Math.min(walletCurrentPage * walletLimit, walletTotal) %></span> 
+                  of <span class="font-medium"><%= walletTotal %></span> transactions
+                </p>
+                <div class="flex flex-wrap gap-2 justify-center">
+                  <% if (walletCurrentPage > 1) { %>
+                    <a href="/user/profile?tab=wallet-history&walletPage=1"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      First
+                    </a>
+                    <a href="/user/profile?tab=wallet-history&walletPage=<%= walletCurrentPage - 1 %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      Prev
+                    </a>
+                  <% } %>
+
+                  <% const maxVisiblePages = 5;
+                    let startPage = Math.max(1, walletCurrentPage - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(walletTotalPages, startPage + maxVisiblePages - 1);
+                    
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+                    
+                    for (let i = startPage; i <= endPage; i++) { %>
+                    <a href="/user/profile?tab=wallet-history&walletPage=<%= i %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md <%= i === walletCurrentPage ? 'bg-teal-600 text-white' : 'hover:bg-teal-50 text-teal-600' %> text-sm transition">
+                      <%= i %>
+                    </a>
+                  <% } %>
+
+                  <% if (walletCurrentPage < walletTotalPages) { %>
+                    <a href="/user/profile?tab=wallet-history&walletPage=<%= walletCurrentPage + 1 %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      Next
+                    </a>
+                    <a href="/user/profile?tab=wallet-history&walletPage=<%= walletTotalPages %>"
+                      class="px-3 py-1 border border-slate-300 rounded-md hover:bg-teal-50 text-sm text-teal-600 transition">
+                      Last
+                    </a>
+                  <% } %>
+                </div>
+              </div>
+            <% } %>
+          <% } else { %>
+            <p class="text-slate-500 text-base py-4">No transactions found</p>
+          <% } %>
+        </div>
+      <% } %>
+
+      <!-- Referrals Tab -->
+      <% if (activeTab === 'referrals') { %>
+        <div class="bg-white rounded-xl shadow-md p-6 mt-6">
+          <h5 class="text-lg sm:text-xl font-semibold mb-4 text-teal-700">Referrals</h5>
+          <p class="text-base text-slate-500">No referrals available.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<style>
+  @media (max-width: 640px) {
+    #cropperModal .max-w-lg {
+      max-width: 90%;
     }
+    #imageToCrop {
+      max-height: 50vh;
+    }
+  }
+</style>
 
-    async function setDefaultAddress(index) {
-      const result = await Swal.fire({
-        title: 'Set as Default Address?',
-        text: 'This will make this address your default for future orders.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#059669',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, set as default',
-        cancelButtonText: 'Cancel'
+<script>
+  let cropper;
+
+  function openCropperModal(event) {
+    const file = event.target.files[0];
+    console.log('Selected file:', file);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const image = document.getElementById('imageToCrop');
+      image.src = e.target.result;
+      document.getElementById('cropperModal').classList.remove('hidden');
+
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(image, {
+        aspectRatio: 1,
+        viewMode: 1,
+        autoCropArea: 0.8,
+        responsive: true,
       });
+    };
+    reader.readAsDataURL(file);
+  }
 
-      if (result.isConfirmed) {
-        try {
-          const response = await fetch(`/user/profile/address/set-default/${index}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
+  function closeCropperModal() {
+    document.getElementById('cropperModal').classList.add('hidden');
+    if (cropper) cropper.destroy();
+    document.getElementById('imageInput').value = ''; // Reset file input
+  }
 
-          const data = await response.json();
+  function cropAndUpload() {
+    if (!cropper) return;
 
+    cropper.getCroppedCanvas({ width: 200, height: 200 }).toBlob((blob) => {
+      console.log('Cropped blob:', blob);
+      const formData = new FormData();
+      formData.append('profileImage', blob, 'profile.jpg');
+
+      fetch('/user/profile/upload-image', {
+        method: 'PUT',
+        body: formData,
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! Status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
           if (data.success) {
-            await Swal.fire({
+            document.getElementById('profileImage').src = data.imageUrl;
+            Swal.fire({
               icon: 'success',
               title: 'Success',
-              text: data.message,
+              text: 'Profile image updated successfully!',
               confirmButtonColor: '#059669'
             });
-            window.location.reload();
+            closeCropperModal();
           } else {
+            console.error('Upload failed:', data);
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: data.message || 'Failed to set default address',
+              text: data.message || 'Failed to upload image',
               confirmButtonColor: '#dc2626'
             });
           }
-        } catch (err) {
-          console.error('Error setting default address:', err);
+        })
+        .catch((err) => {
+          console.error('Error uploading image:', err);
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to set default address. Please try again.',
+            text: 'Error uploading image: ' + err.message,
+            confirmButtonColor: '#dc2626'
+          });
+        });
+    }, 'image/jpeg', 0.8);
+
+    document.getElementById('imageInput').value = ''; // Reset file input
+  }
+
+  async function setDefaultAddress(index) {
+    const result = await Swal.fire({
+      title: 'Set as Default Address?',
+      text: 'This will make this address your default for future orders.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, set as default',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/user/profile/address/set-default/${index}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: data.message,
+            confirmButtonColor: '#059669'
+          });
+          window.location.reload();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.message || 'Failed to set default address',
             confirmButtonColor: '#dc2626'
           });
         }
+      } catch (err) {
+        console.error('Error setting default address:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to set default address. Please try again.',
+          confirmButtonColor: '#dc2626'
+        });
       }
     }
+  }
 
-    async function deleteAddress(event, addressId) {
-      event.preventDefault();
-      const result = await Swal.fire({
-        title: 'Delete Address?',
-        text: 'Are you sure you want to delete this address?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, delete it',
-        cancelButtonText: 'Cancel'
-      });
+  async function deleteAddress(event, addressId) {
+    event.preventDefault();
+    const result = await Swal.fire({
+      title: 'Delete Address?',
+      text: 'Are you sure you want to delete this address?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel'
+    });
 
-      if (result.isConfirmed) {
-        try {
-          const response = await fetch(`/user/profile/address/delete/${addressId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'success',
-              title: 'Address deleted successfully',
-              showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true
-            });
-            window.location.reload();
-          } else {
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'error',
-              title: data.message || 'Failed to delete address',
-              showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true
-            });
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/user/profile/address/delete/${addressId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           }
-        } catch (err) {
-          console.error('Error deleting address:', err);
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Address deleted successfully',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          window.location.reload();
+        } else {
           Swal.fire({
             toast: true,
             position: 'top-end',
             icon: 'error',
-            title: 'Failed to delete address. Please try again.',
+            title: data.message || 'Failed to delete address',
             showConfirmButton: false,
             timer: 3000,
             timerProgressBar: true
           });
         }
+      } catch (err) {
+        console.error('Error deleting address:', err);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Failed to delete address. Please try again.',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
       }
-      return false;
     }
+    return false;
+  }
 
-    async function retryPayment(orderId) {
-      const result = await Swal.fire({
-        title: 'Retry Payment?',
-        text: 'Do you want to retry the payment for this order?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#059669',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, retry payment',
-        cancelButtonText: 'Cancel'
-      });
+  async function retryPayment(orderId) {
+    const result = await Swal.fire({
+      title: 'Retry Payment?',
+      text: 'Do you want to retry the payment for this order?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, retry payment',
+      cancelButtonText: 'Cancel'
+    });
 
-      if (result.isConfirmed) {
-        try {
-          const response = await fetch(`/user/retry-payment/${orderId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/user/retry-payment/${orderId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
 
-          const data = await response.json();
+        const data = await response.json();
 
-          if (data.success) {
-            // Initialize Razorpay checkout
-            const options = {
-              key: data.key_id,
-              amount: data.amount * 100, // Convert to paise
-              currency: 'INR',
-              order_id: data.order_id,
-              name: 'Your Store Name',
-              description: `Retry Payment for Order ${data.order._id}`,
-              handler: async function (response) {
-                // Verify payment after successful Razorpay checkout
-                const verifyResponse = await fetch('/user/verify-payment', {
-                  method: 'POST',
+        if (data.success) {
+          // Initialize Razorpay checkout
+          const options = {
+            key: data.key_id,
+            amount: data.amount * 100, // Convert to paise
+            currency: 'INR',
+            order_id: data.order_id,
+            name: 'Your Store Name',
+            description: `Retry Payment for Order ${data.order._id}`,
+            handler: async function (response) {
+              // Verify payment after successful Razorpay checkout
+              const verifyResponse = await fetch('/user/verify-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+
+              const verifyData = await verifyResponse.json();
+
+              if (verifyData.success) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Payment verified successfully!',
+                  confirmButtonColor: '#059669'
+                }).then(() => {
+                  window.location.reload();
+                });
+              } else {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: verifyData.message || 'Payment verification failed',
+                  confirmButtonColor: '#dc2626'
+                });
+              }
+            },
+            modal: {
+              ondismiss: async function () {
+                // Handle payment cancellation
+                await fetch('/user/payment-failure', {
+                  method: 'PUT',
                   headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                   },
                   body: JSON.stringify({
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_signature: response.razorpay_signature
+                    orderId: data.mongoOrderId,
+                    razorpay_order_id: data.order_id,
+                    error_code: 'USER_CANCELLED',
+                    error_description: 'Payment cancelled by user'
                   })
                 });
-
-                const verifyData = await verifyResponse.json();
-
-                if (verifyData.success) {
-                  Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Payment verified successfully!',
-                    confirmButtonColor: '#059669'
-                  }).then(() => {
-                    window.location.reload();
-                  });
-                } else {
-                  Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: verifyData.message || 'Payment verification failed',
-                    confirmButtonColor: '#dc2626'
-                  });
-                }
-              },
-              modal: {
-                ondismiss: async function () {
-                  // Handle payment cancellation
-                  await fetch('/user/payment-failure', {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                      orderId: data.mongoOrderId,
-                      razorpay_order_id: data.order_id,
-                      error_code: 'USER_CANCELLED',
-                      error_description: 'Payment cancelled by user'
-                    })
-                  });
-                  Swal.fire({
-                    icon: 'warning',
-                    title: 'Payment Cancelled',
-                    text: 'You cancelled the payment. Please try again.',
-                    confirmButtonColor: '#dc2626'
-                  });
-                }
-              },
-              prefill: {
-                name: '<%= user.fullname %>',
-                email: '<%= user.email %>',
-                contact: '<%= user.phoneNumber || "" %>'
-              },
-              theme: {
-                color: '#059669'
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Payment Cancelled',
+                  text: 'You cancelled the payment. Please try again.',
+                  confirmButtonColor: '#dc2626'
+                });
               }
-            };
+            },
+            prefill: {
+              name: '<%= user.fullname %>',
+              email: '<%= user.email %>',
+              contact: '<%= user.phoneNumber || "" %>'
+            },
+            theme: {
+              color: '#059669'
+            }
+          };
 
-            const rzp = new Razorpay(options);
-            rzp.open();
-          } else {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: data.message || 'Failed to initiate payment retry',
-              confirmButtonColor: '#dc2626'
-            });
-          }
-        } catch (err) {
-          console.error('Error retrying payment:', err);
+          const rzp = new Razorpay(options);
+          rzp.open();
+        } else {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to retry payment. Please try again.',
+            text: data.message || 'Failed to initiate payment retry',
             confirmButtonColor: '#dc2626'
           });
         }
+      } catch (err) {
+        console.error('Error retrying payment:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to retry payment. Please try again.',
+          confirmButtonColor: '#dc2626'
+        });
       }
     }
-
-    // Mobile menu functionality
-    document.addEventListener("DOMContentLoaded", function () {
-      const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
-      const mobileMenu = document.getElementById("mobile-menu");
-      const closeMobileMenu = document.getElementById("close-mobile-menu");
-      const toggleSidebar = document.getElementById("toggle-sidebar");
-      const sidebar = document.getElementById("sidebar");
-
-      if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener("click", () => {
-          mobileMenu.classList.toggle("hidden");
-        });
-      }
-
-      if (closeMobileMenu) {
-        closeMobileMenu.addEventListener("click", () => {
-          mobileMenu.classList.add("hidden");
-        });
-      }
-
-      if (toggleSidebar) {
-        toggleSidebar.addEventListener("click", () => {
-          sidebar.classList.toggle("hidden");
-          mobileMenu.classList.add("hidden");
-        });
-      }
-
-      if (mobileMenu) {
-        window.addEventListener("click", (e) => {
-          if (e.target === mobileMenu) {
-            mobileMenu.classList.add("hidden");
-          }
-        });
-      }
-    });
-  </script>
-</body>
-</html>
+  }
+</script>

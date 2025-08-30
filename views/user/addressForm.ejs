@@ -12,6 +12,10 @@
     #sidebar {
       transition: transform 0.3s ease-in-out;
     }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
     @media (max-width: 639px) {
       #sidebar.hidden {
         transform: translateX(-100%);
@@ -22,64 +26,64 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col sm:flex-row">
+<body class="bg-slate-50 min-h-screen flex flex-col sm:flex-row">
   <%- include("partials/userSidebar", { activeTab: 'addresses' }) %>
   <div class="flex-1 ml-0 sm:ml-64 pt-16 main-content">
-    <div class="w-full max-w-full sm:max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div class="w-full max-w-full sm:max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <% if (success && success.length) { %>
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
-          <p class="text-xs sm:text-sm"><%= success %></p>
+        <div class="bg-teal-50 border-l-4 border-teal-500 text-teal-700 p-4 sm:p-6 mb-6 sm:mb-8" role="alert">
+          <p class="text-sm sm:text-base"><%= success %></p>
         </div>
       <% } %>
       <% if (error && error.length) { %>
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 mb-3 sm:mb-4" role="alert">
-          <p class="text-xs sm:text-sm"><%= error %></p>
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 sm:p-6 mb-6 sm:mb-8" role="alert">
+          <p class="text-sm sm:text-base"><%= error %></p>
         </div>
       <% } %>
-      <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
-        <h5 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4"><%= address._id ? 'Edit Address' : 'Add Address' %></h5>
-          <form id="addressForm" 
-            data-action="<%= address._id ? `/user/profile/address/edit/${address._id}` : '/user/profile/address/add' %>" 
-            class="space-y-3 sm:space-y-4">
+      <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6 sm:p-8">
+        <h5 class="text-xl sm:text-2xl font-semibold text-teal-700 mb-6 sm:mb-8"><%= address._id ? 'Edit Address' : 'Add Address' %></h5>
+        <form id="addressForm" 
+          data-action="<%= address._id ? `/user/profile/address/edit/${address._id}` : '/user/profile/address/add' %>" 
+          class="space-y-6 sm:space-y-8">
           <div>
-            <label for="name" class="block text-xs sm:text-sm font-medium text-gray-700">Name *</label>
+            <label for="name" class="block text-sm sm:text-base font-medium text-slate-700">Name *</label>
             <input type="text" id="name" name="name" value="<%= address.name || '' %>" 
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
-            <p class="text-red-500 text-xs mt-1 hidden" id="nameError">Name is required (3-50 characters)</p>
+                   class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base">
+            <p class="text-red-500 text-sm mt-2 hidden" id="nameError">Name is required (3-50 characters)</p>
           </div>
           <div>
-            <label for="landMark" class="block text-xs sm:text-sm font-medium text-gray-700">Landmark</label>
+            <label for="landMark" class="block text-sm sm:text-base font-medium text-slate-700">Landmark</label>
             <input type="text" id="landMark" name="landMark" value="<%= address.landMark || '' %>" 
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+                   class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base">
           </div>
           <div>
-            <label for="city" class="block text-xs sm:text-sm font-medium text-gray-700">City *</label>
+            <label for="city" class="block text-sm sm:text-base font-medium text-slate-700">City *</label>
             <input type="text" id="city" name="city" value="<%= address.city || '' %>" 
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
-            <p class="text-red-500 text-xs mt-1 hidden" id="cityError">City is required (2-50 characters)</p>
+                   class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base">
+            <p class="text-red-500 text-sm mt-2 hidden" id="cityError">City is required (2-50 characters)</p>
           </div>
           <div>
-            <label for="state" class="block text-xs sm:text-sm font-medium text-gray-700">State *</label>
+            <label for="state" class="block text-sm sm:text-base font-medium text-slate-700">State *</label>
             <input type="text" id="state" name="state" value="<%= address.state || '' %>" 
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
-            <p class="text-red-500 text-xs mt-1 hidden" id="stateError">State is required (2-50 characters)</p>
+                   class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base">
+            <p class="text-red-500 text-sm mt-2 hidden" id="stateError">State is required (2-50 characters)</p>
           </div>
           <div>
-            <label for="pincode" class="block text-xs sm:text-sm font-medium text-gray-700">Pincode *</label>
+            <label for="pincode" class="block text-sm sm:text-base font-medium text-slate-700">Pincode *</label>
             <input type="text" id="pincode" name="pincode" value="<%= address.pincode || '' %>" 
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
-            <p class="text-red-500 text-xs mt-1 hidden" id="pincodeError">Pincode must be 6 digits</p>
+                   class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base">
+            <p class="text-red-500 text-sm mt-2 hidden" id="pincodeError">Pincode must be 6 digits</p>
           </div>
           <div>
-            <label for="phone" class="block text-xs sm:text-sm font-medium text-gray-700">Phone *</label>
+            <label for="phone" class="block text-sm sm:text-base font-medium text-slate-700">Phone *</label>
             <input type="tel" id="phone" name="phone" value="<%= address.phone || '' %>" 
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
-            <p class="text-red-500 text-xs mt-1 hidden" id="phoneError">Phone must be 10 digits</p>
+                   class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base">
+            <p class="text-red-500 text-sm mt-2 hidden" id="phoneError">Phone must be 10 digits</p>
           </div>
           <div>
-            <label for="addressType" class="block text-xs sm:text-sm font-medium text-gray-700">Address Type</label>
+            <label for="addressType" class="block text-sm sm:text-base font-medium text-slate-700">Address Type</label>
             <select id="addressType" name="addressType" 
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+                    class="mt-1 block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base">
               <option value="Home" <%= address.addressType === 'Home' ? 'selected' : '' %>>Home</option>
               <option value="Work" <%= address.addressType === 'Work' ? 'selected' : '' %>>Work</option>
               <option value="Other" <%= address.addressType === 'Other' ? 'selected' : '' %>>Other</option>
@@ -88,13 +92,13 @@
           <div>
             <label class="flex items-center">
               <input type="checkbox" id="isDefault" name="isDefault" <%= address.isDefault ? 'checked' : '' %>
-                     class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-              <span class="ml-2 text-xs sm:text-sm text-gray-700">Set as default address</span>
+                     class="rounded border-slate-300 text-teal-600 shadow-sm focus:border-teal-300 focus:ring focus:ring-teal-200 focus:ring-opacity-50">
+              <span class="ml-3 text-sm sm:text-base text-slate-700">Set as default address</span>
             </label>
           </div>
-          <div class="flex justify-end space-x-3 sm:space-x-4">
-            <a href="/user/profile?tab=addresses" class="text-gray-600 hover:text-gray-800 text-xs sm:text-sm">Cancel</a>
-            <button type="submit" class="bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded hover:bg-indigo-700 text-xs sm:text-sm">Save Address</button>
+          <div class="flex justify-end space-x-4 sm:space-x-6">
+            <a href="/user/profile?tab=addresses" class="text-slate-600 hover:text-slate-800 text-sm sm:text-base">Cancel</a>
+            <button type="submit" class="bg-teal-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-teal-700 text-sm sm:text-base">Save Address</button>
           </div>
         </form>
       </div>
