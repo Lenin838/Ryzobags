@@ -1,138 +1,131 @@
-<!-- Professional sidebar for RYZO BAGS admin panel -->
-<aside class="bg-gradient-to-b from-indigo-600 to-indigo-700 text-white w-64 min-h-screen shadow-lg">
-    <!-- Logo Area -->
-    <div class="flex items-center p-4 border-b border-indigo-500">
-        <div class="bg-white rounded-md p-2 mr-3">
-            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="9" height="9" rx="2" fill="#4F46E5"/>
-                <rect x="13" y="2" width="9" height="9" rx="2" fill="#818CF8"/>
-                <rect x="2" y="13" width="9" height="9" rx="2" fill="#818CF8"/>
-                <rect x="13" y="13" width="9" height="9" rx="2" fill="#4F46E5"/>
-            </svg>
-        </div>
-        <h1 class="text-xl font-bold">RYZO Admin</h1>
+<nav class="h-full flex flex-col">
+  <div class="px-4 py-4 border-b border-gray-200">
+    <div class="flex items-center">
+      <div class="h-9 w-9 rounded-md brand-bg flex items-center justify-center mr-3">
+        <svg class="w-5 h-5 text-gray-900" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2" y="2" width="9" height="9" rx="2" fill="currentColor"/>
+          <rect x="13" y="2" width="9" height="9" rx="2" fill="currentColor" opacity="0.6"/>
+          <rect x="2" y="13" width="9" height="9" rx="2" fill="currentColor" opacity="0.6"/>
+          <rect x="13" y="13" width="9" height="9" rx="2" fill="currentColor"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-gray-900">RYZO Admin</p>
+        <p class="text-xs text-gray-500">Management Console</p>
+      </div>
     </div>
+  </div>
+
     
-    <!-- Navigation -->
-    <div class="py-4">
-        <div class="px-4 py-2">
-            <p class="text-xs uppercase tracking-wider text-indigo-200 font-semibold">Main Navigation</p>
-        </div>
-        
-        <nav>
-            <ul>
-                <li>
-                    <a href="/admin/dashboard" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                        </svg>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/users-management" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <span>Customers</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        
-        <div class="px-4 py-2 mt-6">
-            <p class="text-xs uppercase tracking-wider text-indigo-200 font-semibold">Catalog</p>
-        </div>
-        
-        <nav>
-            <ul>
-                <li>
-                    <a href="/admin/products" class="flex items-center px-4 py-5 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                        </svg>
-                        <span>Products</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/categories" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                        <span>Categories</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/brands" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                        </svg>
-                        <span>Brands</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/orders" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                        </svg>
-                        <span>Order Management</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/inventory" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                        </svg>
-                        <span>Stock Management</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/coupons/list" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                        </svg>
-                        <span>Coupon Management</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/sales-report" class="flex items-center px-4 py-3 hover:bg-indigo-800 transition-colors">
-                        <svg class="w-5 h-5 mr-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                        </svg>
-                        <span>Sales Report</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+  <div class="flex-1 overflow-y-auto">
+    <div class="px-4 pt-4 pb-1">
+      <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Main</p>
     </div>
+    <ul class="px-2 space-y-1">
+      <li>
+        <a href="/admin/dashboard" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/users-management" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Customers</span>
+        </a>
+      </li>
+    </ul>
 
-    <!-- JavaScript to set active sidebar link -->
-    <script>
-        function setActiveSidebarLink() {
-            const currentPath = window.location.pathname;
-            const sidebarLinks = document.querySelectorAll('aside nav a');
+    <div class="px-4 pt-6 pb-1">
+      <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Catalog</p>
+    </div>
+    <ul class="px-2 space-y-1">
+      <li>
+        <a href="/admin/products" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Products</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/categories" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Categories</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/brands" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Brands</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/orders" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 7h18M8 7v10m8-10v10M5 21h14a2 2 0 002-2V7M7 3h10a2 2 0 012 2v2H5V5a2 2 0 012-2z"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Order Management</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/inventory" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M20 13V7a2 2 0 00-2-2h-3V3H9v2H6a2 2 0 00-2 2v6m16 0v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4m16 0H4"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Stock Management</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/coupons/list" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 14l6-6m-8 8h10a2 2 0 002-2v-4a2 2 0 00-2-2H7l-2 2v4a2 2 0 002 2z"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Coupon Management</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/sales-report" class="group flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 3v18m-7-6l4-4 4 4 8-8"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-800">Sales Report</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
 
-            sidebarLinks.forEach(link => {
-                // Remove active styles
-                link.classList.remove('bg-indigo-800');
-                const icon = link.querySelector('svg');
-                if (icon) {
-                    icon.classList.remove('text-white');
-                    icon.classList.add('text-indigo-300');
-                }
+<script>
+  // Set active link by matching pathname
+  (function() {
+    const currentPath = window.location.pathname;
+    const links = document.querySelectorAll('aside nav a');
 
-                // Add active styles if href matches current path
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('bg-indigo-800');
-                    if (icon) {
-                        icon.classList.remove('text-indigo-300');
-                        icon.classList.add('text-white');
-                    }
-                }
-            });
-        }
-
-        // Run on page load
-        document.addEventListener('DOMContentLoaded', setActiveSidebarLink);
-    </script>
-</aside>
+    links.forEach(link => {
+      // reset
+      link.classList.remove('bg-gray-50', 'border-l-4', 'border-brand');
+      // active
+      if (link.getAttribute('href') === currentPath) {
+        link.classList.add('bg-gray-50', 'border-l-4', 'border-brand');
+      }
+    });
+  })();
+</script>

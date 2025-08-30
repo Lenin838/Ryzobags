@@ -26,7 +26,7 @@ const couponController = {
 
     createCoupon: async (req,res) => {
         try{
-            const {code,discountAmount,minCartAmount,maxDiscount,expiresAt,usageLimit} = req.body;
+            const {code,discountAmount,minCartAmount,expiresAt} = req.body;
 
             const existing = await Coupon.findOne({code: code.toUpperCase()});
             if(existing){
@@ -37,9 +37,7 @@ const couponController = {
                 code,
                 discountAmount,
                 minCartAmount,
-                maxDiscount,
                 expiresAt,
-                usageLimit
             });
 
             await newCoupon.save();
@@ -52,7 +50,7 @@ const couponController = {
     updateCoupon: async (req,res) => {
         try{
             const {id} = req.params;
-            const {code,discountAmount,minCartAmount,maxDiscount,expiresAt,usageLimit,isActive} = req.body;
+            const {code,discountAmount,minCartAmount,expiresAt,isActive} = req.body;
 
             const existingCoupon = await Coupon.findOne({code: code.toUpperCase(),_id:{$ne:id}});
             if(existingCoupon){
@@ -63,9 +61,7 @@ const couponController = {
                 code,
                 discountAmount,
                 minCartAmount,
-                maxDiscount,
                 expiresAt,
-                usageLimit,
                 isActive
             });
 

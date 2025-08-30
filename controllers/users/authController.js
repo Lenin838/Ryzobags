@@ -189,7 +189,6 @@ const userController = {
 
     verifyOtp: async (req, res) => {
         try {
-
             const { otp } = req.body;
 
             if (!req.session.otp || !req.session.email || !req.session.fullname || !req.session.password) {

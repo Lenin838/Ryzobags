@@ -24,6 +24,15 @@
         max-width: 20rem; /* Fixed width for larger screens */
       }
     }
+    .error-message {
+      color: #e53e3e;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+    .input-error {
+      border-color: #e53e3e;
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col sm:flex-row">
@@ -59,14 +68,17 @@
           <div class="mb-3 sm:mb-4">
             <label for="fullname" class="block text-xs sm:text-sm font-medium text-gray-700">Full Name</label>
             <input type="text" name="fullname" id="fullname" value="<%= user.fullname %>" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 sm:py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm" required>
+            <p id="fullname-error" class="error-message"></p>
           </div>
           <div class="mb-3 sm:mb-4">
             <label for="phoneNumber" class="block text-xs sm:text-sm font-medium text-gray-700">Phone Number</label>
             <input type="tel" name="phoneNumber" id="phoneNumber" value="<%= user.phoneNumber || '' %>" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 sm:py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm">
+            <p id="phoneNumber-error" class="error-message"></p>
           </div>
           <div class="mb-3 sm:mb-4">
             <label for="profileImage" class="block text-xs sm:text-sm font-medium text-gray-700">Profile Image</label>
             <input type="file" name="profileImage" id="profileImage" accept="image/*" class="mt-1 block w-full text-xs sm:text-sm text-gray-500 file:mr-3 sm:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            <p id="profileImage-error" class="error-message"></p>
           </div>
           <div class="flex justify-end">
             <button type="submit" class="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Save Changes</button>
@@ -85,6 +97,7 @@
             <div class="mb-3 sm:mb-4">
               <label for="newEmail" class="block text-xs sm:text-sm font-medium text-gray-700">New Email</label>
               <input type="email" name="newEmail" id="newEmail" value="<%= newEmail || '' %>" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 sm:py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm" required>
+              <p id="newEmail-error" class="error-message"></p>
             </div>
             <div class="flex justify-end">
               <button type="submit" id="send-otp-btn" class="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -109,6 +122,7 @@
               <div class="mb-3 sm:mb-4">
                 <label for="otp" class="block text-xs sm:text-sm font-medium text-gray-700">Enter OTP</label>
                 <input type="text" name="otp" id="otp" maxlength="6" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-1.5 sm:py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-xs sm:text-sm" placeholder="Enter 6-digit OTP" required>
+                <p id="otp-error" class="error-message"></p>
               </div>
               <div class="flex justify-between items-center">
                 <button type="button" id="resend-otp-btn" class="text-xs sm:text-sm text-indigo-600 hover:text-indigo-500">
@@ -147,7 +161,7 @@
       // Utility functions
       function showToast(message, isError = false) {
         toastMessage.textContent = message;
-        toastSuccess.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg flex items-center z-50 ${isError ? 'bg-red-500' : 'bg-green-500'} text-white`;
+        toastSuccess.className = `fixed top-2 sm:top-4 right-2 sm:right-4 p-3 sm:p-4 rounded-md shadow-lg flex items-center z-50 ${isError ? 'bg-red-500' : 'bg-green-500'} text-white`;
         toastSuccess.classList.remove('hidden');
         setTimeout(() => toastSuccess.classList.add('hidden'), 5000);
       }
@@ -176,6 +190,32 @@
         otpSection.classList.add('hidden');
         otpInput.value = '';
       }
+
+      function clearErrors() {
+        // Clear all error messages
+        const errorElements = document.querySelectorAll('.error-message');
+        errorElements.forEach(el => {
+          el.textContent = '';
+          el.style.display = 'none';
+        });
+        
+        // Remove error styling from inputs
+        const inputElements = document.querySelectorAll('.input-error');
+        inputElements.forEach(el => {
+          el.classList.remove('input-error');
+        });
+      }
+
+      function showError(field, message) {
+        const errorElement = document.getElementById(`${field}-error`);
+        const inputElement = document.getElementById(field);
+        
+        if (errorElement && inputElement) {
+          errorElement.textContent = message;
+          errorElement.style.display = 'block';
+          inputElement.classList.add('input-error');
+        }
+      }
   
       // Toast close handler
       toastClose.addEventListener('click', () => {
@@ -185,17 +225,18 @@
       // Change email form handler
       changeEmailForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        clearErrors();
         
         const email = newEmailInput.value.trim();
         if (!email) {
-          showToast('Please enter a valid email address', true);
+          showError('newEmail', 'Please enter a valid email address');
           return;
         }
   
         // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-          showToast('Please enter a valid email format', true);
+          showError('newEmail', 'Please enter a valid email format');
           return;
         }
   
@@ -215,6 +256,9 @@
           if (response.ok && data.success) {
             showToast(data.message);
             showOtpSection(email);
+          } else if (data.errors && data.errors.newEmail) {
+            // Show field-specific error
+            showError('newEmail', data.errors.newEmail);
           } else {
             showToast(data.message || 'Failed to send verification email', true);
           }
@@ -229,10 +273,11 @@
       // Verify email form handler
       verifyEmailForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        clearErrors();
         
         const otp = otpInput.value.trim();
         if (!otp || otp.length !== 6) {
-          showToast('Please enter a valid 6-digit OTP', true);
+          showError('otp', 'Please enter a valid 6-digit OTP');
           return;
         }
   
@@ -256,6 +301,9 @@
             setTimeout(() => {
               window.location.reload();
             }, 2000);
+          } else if (data.errors && data.errors.otp) {
+            // Show field-specific error
+            showError('otp', data.errors.otp);
           } else {
             showToast(data.message || 'Invalid or expired OTP', true);
           }
@@ -271,7 +319,7 @@
       resendOtpBtn.addEventListener('click', async () => {
         const email = newEmailInput.value.trim();
         if (!email) {
-          showToast('Please enter email address first', true);
+          showError('newEmail', 'Please enter email address first');
           return;
         }
   
@@ -316,59 +364,106 @@
           mobileMenu.classList.add('hidden');
         }
       });
+
+      // Clear error when user starts typing in a field
+      document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+          const field = this.id;
+          const errorElement = document.getElementById(`${field}-error`);
+          if (errorElement) {
+            errorElement.style.display = 'none';
+            this.classList.remove('input-error');
+          }
+        });
+      });
     });
 
     document.getElementById("editProfileForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+      e.preventDefault();
+      
+      // Clear previous errors
+      const errorElements = document.querySelectorAll('.error-message');
+      errorElements.forEach(el => {
+        el.textContent = '';
+        el.style.display = 'none';
+      });
+      
+      const inputElements = document.querySelectorAll('.input-error');
+      inputElements.forEach(el => {
+        el.classList.remove('input-error');
+      });
 
-    const form = e.target;
-    const formData = new FormData(form);
+      const form = e.target;
+      const formData = new FormData(form);
 
-    try {
+      try {
         const res = await fetch("/user/profile/edit", {
-            method: "PUT",
-            body: formData,
+          method: "PUT",
+          body: formData,
         });
 
         const result = await res.json();
         if (result.success) {
-            // Success toast notification
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Profile updated successfully!',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            // Error toast notification
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'error',
-                title: 'Error: ' + result.message,
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        }
-    } catch (error) {
-        // Network error toast notification
-        Swal.fire({
+          // Success toast notification
+          Swal.fire({
             toast: true,
             position: 'top-end',
-            icon: 'error',
-            title: 'Network error. Please try again.',
+            icon: 'success',
+            title: 'Profile updated successfully!',
             showConfirmButton: false,
             timer: 3000,
             timerProgressBar: true
+          });
+          setTimeout(() => window.location.reload(), 1000);
+        } else if (result.errors) {
+          // Show field-specific errors under input fields
+          if (result.errors.fullname) {
+            showError('fullname', result.errors.fullname);
+          }
+          if (result.errors.phoneNumber) {
+            showError('phoneNumber', result.errors.phoneNumber);
+          }
+          if (result.errors.profileImage) {
+            showError('profileImage', result.errors.profileImage);
+          }
+        } else {
+          // Generic error toast notification
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Error: ' + (result.message || 'Failed to update profile'),
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+        }
+      } catch (error) {
+        // Network error toast notification
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Network error. Please try again.',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
         });
         console.error('Error:', error);
+      }
+    });
+
+    // Helper function to show errors under input fields
+    function showError(field, message) {
+      const errorElement = document.getElementById(`${field}-error`);
+      const inputElement = document.getElementById(field);
+      
+      if (errorElement && inputElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        inputElement.classList.add('input-error');
+      }
     }
-});
   </script>
 </body>
 </html>

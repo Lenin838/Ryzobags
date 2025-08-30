@@ -1,73 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - User Management</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.3/dist/cdn.min.js" defer></script>
-</head>
-<body class="bg-gray-100">
-  <div class="flex h-screen">
-    <!-- Include sidebar partial -->
-    <%- include('../partials/sidebar') %>
-    
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Include header partial -->
-      <%- include('../partials/header') %>
-      
-      <!-- Main content -->
-      <main class="flex-1 overflow-y-auto p-6">
-        <%- include(body) %>
-      </main>
-    </div>
-  </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title><%= typeof title !== 'undefined' ? title : 'Admin Panel' %></title>
 
-  <!-- Modal for confirmation -->
-  <div id="confirmationModal" x-data="{ open: false, action: '', userId: '', userName: '' }" x-show="open" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-      <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-              <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                <span x-text="action === 'block' ? 'Block User' : 'Unblock User'"></span>
-              </h3>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500">
-                  Are you sure you want to <span x-text="action"></span> <span x-text="userName"></span>? This action <span x-text="action === 'block' ? 'will prevent this user from accessing the system.' : 'will restore this user\'s access to the system.'"></span>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+      
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js"></script>
+
+    <style>
+      :root {
+        /* Color system: 1 primary + 3 neutrals + 1 border = 5 colors total */
+        --brand: rgb(160, 216, 216);   /* primary */
+        --bg: #F8FAFC;                 /* neutral background */
+        --surface: #FFFFFF;            /* neutral surface */
+        --text: #0F172A;               /* neutral text */
+        --border: #E5E7EB;             /* neutral border */
+        /* Derived brand tone for hover states (no new color family) */
+        --brand-600: rgb(136, 193, 193);
+      }
+      .brand-bg { background-color: var(--brand); }
+      .brand-bg-600 { background-color: var(--brand-600); }
+      .brand-text { color: var(--text); }
+      .border-brand { border-color: var(--brand); }
+      .ring-brand:focus { box-shadow: 0 0 0 3px rgba(160,216,216,0.5); outline: none; }
+      .scroll-smooth { scroll-behavior: smooth; }
+    </style>
+  </head>
+
+  <body class="scroll-smooth bg-gray-50" x-data="{ sidebarOpen: false }">
+
+    <div
+      class="fixed inset-0 bg-black bg-opacity-40 z-30 md:hidden"
+      x-show="sidebarOpen"
+      x-transition.opacity
+      @click="sidebarOpen = false"
+      aria-hidden="true"
+    ></div>
+
+    <div class="min-h-screen flex">
+      
+      <aside
+        class="fixed z-40 inset-y-0 left-0 w-72 transform transition-transform duration-200 md:static md:translate-x-0 md:w-64 bg-white border-r border-gray-200"
+        :class="{'-translate-x-full md:translate-x-0': !sidebarOpen}"
+        aria-label="Sidebar Navigation"
+      >
+        <%- include('../partials/sidebar') %>
+      </aside>
+
+       
+      <div class="flex-1 flex flex-col min-w-0 md:ml-0 md:pl-0">
+         
+        <header class="sticky top-0 z-20">
+          <%- include('../partials/header') %>
+        </header>
+
+
+        <main id="main-content" class="flex-1 min-w-0 p-4 sm:p-6 md:p-8">
+          <div class="mx-auto max-w-7xl">
+            <%- include(body) %>
+          </div>
+        </main>
+      </div>
+    </div>
+
+ 
+    <div
+      id="confirmationModal"
+      class="fixed inset-0 z-50"
+      x-cloak
+      x-show="$store.confirm.open"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="flex items-center justify-center min-h-screen px-4 text-center"
+      >
+        <div
+          class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+          x-show="$store.confirm.open"
+          x-transition.opacity
+          aria-hidden="true"
+        ></div>
+
+        <div
+          class="relative inline-block w-full max-w-lg text-left align-middle transition-all transform bg-white shadow-xl rounded-lg"
+          x-show="$store.confirm.open"
+          x-transition
+        >
+          <div class="px-6 pt-6 pb-4">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="h-12 w-12 rounded-full brand-bg flex items-center justify-center">
+                  <svg class="h-6 w-6 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="ml-4">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-900">
+                  <span x-text="$store.confirm.action === 'block' ? 'Block User' : 'Unblock User'"></span>
+                </h3>
+                <p class="mt-2 text-sm text-gray-600">
+                  Are you sure you want to
+                  <span class="font-medium" x-text="$store.confirm.action"></span>
+                  <span class="font-medium" x-text="$store.confirm.userName"></span>?
+                  <span x-text="$store.confirm.action === 'block' ? 'This will prevent access to the system.' : 'This will restore access to the system.'"></span>
                 </p>
               </div>
             </div>
           </div>
-        </div>
-        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button @click="
-            fetch(`/api/users/${userId}/${action}`, { method: 'POST' })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  window.location.reload();
-                }
-              });
-            open = false;
-          " type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-            Confirm
-          </button>
-          <button @click="open = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-            Cancel
-          </button>
+          <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+            <button
+              type="button"
+              class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-800 text-sm font-medium hover:bg-gray-100 focus:ring-2 ring-brand"
+              @click="$store.confirm.open = false"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center px-4 py-2 rounded-md brand-bg text-gray-900 text-sm font-semibold hover:brand-bg-600 focus:ring-2 ring-brand"
+              @click="
+                fetch(`/api/users/${$store.confirm.userId}/${$store.confirm.action}`, { method: 'POST' })
+                  .then(r => r.json())
+                  .then(data => { if (data && data.success) { window.location.reload(); } });
+                $store.confirm.open = false;
+              "
+            >
+              Confirm
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+    <script>
+      document.addEventListener('alpine:init', () => {
+        Alpine.store('confirm', {
+          open: false,
+          action: '',
+          userId: '',
+          userName: ''
+        });
+      });
 
-</body>
+      window.openConfirm = function(action, userId, userName) {
+        const s = Alpine.store('confirm');
+        s.action = action;
+        s.userId = userId;
+        s.userName = userName;
+        s.open = true;
+      }
+    </script>
+  </body>
 </html>

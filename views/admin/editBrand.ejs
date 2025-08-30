@@ -1,130 +1,118 @@
-<div class="min-h-screen bg-gray-50 py-4 sm:py-6 px-3 sm:px-4 lg:px-6">
-  <div class="max-w-3xl mx-auto">
-    <div class="bg-white p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl shadow-md sm:shadow-lg">
-      <!-- Header -->
-      <div class="mb-6 sm:mb-8 text-center">
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Edit Brand</h2>
-        <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-600">Update your brand information</p>
-      </div>
+<div class="px-3 sm:px-4 py-4 sm:py-6 bg-[var(--surface)] rounded-md shadow-sm">
+    <!-- Header -->
+    <div class="mb-4 sm:mb-6 text-center">
+        <h2 class="text-xl sm:text-2xl font-semibold text-[var(--text)]">Edit Brand</h2>
+        <p class="mt-1 text-xs text-gray-500">Update your brand information</p>
+    </div>
 
-      <!-- Success/Error Messages -->
-      <% if (success && success.length > 0) { %>
-        <div class="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 mb-4 sm:mb-6 rounded">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-4 sm:h-5 w-4 sm:w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-              </svg>
+    <!-- Success/Error Messages -->
+    <% if (success && success.length > 0) { %>
+        <div class="bg-[var(--brand)] bg-opacity-20 text-[var(--text)] p-3 rounded-md mb-4 text-sm">
+            <div class="flex items-center">
+                <svg class="h-4 w-4 text-[var(--brand)] mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <p><%= success %></p>
             </div>
-            <div class="ml-2 sm:ml-3">
-              <p class="text-xs sm:text-sm text-green-700"><%= success %></p>
-            </div>
-          </div>
         </div>
-      <% } %>
-      
-      <% if (error && error.length > 0) { %>
-        <div class="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 mb-4 sm:mb-6 rounded">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg class="h-4 sm:h-5 w-4 sm:w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-              </svg>
+    <% } %>
+    
+    <% if (error && error.length > 0) { %>
+        <div class="bg-red-500 bg-opacity-20 text-red-500 p-3 rounded-md mb-4 text-sm">
+            <div class="flex items-center">
+                <svg class="h-4 w-4 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                <p><%= error %></p>
             </div>
-            <div class="ml-2 sm:ml-3">
-              <p class="text-xs sm:text-sm text-red-700"><%= error %></p>
-            </div>
-          </div>
         </div>
-      <% } %>
+    <% } %>
 
-      <!-- Form -->
-      <form id="editBrandForm" class="space-y-4 sm:space-y-6">
+    <!-- Form -->
+    <form id="editBrandForm" class="space-y-6">
         <input type="hidden" id="brandId" value="<%= brand._id %>" />
 
         <!-- Brand Name -->
         <div>
-          <label for="name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Brand Name</label>
-          <div class="mt-1 relative rounded-md shadow-sm">
+            <label for="name" class="block text-sm font-medium text-[var(--text)] mb-1">Brand Name</label>
             <input 
-              type="text" 
-              id="name" 
-              value="<%= brand.name %>" 
-              required
-              class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-2 sm:pl-3 pr-8 sm:pr-10 py-2 sm:py-3 text-xs sm:text-sm border-gray-300 rounded-md border"
-              placeholder="Enter brand name"
+                type="text" 
+                id="name" 
+                value="<%= brand.name %>" 
+                required
+                class="w-full border border-[var(--border)] rounded-md shadow-sm px-3 py-2 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition duration-300"
+                placeholder="Enter brand name"
             />
-          </div>
         </div>
 
         <!-- Description -->
         <div>
-          <label for="description" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Description</label>
-          <div class="mt-1">
+            <label for="description" class="block text-sm font-medium text-[var(--text)] mb-1">Description</label>
             <textarea 
-              id="description" 
-              rows="3" 
-              required
-              class="focus:ring-indigo-500 focus:border-indigo-500 block w-full px-2 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm border border-gray-300 rounded-md"
-              placeholder="Enter brand description"><%= brand.description %></textarea>
-          </div>
+                id="description" 
+                rows="3" 
+                required
+                class="w-full border border-[var(--border)] rounded-md shadow-sm px-3 py-2 text-sm placeholder-gray-400 focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition duration-300"
+                placeholder="Enter brand description"><%= brand.description %></textarea>
         </div>
 
         <!-- Submit Button -->
-        <div class="pt-2 sm:pt-4">
-          <button 
-            type="submit" 
-            class="w-full flex justify-center py-2 sm:py-3 px-3 sm:px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
-          >
-            Update Brand
-          </button>
+        <div class="pt-4 flex space-x-3">
+            <button 
+                type="submit" 
+                class="px-4 py-2 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300"
+            >
+                Update Brand
+            </button>
+            <a href="/admin/brands"
+                class="px-4 py-2 bg-gray-500 text-[var(--text)] rounded-md hover:bg-gray-600 text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 text-center"
+            >
+                Cancel
+            </a>
         </div>
-      </form>
-    </div>
-  </div>
+    </form>
 </div>
 
-<!-- Original script remains completely unchanged -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.getElementById('editBrandForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const id = document.getElementById('brandId').value;
-  const name = document.getElementById('name').value;
-  const description = document.getElementById('description').value;
+    e.preventDefault();
+    const id = document.getElementById('brandId').value;
+    const name = document.getElementById('name').value;
+    const description = document.getElementById('description').value;
 
-  try {
-    const response = await fetch(`/admin/brands/edit/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description })
-    });
+    try {
+        const response = await fetch(`/admin/brands/edit/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description })
+        });
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if (result.success) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Updated!',
-        text: 'Brand updated successfully',
-        timer: 2000,
-        showConfirmButton: false
-      }).then(() => {
-        window.location.href = '/admin/brands';
-      });
-    } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: result.message || 'Error updating brand'
-      });
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Updated!',
+                text: 'Brand updated successfully',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.href = '/admin/brands';
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: result.message || 'Error updating brand'
+            });
+        }
+    } catch (err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Network Error',
+            text: 'Something went wrong. Please try again later.'
+        });
     }
-  } catch (err) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Network Error',
-      text: 'Something went wrong. Please try again later.'
-    });
-  }
 });
 </script>

@@ -179,22 +179,74 @@
           <div class="mb-4 sm:mb-6">
             <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Available Coupons</h3>
             <div class="space-y-2 sm:space-y-3 max-h-48 overflow-y-auto pr-1">
-              <% if (locals.coupon) { %>
+              <% if (locals.coupon && coupon.length > 0) { %>
                 <% for (let i=0; i < coupon.length; i++) { %>
-                  <div class="border border-gray-200 rounded-lg p-2 sm:p-3 flex justify-between items-center hover:border-blue-300 transition-colors">
-                    <div>
-                      <span class="text-xs font-semibold text-gray-800"><%= coupon[i].code %></span>
+                  <div class="border border-gray-200 rounded-lg p-2 sm:p-3 hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-start mb-2">
+                      <div class="flex-1">
+                        <div class="flex items-center">
+                          <span class="text-xs font-semibold text-gray-800 bg-yellow-100 px-2 py-1 rounded"><%= coupon[i].code %></span>
+                          <% if (!coupon[i].isActive) { %>
+                            <span class="ml-2 text-xs text-red-600 bg-red-100 px-2 py-1 rounded">Inactive</span>
+                          <% } %>
+                          <% if (coupon[i].expiresAt < new Date()) { %>
+                            <span class="ml-2 text-xs text-red-600 bg-red-100 px-2 py-1 rounded">Expired</span>
+                          <% } %>
+                        </div>
+                        
+                        <!-- Discount details -->
+                        <div class="mt-2">
+                          <% if (coupon[i].discountType === 'percentage') { %>
+                            <span class="text-sm font-bold text-green-600">
+                              <%= coupon[i].discountAmount %>% OFF
+                            </span>
+                            <% if (coupon[i].maxDiscount) { %>
+                              <span class="text-xs text-gray-500 ml-1">(up to ₹<%= coupon[i].maxDiscount %>)</span>
+                            <% } %>
+                          <% } else { %>
+                            <span class="text-sm font-bold text-green-600">
+                              ₹<%= coupon[i].discountAmount %> OFF
+                            </span>
+                          <% } %>
+                        </div>
+                      </div>
+                      
+                      <div class="flex space-x-1 sm:space-x-2">
+                        <% if (coupon[i].isActive && coupon[i].expiresAt > new Date()) { %>
+                          <button onclick="useCoupon('<%= coupon[i].code %>')" id="useButton_<%= coupon[i].code %>"
+                            class="px-2 sm:px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors use-button">
+                            Use
+                          </button>
+                          <button onclick="cancelCoupon('<%= coupon[i].code %>')" id="cancelButton_<%= coupon[i].code %>"
+                            class="px-2 sm:px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                            style="display: none;">
+                            Cancel
+                          </button>
+                        <% } else { %>
+                          <button class="px-2 sm:px-3 py-1 bg-gray-400 text-white text-xs rounded cursor-not-allowed" disabled>
+                            Unavailable
+                          </button>
+                        <% } %>
+                      </div>
                     </div>
-                    <div class="flex space-x-1 sm:space-x-2">
-                      <button onclick="useCoupon('<%= coupon[i].code %>')" id="useButton_<%= coupon[i].code %>"
-                        class="px-2 sm:px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors use-button">
-                        Use
-                      </button>
-                      <button onclick="cancelCoupon('<%= coupon[i].code %>')" id="cancelButton_<%= coupon[i].code %>"
-                        class="px-2 sm:px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
-                        style="display: none;">
-                        Cancel
-                      </button>
+                    
+                    <!-- Additional coupon details -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-500 mt-2">
+                      <% if (coupon[i].minCartAmount && coupon[i].minCartAmount > 0) { %>
+                        <div class="flex items-center">
+                          <svg class="w-3 h-3 mr-1 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+                          </svg>
+                          <span>Min. order: ₹<%= coupon[i].minCartAmount %></span>
+                        </div>
+                      <% } %>
+                      
+                      <div class="flex items-center">
+                        <svg class="w-3 h-3 mr-1 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>Expires: <%= coupon[i].expiresAt.toLocaleDateString() %></span>
+                      </div>
                     </div>
                   </div>
                 <% } %>
@@ -204,33 +256,19 @@
             </div>
           </div>
 
-          <!-- Order Details -->
-          <%
-          let cartTotal = 0;
-          if (cart && cart.items && cart.items.length > 0) {
-            for (let i = 0; i < cart.items.length; i++) {
-              if (cart.items[i].productId) {
-                const product = cart.items[i].productId;
-                const variant = product.variants.find(v => v.size === cart.items[i].size);
-                const price = variant ? variant.regularPrice : 0;
-                cartTotal += price * cart.items[i].quantity;
-              }
-            }
-          }
-          %>
 
           <div class="border-t border-gray-200 pt-3 sm:pt-4 space-y-2 sm:space-y-3">
             <div class="flex justify-between text-xs sm:text-sm">
               <span class="text-gray-600">Subtotal</span>
-              <span class="text-gray-800 font-medium">₹<%= subtotal %></span>
+              <span class="text-gray-800 font-medium">₹<%= regularTotal %></span>
             </div>
             <div class="flex justify-between text-xs sm:text-sm">
-              <span class="text-gray-600">Coupon</span>
-              <span class="text-gray-800 font-medium" id="couponDiscount">₹-<%= couponDiscount %></span>
-            </div>
-            <div class="flex justify-between text-xs sm:text-sm">
-              <span class="text-gray-600">Discount</span>
+              <span class="text-gray-600">Offer Discount</span>
               <span class="text-gray-800 font-medium" id="productDiscount">₹<%= productDiscount %></span>
+            </div>
+            <div class="flex justify-between text-xs sm:text-sm">
+              <span class="text-gray-600">Coupon Discount</span>
+              <span class="text-gray-800 font-medium" id="couponDiscount">₹-<%= couponDiscount %></span>
             </div>
             <div class="flex justify-between text-sm sm:text-base font-medium pt-2 border-t border-gray-200">
               <span class="text-gray-900">Total</span>

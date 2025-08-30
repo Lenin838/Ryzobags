@@ -1,498 +1,415 @@
-<div class="min-h-screen bg-gray-100 p-2 sm:p-4 md:p-6">
-  <div class="max-w-4xl mx-auto bg-white rounded-lg sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-6 md:p-8">
-    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Coupon Management</h2>
+<div class="px-3 sm:px-4 py-4 sm:py-6 bg-[var(--surface)] rounded-md shadow-sm">
+    <div class="bg-[var(--surface)] rounded-md shadow-sm p-4 sm:p-6">
+        <h2 class="text-xl sm:text-2xl font-semibold text-[var(--text)] mb-4 sm:mb-6">Coupon Management</h2>
 
-    <form id="couponForm" class="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <div class="relative">
-          <input type="text" name="code" placeholder="Coupon Code" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-          <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-code"></div>
-        </div>
-        <div class="relative">
-          <input type="number" name="discountAmount" placeholder="Discount Amount" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-          <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-discountAmount"></div>
-        </div>
-        <div class="relative">
-          <input type="number" name="minCartAmount" placeholder="Min Cart Amount" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-          <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-minCartAmount"></div>
-        </div>
-        <div class="relative">
-          <input type="number" name="maxDiscount" placeholder="Max Discount" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-          <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-maxDiscount"></div>
-        </div>
-        <div class="relative">
-          <input type="number" name="usageLimit" placeholder="Usage Limit" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-          <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-usageLimit"></div>
-        </div>
-        <div class="relative">
-          <input type="date" name="expiresAt" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-          <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-expiresAt"></div>
-        </div>
-      </div>
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-md sm:rounded-lg hover:bg-blue-700 transition w-full text-sm sm:text-base">Create Coupon</button>
-      <p id="formError" class="text-red-500 text-xs sm:text-sm mt-1 sm:mt-2"></p>
-      <p id="formSuccess" class="text-green-500 text-xs sm:text-sm mt-1 sm:mt-2"></p>
-    </form>
-
-    <!-- Edit Coupon Modal -->
-    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-2 sm:p-4">
-      <div class="bg-white rounded-lg sm:rounded-2xl p-4 sm:p-6 w-full max-w-md sm:max-w-lg relative max-h-[90vh] overflow-y-auto">
-        <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4">Edit Coupon</h3>
-        <form id="editCouponForm" class="space-y-2 sm:space-y-3">
-          <input type="hidden" name="id" id="edit-id" />
-          <div class="relative">
-            <input type="text" name="code" id="edit-code" placeholder="Coupon Code" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-            <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-edit-code"></div>
-          </div>
-          <div class="relative">
-            <input type="number" name="discountAmount" id="edit-discountAmount" placeholder="Discount Amount" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-            <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-edit-discountAmount"></div>
-          </div>
-          <div class="relative">
-            <input type="number" name="minCartAmount" id="edit-minCartAmount" placeholder="Min Cart Amount" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-            <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-edit-minCartAmount"></div>
-          </div>
-          <div class="relative">
-            <input type="number" name="maxDiscount" id="edit-maxDiscount" placeholder="Max Discount" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-            <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-edit-maxDiscount"></div>
-          </div>
-          <div class="relative">
-            <input type="number" name="usageLimit" id="edit-usageLimit" placeholder="Usage Limit" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-            <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-edit-usageLimit"></div>
-          </div>
-          <div class="relative">
-            <input type="date" name="expiresAt" id="edit-expiresAt" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base" />
-            <div class="text-red-500 text-xs sm:text-sm mt-1" id="error-edit-expiresAt"></div>
-          </div>
-          <select name="isActive" id="edit-isActive" class="border border-gray-300 rounded-md sm:rounded-lg p-2 sm:p-3 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base">
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
-          <div class="text-red-500 text-xs sm:text-sm" id="editFormError"></div>
-          <div class="text-green-500 text-xs sm:text-sm" id="editFormSuccess"></div>
-          <div class="flex justify-end gap-2 sm:gap-3 pt-3 sm:pt-4">
-            <button type="button" onclick="closeEditModal()" class="px-3 py-1 sm:px-4 sm:py-2 border border-gray-300 rounded-md sm:rounded-lg text-gray-700 hover:bg-gray-100 transition text-sm sm:text-base">Cancel</button>
-            <button type="submit" class="bg-blue-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-md sm:rounded-lg hover:bg-blue-700 transition text-sm sm:text-base">Update</button>
-          </div>
+        <form id="couponForm" class="space-y-4 mb-6 sm:mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="relative">
+                    <input type="text" name="code" placeholder="Coupon Code" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                    <div class="text-red-500 text-xs mt-1" id="error-code"></div>
+                </div>
+                <div class="relative">
+                    <input type="number" name="discountAmount" placeholder="Discount Amount" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                    <div class="text-red-500 text-xs mt-1" id="error-discountAmount"></div>
+                </div>
+                <div class="relative">
+                    <input type="number" name="minCartAmount" placeholder="Min Cart Amount" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                    <div class="text-red-500 text-xs mt-1" id="error-minCartAmount"></div>
+                </div>
+                <div class="relative">
+                    <input type="date" name="expiresAt" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                    <div class="text-red-500 text-xs mt-1" id="error-expiresAt"></div>
+                </div>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] transition w-full text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">Create Coupon</button>
         </form>
-      </div>
-    </div>
 
-    <hr class="my-4 sm:my-6 md:my-8 border-gray-200" />
-
-    <div class="overflow-x-auto">
-      <table class="w-full border text-xs sm:text-sm">
-        <thead>
-          <tr class="bg-gray-200 text-gray-700">
-            <th class="p-2 sm:p-3 text-left">Code</th>
-            <th class="p-2 sm:p-3 text-left">Discount</th>
-            <th class="p-2 sm:p-3 text-left hidden sm:table-cell">Min Cart</th>
-            <th class="p-2 sm:p-3 text-left hidden md:table-cell">Max Discount</th>
-            <th class="p-2 sm:p-3 text-left">Expires</th>
-            <th class="p-2 sm:p-3 text-left hidden md:table-cell">Usage</th>
-            <th class="p-2 sm:p-3 text-left">Status</th>
-            <th class="p-2 sm:p-3 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% coupons.forEach(coupon => { %>
-            <tr class="border-b hover:bg-gray-50">
-              <td class="p-2 sm:p-3"><%= coupon.code %></td>
-              <td class="p-2 sm:p-3"><%= coupon.discountAmount %></td>
-              <td class="p-2 sm:p-3 hidden sm:table-cell"><%= coupon.minCartAmount || '-' %></td>
-              <td class="p-2 sm:p-3 hidden md:table-cell"><%= coupon.maxDiscount || '-' %></td>
-              <td class="p-2 sm:p-3 whitespace-nowrap"><%= new Date(coupon.expiresAt).toLocaleDateString() %></td>
-              <td class="p-2 sm:p-3 hidden md:table-cell"><%= coupon.usageLimit || '-' %></td>
-              <td class="p-2 sm:p-3">
-                <span class="<%= coupon.isActive ? 'text-green-500' : 'text-red-500' %>">
-                  <%= coupon.isActive ? "Active" : "Inactive" %>
-                </span>
-              </td>
-              <td class="p-2 sm:p-3 flex gap-1 sm:gap-2">
-                <button onclick="openEditModal({
-                  _id: '<%= coupon._id %>',
-                  code: '<%= coupon.code %>',
-                  discountAmount: '<%= coupon.discountAmount %>',
-                  minCartAmount: <%= coupon.minCartAmount || 'null' %>,
-                  maxDiscount: <%= coupon.maxDiscount || 'null' %>,
-                  usageLimit: <%= coupon.usageLimit || 'null' %>,
-                  expiresAt: '<%= coupon.expiresAt %>',
-                  isActive: <%= coupon.isActive %>
-                })" class="text-blue-500 hover:text-blue-700 cursor-pointer text-xs sm:text-sm">Edit</button>
-                <button onclick="deleteCoupon('<%= coupon._id %>')" class="text-red-500 hover:text-red-700 cursor-pointer text-xs sm:text-sm">Delete</button>
-              </td>
-            </tr>
-          <% }) %>
-          <% if (!coupons || coupons.length === 0) { %>
-            <tr>
-              <td colspan="8" class="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">No coupons found</td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Pagination -->
-    <% if (totalPages > 1) { %>
-      <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
-        <p class="text-xs sm:text-sm text-gray-700 mb-2 sm:mb-0">
-          Showing <span class="font-medium"><%= ((page - 1) * limit) + 1 %></span> to <span class="font-medium"><%= Math.min(page * limit, totalCoupons) %></span> of <span class="font-medium"><%= totalCoupons %></span> results
-        </p>
-        <div class="flex flex-wrap gap-1 justify-center">
-          <% if (page > 1) { %>
-            <a
-              href="/admin/coupons/list?page=1"
-              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
-            >
-              First
-            </a>
-            <a
-              href="/admin/coupons/list?page=<%= page - 1 %>"
-              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
-            >
-              Prev
-            </a>
-          <% } %>
-
-          <% const maxVisiblePages = 5;
-             let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-             let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-             
-             if (endPage - startPage + 1 < maxVisiblePages) {
-               startPage = Math.max(1, endPage - maxVisiblePages + 1);
-             }
-             
-             for (let i = startPage; i <= endPage; i++) { %>
-            <a
-              href="/admin/coupons/list?page=<%= i %>"
-              class="px-2 sm:px-3 py-1 border rounded <%= i === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-100' %> text-xs sm:text-sm"
-            >
-              <%= i %>
-            </a>
-          <% } %>
-
-          <% if (page < totalPages) { %>
-            <a
-              href="/admin/coupons/list?page=<%= page + 1 %>"
-              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
-            >
-              Next
-            </a>
-            <a
-              href="/admin/coupons/list?page=<%= totalPages %>"
-              class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm"
-            >
-              Last
-            </a>
-          <% } %>
+        <!-- Edit Coupon Modal -->
+        <div id="editModal" class="fixed inset-0 bg-[var(--bg)] bg-opacity-50 hidden flex items-center justify-center z-50 p-2 sm:p-4">
+            <div class="bg-[var(--surface)] rounded-md p-4 sm:p-6 w-full max-w-md sm:max-w-lg relative max-h-[90vh] overflow-y-auto">
+                <h3 class="text-base sm:text-lg font-semibold text-[var(--text)] mb-3 sm:mb-4">Edit Coupon</h3>
+                <form id="editCouponForm" class="space-y-3">
+                    <input type="hidden" name="id" id="edit-id" />
+                    <div class="relative">
+                        <label for="edit-code" class="block text-xs font-medium text-[var(--text)] mb-1">Coupon Code</label>
+                        <input type="text" name="code" id="edit-code" placeholder="Coupon Code" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                        <div class="text-red-500 text-xs mt-1" id="error-edit-code"></div>
+                    </div>
+                    <div class="relative">
+                        <label for="edit-discountAmount" class="block text-xs font-medium text-[var(--text)] mb-1">Discount Amount</label>
+                        <input type="number" name="discountAmount" id="edit-discountAmount" placeholder="Discount Amount" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                        <div class="text-red-500 text-xs mt-1" id="error-edit-discountAmount"></div>
+                    </div>
+                    <div class="relative">
+                        <label for="edit-minCartAmount" class="block text-xs font-medium text-[var(--text)] mb-1">Minimum Cart Amount</label>
+                        <input type="number" name="minCartAmount" id="edit-minCartAmount" placeholder="Min Cart Amount" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                        <div class="text-red-500 text-xs mt-1" id="error-edit-minCartAmount"></div>
+                    </div>
+                    <div class="relative">
+                        <label for="edit-expiresAt" class="block text-xs font-medium text-[var(--text)] mb-1">Expiration Date</label>
+                        <input type="date" name="expiresAt" id="edit-expiresAt" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm" />
+                        <div class="text-red-500 text-xs mt-1" id="error-edit-expiresAt"></div>
+                    </div>
+                    <div class="relative">
+                        <label for="edit-isActive" class="block text-xs font-medium text-[var(--text)] mb-1">Status</label>
+                        <select name="isActive" id="edit-isActive" class="px-3 py-2 border border-[var(--border)] rounded-md w-full focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition text-sm">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-500 text-[var(--text)] rounded-md hover:bg-gray-600 transition text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] transition text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">Update</button>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
+
+        <hr class="my-4 sm:my-6 border-[var(--border)]" />
+
+        <div class="overflow-x-auto">
+            <table class="w-full border border-[var(--border)] text-xs sm:text-sm">
+                <thead class="bg-[var(--bg)] text-[var(--text)]">
+                    <tr>
+                        <th class="px-3 py-2 text-left">Code</th>
+                        <th class="px-3 py-2 text-left">Discount</th>
+                        <th class="px-3 py-2 text-left hidden sm:table-cell">Min Cart</th>
+                        <th class="px-3 py-2 text-left">Expires</th>
+                        <th class="px-3 py-2 text-left">Status</th>
+                        <th class="px-3 py-2 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% coupons.forEach(coupon => { %>
+                        <tr class="border-b border-[var(--border)] hover:bg-gray-100">
+                            <td class="px-3 py-2 text-[var(--text)]"><%= coupon.code %></td>
+                            <td class="px-3 py-2 text-[var(--text)]"><%= coupon.discountAmount %></td>
+                            <td class="px-3 py-2 text-[var(--text)] hidden sm:table-cell"><%= coupon.minCartAmount || '-' %></td>
+                            <td class="px-3 py-2 text-[var(--text)] whitespace-nowrap"><%= new Date(coupon.expiresAt).toLocaleDateString() %></td>
+                            <td class="px-3 py-2">
+                                <span class="<%= coupon.isActive ? 'text-[var(--brand)]' : 'text-red-500' %>">
+                                    <%= coupon.isActive ? 'Active' : 'Inactive' %>
+                                </span>
+                            </td>
+                            <td class="px-3 py-2 flex gap-2">
+                                <button onclick="openEditModal({
+                                    _id: '<%= coupon._id %>',
+                                    code: '<%= coupon.code %>',
+                                    discountAmount: '<%= coupon.discountAmount %>',
+                                    minCartAmount: <%= coupon.minCartAmount || 'null' %>,
+                                    expiresAt: '<%= coupon.expiresAt %>',
+                                    isActive: <%= coupon.isActive %>
+                                })" class="text-[var(--brand)] hover:text-[var(--brand-600)] text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition">Edit</button>
+                                <button onclick="deleteCoupon('<%= coupon._id %>')" class="text-red-500 hover:text-red-600 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition">Delete</button>
+                            </td>
+                        </tr>
+                    <% }) %>
+                    <% if (!coupons || coupons.length === 0) { %>
+                        <tr>
+                            <td colspan="6" class="px-3 py-4 text-center text-[var(--text)] text-sm">No coupons found</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+        <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <p class="text-xs text-gray-500">
+                Showing <span class="font-medium"><%= ((page - 1) * limit) + 1 %></span> to <span class="font-medium"><%= Math.min(page * limit, totalCoupons) %></span> of <span class="font-medium"><%= totalCoupons %></span> results
+            </p>
+            <div class="flex flex-wrap gap-1 justify-center">
+                <% if (page > 1) { %>
+                    <a href="/admin/coupons/list?page=1" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition">First</a>
+                    <a href="/admin/coupons/list?page=<%= page - 1 %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition">Prev</a>
+                <% } %>
+
+                <% const maxVisiblePages = 5;
+                   let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+                   let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                   
+                   if (endPage - startPage + 1 < maxVisiblePages) {
+                       startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                   }
+                   
+                   for (let i = startPage; i <= endPage; i++) { %>
+                    <a href="/admin/coupons/list?page=<%= i %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] <%= i === page ? 'bg-[var(--brand)] text-[var(--text)]' : 'bg-[var(--surface)] text-[var(--text)] hover:bg-gray-100' %> rounded-md text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition"><%= i %></a>
+                <% } %>
+
+                <% if (page < totalPages) { %>
+                    <a href="/admin/coupons/list?page=<%= page + 1 %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition">Next</a>
+                    <a href="/admin/coupons/list?page=<%= totalPages %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition">Last</a>
+                <% } %>
+            </div>
+        </div>
     <% } %>
-  </div>
 </div>
 
-<!-- Keep the existing script exactly as it was -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Store coupon data for easier access
-let couponData = {};
+    // Store coupon data for easier access
+    let couponData = {};
 
-// Toast configuration
-const Toast = Swal.mixin({
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true,
-  didOpen: (toast) => {
-    toast.addEventListener('mouseenter', Swal.stopTimer)
-    toast.addEventListener('mouseleave', Swal.resumeTimer)
-  }
-});
+    // Toast configuration
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
 
-// Validation function
-function validateFormData(data, prefix = '') {
-  const errors = {};
-  
-  // Coupon Code: Required, min 3 chars, alphanumeric or hyphens
-  if (!data.code) {
-    errors[`${prefix}code`] = 'Coupon code is required';
-  } else if (data.code.length < 3) {
-    errors[`${prefix}code`] = 'Coupon code must be at least 3 characters';
-  } else if (!/^[a-zA-Z0-9-]+$/.test(data.code)) {
-    errors[`${prefix}code`] = 'Coupon code can only contain letters, numbers, or hyphens';
-  }
+    // Validation function
+    function validateFormData(data, prefix = '') {
+        const errors = {};
 
-  // Discount Amount: Required, positive number
-  if (!data.discountAmount) {
-    errors[`${prefix}discountAmount`] = 'Discount amount is required';
-  } else if (isNaN(data.discountAmount) || Number(data.discountAmount) < 1) {
-    errors[`${prefix}discountAmount`] = 'Discount amount must be a positive number';
-  }
+        // Coupon Code: Required, min 3 chars, alphanumeric or hyphens
+        if (!data.code) {
+            errors[`${prefix}code`] = 'Coupon code is required';
+        } else if (data.code.length < 3) {
+            errors[`${prefix}code`] = 'Coupon code must be at least 3 characters';
+        } else if (!/^[a-zA-Z0-9-]+$/.test(data.code)) {
+            errors[`${prefix}code`] = 'Coupon code can only contain letters, numbers, or hyphens';
+        }
 
-  // Min Cart Amount: Optional, non-negative number
-  if (data.minCartAmount && (isNaN(data.minCartAmount) || Number(data.minCartAmount) < 0)) {
-    errors[`${prefix}minCartAmount`] = 'Minimum cart amount must be non-negative';
-  }
+        // Discount Amount: Required, positive number
+        if (!data.discountAmount) {
+            errors[`${prefix}discountAmount`] = 'Discount amount is required';
+        } else if (isNaN(data.discountAmount) || Number(data.discountAmount) < 1) {
+            errors[`${prefix}discountAmount`] = 'Discount amount must be a positive number';
+        }
 
-  // Max Discount: Optional, positive and >= discountAmount
-  if (data.maxDiscount) {
-    if (isNaN(data.maxDiscount) || Number(data.maxDiscount) < 1) {
-      errors[`${prefix}maxDiscount`] = 'Max discount must be a positive number';
-    } else if (Number(data.maxDiscount) < Number(data.discountAmount)) {
-      errors[`${prefix}maxDiscount`] = 'Max discount must be greater than or equal to discount amount';
+        // Min Cart Amount: Optional, non-negative number
+        if (data.minCartAmount && (isNaN(data.minCartAmount) || Number(data.minCartAmount) < 0)) {
+            errors[`${prefix}minCartAmount`] = 'Minimum cart amount must be non-negative';
+        }
+
+        // Expires At: Required, not in the past
+        if (!data.expiresAt) {
+            errors[`${prefix}expiresAt`] = 'Expiration date is required';
+        } else {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize to start of day
+            const expires = new Date(data.expiresAt);
+            if (expires < today) {
+                errors[`${prefix}expiresAt`] = 'Expiration date cannot be in the past';
+            }
+        }
+
+        return errors;
     }
-  }
 
-  // Usage Limit: Optional, positive integer
-  if (data.usageLimit && (isNaN(data.usageLimit) || Number(data.usageLimit) < 1 || !Number.isInteger(Number(data.usageLimit)))) {
-    errors[`${prefix}usageLimit`] = 'Usage limit must be a positive integer';
-  }
-
-  // Expires At: Required, not in the past
-  if (!data.expiresAt) {
-    errors[`${prefix}expiresAt`] = 'Expiration date is required';
-  } else {
-    const today = new Date('2025-07-11');
-    const expires = new Date(data.expiresAt);
-    if (expires < today) {
-      errors[`${prefix}expiresAt`] = 'Expiration date cannot be in the past';
+    // Clear error messages
+    function clearErrors(prefix = '') {
+        const fields = ['code', 'discountAmount', 'minCartAmount', 'expiresAt'];
+        fields.forEach(field => {
+            const errorElement = document.getElementById(`error-${prefix}${field}`);
+            if (errorElement) {
+                errorElement.innerText = '';
+            }
+        });
     }
-  }
 
-  return errors;
-}
+    // Create Coupon Form Submission
+    document.getElementById('couponForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
 
-// Clear error messages
-function clearErrors(prefix = '') {
-  const fields = ['code', 'discountAmount', 'minCartAmount', 'maxDiscount', 'usageLimit', 'expiresAt'];
-  fields.forEach(field => {
-    const errorElement = document.getElementById(`error-${prefix}${field}`);
-    if (errorElement) {
-      errorElement.innerText = '';
+        // Clear previous errors
+        clearErrors();
+
+        // Validate form data
+        const errors = validateFormData(data);
+        if (Object.keys(errors).length > 0) {
+            Object.keys(errors).forEach(key => {
+                const errorElement = document.getElementById(`error-${key}`);
+                if (errorElement) {
+                    errorElement.innerText = errors[key];
+                }
+            });
+            return;
+        }
+
+        try {
+            const res = await fetch('/admin/coupons/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                Toast.fire({
+                    icon: 'success',
+                    title: result.message || 'Coupon created successfully!'
+                });
+                form.reset();
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                Toast.fire({
+                    icon: 'error',
+                    title: result.error || 'Failed to create coupon'
+                });
+            }
+        } catch (err) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Something went wrong. Please try again.'
+            });
+            console.error('Error:', err);
+        }
+    });
+
+    // Edit Coupon Form Submission
+    document.getElementById('editCouponForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const id = form.id.value;
+        const data = {
+            code: form.code.value,
+            discountAmount: form.discountAmount.value,
+            minCartAmount: form.minCartAmount.value,
+            expiresAt: form.expiresAt.value,
+            isActive: form.isActive.value,
+        };
+
+        // Clear previous errors
+        clearErrors('edit-');
+
+        // Validate form data
+        const errors = validateFormData(data, 'edit-');
+        if (Object.keys(errors).length > 0) {
+            Object.keys(errors).forEach(key => {
+                const errorElement = document.getElementById(`error-${key}`);
+                if (errorElement) {
+                    errorElement.innerText = errors[key];
+                }
+            });
+            return;
+        }
+
+        try {
+            const res = await fetch(`/admin/coupons/edit/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                Toast.fire({
+                    icon: 'success',
+                    title: result.message || 'Coupon updated successfully!'
+                });
+                setTimeout(() => {
+                    closeEditModal();
+                    window.location.reload();
+                }, 1000);
+            } else {
+                Toast.fire({
+                    icon: 'error',
+                    title: result.error || 'Update failed'
+                });
+            }
+        } catch (err) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Server error. Please try again.'
+            });
+            console.error('Error:', err);
+        }
+    });
+
+    // Delete Coupon
+    async function deleteCoupon(id) {
+        const { isConfirmed } = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--brand)',
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            const res = await fetch(`/admin/coupons/delete/${id}`, {
+                method: 'PATCH',
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                Toast.fire({
+                    icon: 'success',
+                    title: result.message || 'Coupon deleted successfully!'
+                });
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                Toast.fire({
+                    icon: 'error',
+                    title: result.error || 'Failed to delete coupon'
+                });
+            }
+        } catch (err) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Error deleting coupon. Please try again.'
+            });
+            console.error('Error:', err);
+        }
     }
-  });
-  const formErrorElement = document.getElementById(`${prefix}formError`);
-  if (formErrorElement) {
-    formErrorElement.innerText = '';
-  }
-}
 
-// Create Coupon Form Submission
-document.getElementById('couponForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const form = e.target;
-  const formData = new FormData(form);
-  const data = Object.fromEntries(formData.entries());
+    // Open Edit Modal
+    function openEditModal(coupon) {
+        console.log('Opening edit modal for coupon:', coupon);
 
-  // Clear previous errors
-  clearErrors();
+        try {
+            document.getElementById('edit-id').value = coupon._id || '';
+            document.getElementById('edit-code').value = coupon.code || '';
+            document.getElementById('edit-discountAmount').value = coupon.discountAmount || '';
+            document.getElementById('edit-minCartAmount').value = coupon.minCartAmount || '';
 
-  // Validate form data
-  const errors = validateFormData(data);
-  if (Object.keys(errors).length > 0) {
-    Object.keys(errors).forEach(key => {
-      const errorElement = document.getElementById(`error-${key}`);
-      if (errorElement) {
-        errorElement.innerText = errors[key];
-      }
-    });
-    return;
-  }
+            if (coupon.expiresAt) {
+                const date = new Date(coupon.expiresAt);
+                const formattedDate = date.toISOString().split('T')[0];
+                document.getElementById('edit-expiresAt').value = formattedDate;
+            }
 
-  try {
-    const res = await fetch('/admin/coupons/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+            document.getElementById('edit-isActive').value = coupon.isActive ? 'true' : 'false';
 
-    const result = await res.json();
-    if (res.ok) {
-      Toast.fire({
-        icon: 'success',
-        title: result.message || 'Coupon created successfully!'
-      });
-      document.getElementById('formSuccess').innerText = '';
-      document.getElementById('formError').innerText = '';
-      form.reset();
-      setTimeout(() => window.location.reload(), 1000);
-    } else {
-      Toast.fire({
-        icon: 'error',
-        title: result.error || 'Failed to create coupon'
-      });
+            clearErrors('edit-');
+
+            document.getElementById('editModal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error opening edit modal:', error);
+            Toast.fire({
+                icon: 'error',
+                title: 'Error opening edit form. Please try again.'
+            });
+        }
     }
-  } catch (err) {
-    Toast.fire({
-      icon: 'error',
-      title: 'Something went wrong. Please try again.'
-    });
-    console.error('Error:', err);
-  }
-});
 
-// Edit Coupon Form Submission
-document.getElementById('editCouponForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const form = e.target;
-  const id = form.id.value;
-  const data = {
-    code: form.code.value,
-    discountAmount: form.discountAmount.value,
-    minCartAmount: form.minCartAmount.value,
-    maxDiscount: form.maxDiscount.value,
-    usageLimit: form.usageLimit.value,
-    expiresAt: form.expiresAt.value,
-    isActive: form.isActive.value,
-  };
-
-  // Clear previous errors
-  clearErrors('edit-');
-
-  // Validate form data
-  const errors = validateFormData(data, 'edit-');
-  if (Object.keys(errors).length > 0) {
-    Object.keys(errors).forEach(key => {
-      const errorElement = document.getElementById(`error-${key}`);
-      if (errorElement) {
-        errorElement.innerText = errors[key];
-      }
-    });
-    return;
-  }
-
-  try {
-    const res = await fetch(`/admin/coupons/edit/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-
-    const result = await res.json();
-    if (res.ok) {
-      Toast.fire({
-        icon: 'success',
-        title: result.message || 'Coupon updated successfully!'
-      });
-      document.getElementById('editFormSuccess').innerText = '';
-      document.getElementById('editFormError').innerText = '';
-      setTimeout(() => {
-        closeEditModal();
-        window.location.reload();
-      }, 1000);
-    } else {
-      Toast.fire({
-        icon: 'error',
-        title: result.error || 'Update failed'
-      });
+    // Close Edit Modal
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+        document.getElementById('editCouponForm').reset();
+        clearErrors('edit-');
     }
-  } catch (err) {
-    Toast.fire({
-      icon: 'error',
-      title: 'Server error. Please try again.'
+
+    // Close modal when clicking outside
+    document.getElementById('editModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEditModal();
+        }
     });
-    console.error('Error:', err);
-  }
-});
-
-// Delete Coupon
-async function deleteCoupon(id) {
-  const { isConfirmed } = await Swal.fire({
-    title: 'Are you sure?',
-    text: "You won't be able to revert this!",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, delete it!'
-  });
-
-  if (!isConfirmed) return;
-
-  try {
-    const res = await fetch(`/admin/coupons/delete/${id}`, {
-      method: 'PATCH',
-    });
-
-    const result = await res.json();
-    if (res.ok) {
-      Toast.fire({
-        icon: 'success',
-        title: result.message || 'Coupon deleted successfully!'
-      });
-      window.location.reload();
-    } else {
-      Toast.fire({
-        icon: 'error',
-        title: result.error || 'Failed to delete coupon'
-      });
-    }
-  } catch (err) {
-    Toast.fire({
-      icon: 'error',
-      title: 'Error deleting coupon. Please try again.'
-    });
-    console.error('Error:', err);
-  }
-}
-
-// Open Edit Modal - Fixed version
-function openEditModal(coupon) {
-  console.log('Opening edit modal for coupon:', coupon); // Debug log
-  
-  try {
-    // Populate form fields
-    document.getElementById('edit-id').value = coupon._id || '';
-    document.getElementById('edit-code').value = coupon.code || '';
-    document.getElementById('edit-discountAmount').value = coupon.discountAmount || '';
-    document.getElementById('edit-minCartAmount').value = coupon.minCartAmount || '';
-    document.getElementById('edit-maxDiscount').value = coupon.maxDiscount || '';
-    document.getElementById('edit-usageLimit').value = coupon.usageLimit || '';
-    
-    // Handle date formatting
-    if (coupon.expiresAt) {
-      const date = new Date(coupon.expiresAt);
-      const formattedDate = date.toISOString().split('T')[0];
-      document.getElementById('edit-expiresAt').value = formattedDate;
-    }
-    
-    document.getElementById('edit-isActive').value = coupon.isActive ? 'true' : 'false';
-
-    // Clear any previous errors
-    clearErrors('edit-');
-    document.getElementById('editFormError').innerText = '';
-    document.getElementById('editFormSuccess').innerText = '';
-    
-    // Show modal
-    document.getElementById('editModal').classList.remove('hidden');
-    
-  } catch (error) {
-    console.error('Error opening edit modal:', error);
-    Toast.fire({
-      icon: 'error',
-      title: 'Error opening edit form. Please try again.'
-    });
-  }
-}
-
-// Close Edit Modal
-function closeEditModal() {
-  document.getElementById('editModal').classList.add('hidden');
-  // Clear form
-  document.getElementById('editCouponForm').reset();
-  // Clear messages
-  document.getElementById('editFormError').innerText = '';
-  document.getElementById('editFormSuccess').innerText = '';
-  clearErrors('edit-');
-}
-
-// Close modal when clicking outside
-document.getElementById('editModal').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeEditModal();
-  }
-});
 </script>

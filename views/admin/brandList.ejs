@@ -1,56 +1,58 @@
-<div class="p-4 sm:p-6 md:p-8 bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md">
+<div class="px-3 sm:px-4 py-4 sm:py-6 bg-[var(--surface)] rounded-md shadow-sm">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
-      <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Brand List</h2>
+      <h2 class="text-xl sm:text-2xl font-semibold text-[var(--text)]">Brand List</h2>
       <a href="/admin/brands/add"
-        class="w-full sm:w-auto bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-md sm:rounded-lg hover:bg-indigo-700 text-sm sm:text-base text-center">
+        class="px-4 py-2 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 text-center">
         + Add Brand
       </a>
     </div>
   
-    <form method="GET" action="/admin/brands" class="mb-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
+    <form method="GET" action="/admin/brands" class="mb-4 flex flex-col sm:flex-row gap-3">
       <input type="text" name="search" value="<%= searchQuery %>" placeholder="Search brand..."
-        class="border border-gray-300 rounded-md sm:rounded-lg py-2 px-3 sm:px-4 w-full focus:ring-2 focus:ring-indigo-400 text-sm sm:text-base" />
-      <div class="flex gap-3 sm:gap-4">
+        class="border border-[var(--border)] rounded-md py-2 px-3 sm:px-4 w-full focus:ring-2 focus:ring-[var(--brand)] text-sm placeholder-gray-400" />
+      <div class="flex gap-3">
         <button type="submit"
-          class="w-full sm:w-auto bg-gray-100 text-gray-800 px-3 sm:px-4 py-2 rounded-md sm:rounded-lg hover:bg-indigo-100 text-sm sm:text-base">
+          class="px-4 py-2 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">
           Search
         </button>
         <% if (searchQuery) { %>
-          <a href="/admin/brands" class="text-red-500 font-medium hover:underline text-sm sm:text-base flex items-center">Clear</a>
+          <a href="/admin/brands" class="px-4 py-2 bg-gray-500 text-[var(--text)] rounded-md hover:bg-gray-600 text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 flex items-center">
+            Clear
+          </a>
         <% } %>
       </div>
     </form>
   
     <div class="overflow-x-auto">
-      <table class="min-w-full table-auto border border-gray-200">
-        <thead class="bg-gray-100">
-          <tr class="text-left text-gray-700">
-            <th class="p-2 sm:p-3 text-sm sm:text-base">Index</th>
-            <th class="p-2 sm:p-3 text-sm sm:text-base">Name</th>
-            <th class="p-2 sm:p-3 text-sm sm:text-base hidden sm:table-cell">Description</th>
-            <th class="p-2 sm:p-3 text-sm sm:text-base">Status</th>
-            <th class="p-2 sm:p-3 text-sm sm:text-base text-center">Actions</th>
+      <table class="min-w-full table-auto border border-[var(--border)]">
+        <thead class="bg-[var(--bg)]">
+          <tr class="text-left text-[var(--text)]">
+            <th class="p-2 sm:p-3 text-sm">Index</th>
+            <th class="p-2 sm:p-3 text-sm">Name</th>
+            <th class="p-2 sm:p-3 text-sm hidden sm:table-cell">Description</th>
+            <th class="p-2 sm:p-3 text-sm">Status</th>
+            <th class="p-2 sm:p-3 text-sm text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           <% brands.forEach((brand, index) => { %>
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-2 sm:p-3 text-sm sm:text-base"><%= (currentPage - 1) * limit + index + 1 %></td>
-              <td class="p-2 sm:p-3 text-sm sm:text-base font-medium"><%= brand.name %></td>
-              <td class="p-2 sm:p-3 text-sm sm:text-base hidden sm:table-cell"><%= brand.description %></td>
-              <td class="p-2 sm:p-3 text-sm sm:text-base">
-                <span class="px-2 py-1 rounded-full text-xs sm:text-sm font-semibold
-                  <%= brand.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' %>">
+            <tr class="border-t border-[var(--border)] hover:bg-gray-100">
+              <td class="p-2 sm:p-3 text-sm text-[var(--text)]"><%= (currentPage - 1) * limit + index + 1 %></td>
+              <td class="p-2 sm:p-3 text-sm text-[var(--text)] font-medium"><%= brand.name %></td>
+              <td class="p-2 sm:p-3 text-sm text-[var(--text)] hidden sm:table-cell"><%= brand.description %></td>
+              <td class="p-2 sm:p-3 text-sm">
+                <span class="px-2 py-1 rounded-full text-xs font-semibold
+                  <%= brand.isActive ? 'bg-[var(--brand)] bg-opacity-20 text-[var(--brand)]' : 'bg-red-500 bg-opacity-20 text-red-500' %>">
                   <%= brand.isActive ? 'Active' : 'Inactive' %>
                 </span>
               </td>
-              <td class="p-2 sm:p-3 text-sm sm:text-base text-center space-x-2 sm:space-x-3">
+              <td class="p-2 sm:p-3 text-sm text-center space-x-2">
                 <a href="/admin/brands/edit/<%= brand._id %>"
-                  class="text-blue-600 hover:underline text-sm sm:text-base">Edit</a>
+                  class="px-2 py-1 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">Edit</a>
                 <% if (brand.isActive) { %>
-                  <a href="#" class="unlist-brand hover:underline text-sm sm:text-base" data-id="<%= brand._id %>">Unlist</a>
+                  <a href="#" class="unlist-brand px-2 py-1 bg-red-500 text-[var(--text)] rounded-md hover:bg-red-600 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2" data-id="<%= brand._id %>">Unlist</a>
                 <% } else { %>
-                  <a href="#" class="list-brand hover:underline text-sm sm:text-base" data-id="<%= brand._id %>">List</a>
+                  <a href="#" class="list-brand px-2 py-1 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2" data-id="<%= brand._id %>">List</a>
                 <% } %>
               </td>
             </tr>
@@ -61,18 +63,18 @@
   
     <!-- Pagination -->
     <% if (totalPages > 1) { %>
-      <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
-        <p class="text-xs sm:text-sm text-gray-600">
+      <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <p class="text-xs text-gray-500">
           Showing <%= (currentPage - 1) * limit + 1 %> to <%= Math.min(currentPage * limit, totalBrands) %> of <%= totalBrands %> brands
         </p>
         <div class="flex flex-wrap gap-1 justify-center">
           <% if (currentPage > 1) { %>
             <a href="/admin/brands?page=1&search=<%= searchQuery %>"
-              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
+              class="px-2 sm:px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">
               First
             </a>
             <a href="/admin/brands?page=<%= currentPage - 1 %>&search=<%= searchQuery %>"
-              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
+              class="px-2 sm:px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">
               Prev
             </a>
           <% } %>
@@ -87,18 +89,18 @@
              
              for (let i = startPage; i <= endPage; i++) { %>
             <a href="/admin/brands?page=<%= i %>&search=<%= searchQuery %>"
-              class="px-2 sm:px-3 py-1 rounded-md border <%= i === currentPage ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100' %> text-xs sm:text-sm">
+              class="px-2 sm:px-3 py-1 rounded-md border border-[var(--border)] <%= i === currentPage ? 'bg-[var(--brand)] text-[var(--text)]' : 'bg-[var(--surface)] text-[var(--text)] hover:bg-gray-100' %> text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">
               <%= i %>
             </a>
           <% } %>
 
           <% if (currentPage < totalPages) { %>
             <a href="/admin/brands?page=<%= currentPage + 1 %>&search=<%= searchQuery %>"
-              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
+              class="px-2 sm:px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">
               Next
             </a>
             <a href="/admin/brands?page=<%= totalPages %>&search=<%= searchQuery %>"
-              class="px-2 sm:px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-100 text-xs sm:text-sm">
+              class="px-2 sm:px-3 py-1 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2">
               Last
             </a>
           <% } %>
@@ -109,7 +111,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-/* Original script remains completely unchanged */
 document.addEventListener('DOMContentLoaded', () => {
   const Toast = Swal.mixin({
     toast: true,

@@ -22,20 +22,7 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-const restoreOrderStock = async (order) => {
-  try{
-    if(!order.items || order.items.length === 0) return;
 
-    for(const item of order.items){
-      await Product.updateOne(
-        {_id: item.productId, "variants.size": item.size},
-        {$inc: {"variants.$.quantity": item.quantity}}
-      );
-    }
-  }catch (error){
-    console.error("Error restoring stock:",error);
-  }
-}
 
 
 const productController = {
@@ -933,8 +920,10 @@ const productController = {
           ? addressDoc.address.filter((addr) => addr.status === "active")
           : [];
 
+        
         let subtotal = 0;
         let totalProductDiscount = 0;
+        let regularTotal = 0;
 
         const itemsWithStock = cart.items.map((item) => {
           const product = item.productId;
@@ -952,9 +941,11 @@ const productController = {
           const discountedPrice = Math.round(basePrice - (basePrice * maxDiscount / 100));
           const discountAmount = basePrice - discountedPrice;
 
+          const itemRegularTotal = basePrice * item.quantity;
           const itemTotal = discountedPrice * item.quantity;
           subtotal += itemTotal;
-          totalProductDiscount += discountAmount * item.quantity; 
+          totalProductDiscount += discountAmount * item.quantity;
+          regularTotal += itemRegularTotal 
 
           return {
             ...item.toObject(),
@@ -1037,6 +1028,7 @@ const productController = {
           cart: { ...cart.toObject(), items: itemsWithStock },
           userAddress: addresses,
           subtotal,
+          regularTotal,
           coupon: finalCoupon,
           productDiscount: totalProductDiscount,
           grandTotal,
@@ -1066,7 +1058,7 @@ const productController = {
         if (!addressId) validationErrors.push("Shipping address is required");
         if (!payment) validationErrors.push("Payment method is required");
 
-        const validPaymentMethods = ["cod", "razorpay"]; // Removed "wallet"
+        const validPaymentMethods = ["cod", "razorpay"];
         if (!validPaymentMethods.includes(payment)) {
           validationErrors.push("Invalid payment method");
         }
@@ -1343,19 +1335,17 @@ const productController = {
 
         await order.save();
 
-        for (const item of cart.items) {
-          const variant = item.productId.variants.find((v) => v.size === item.size);
-          variant.quantity -= item.quantity;
-          await Product.updateOne(
-            { _id: item.productId._id, "variants.size": item.size },
-            { $set: { "variants.$.quantity": variant.quantity } }
-          );
-        }
 
         await Cart.deleteOne({ userId });
         req.session.checkoutData = null;
 
         if (payment === "cod") {
+          for(const item of cart.items){
+            await Product.updateOne(
+              {_id: item.productId._id,"variants.size": item.size},
+              {$inc: {"variants.$.quantity": -item.quantity}}
+            );
+          }
           order.paymentStatus = "pending";
           order.status = "processing";
           await order.save();
@@ -1454,9 +1444,7 @@ const productController = {
           timeStamp: new Date(),
         };
 
-        await order.save();
-
-        await restoreOrderStock(order);
+        
 
         res.status(statusCode.OK).json({success: true, message:"Payment failure recorded",orderId: order.orderId});
       }catch (err){
@@ -1491,9 +1479,9 @@ const productController = {
               failureType: 'gateway_error',
               timeStamp: new Date(),
             };
-            await order.save();
 
-            await restoreOrderStock(order);
+
+            
 
             return res.status(statusCode.BAD_REQUEST).json({
               success:false,
@@ -1564,9 +1552,6 @@ const productController = {
             receivedSignature: razorpay_signature
           };
 
-          await order.save();
-
-          await restoreOrderStock(order);
 
           console.error("Invalid Razorpay signature:",{
             expected: expectedSignature,
@@ -1576,6 +1561,16 @@ const productController = {
 
           return res.status(statusCode.BAD_REQUEST).json({success: false, message: "Invalid payment signature",orderId: order.orderId});
         }
+
+        if(expectedSignature === razorpay_signature){
+          for(const item of order.items){
+            await Product.updateOne(
+              {_id: item.productId, "variants.size": item.size},
+              {$inc: {"variants.$.quantity": -item.quantity}}
+            )
+          }
+        }
+
 
         order.items.forEach(item => {
         item.status = "processing"; 
@@ -1626,9 +1621,7 @@ const productController = {
                 timeStamp: new Date(),
               };
 
-              await order.save();
-
-              await restoreOrderStock(order);
+              
             }
           }
         }catch (updateErr){
