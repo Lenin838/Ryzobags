@@ -107,7 +107,8 @@ const adminOrderController = {
           return res.redirect('/admin/orders');
         }
 
-        res.render('admin/orderDetail', {
+        res.render('admin/layout', {
+          body: 'orderDetail',
           order,
           csrfToken: req.csrfToken ? req.csrfToken() : '',
           success: req.flash('success'),

@@ -1,37 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Order Management</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100">
-  <div class="container mx-auto p-4 sm:p-6">
-    <h1 class="text-xl sm:text-2xl font-bold text-indigo-600 mb-4 sm:mb-6">Order Management</h1>
+<div class="px-3 sm:px-4 py-4 sm:py-6 bg-[var(--surface)] rounded-md shadow-sm">
+    <h1 class="text-xl sm:text-2xl font-semibold text-[var(--text)] mb-4 sm:mb-6">Order Management</h1>
 
     <!-- Flash Messages -->
     <% if (success && success.length > 0) { %>
-      <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 sm:p-4 mb-3 sm:mb-4 text-sm sm:text-base">
+      <div class="bg-[var(--brand)] bg-opacity-20 text-[var(--text)] p-3 rounded-md mb-4 text-sm">
         <%= success %>
       </div>
     <% } %>
     <% if (error && error.length > 0) { %>
-      <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 sm:p-4 mb-3 sm:mb-4 text-sm sm:text-base">
+      <div class="bg-red-500 bg-opacity-20 text-red-500 p-3 rounded-md mb-4 text-sm">
         <%= error %>
       </div>
     <% } %>
 
     <!-- Search, Sort, Filter -->
-    <form id="order-filter-form" method="GET" action="/admin/orders" class="mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    <form id="order-filter-form" method="GET" action="/admin/orders" class="mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
       <input
         type="text"
         name="search"
         value="<%= searchQuery %>"
         placeholder="Search by Order ID or User"
-        class="p-2 border rounded text-sm sm:text-base sm:col-span-2 lg:col-span-1"
+        class="px-3 py-2 border border-[var(--border)] rounded-md text-sm placeholder-gray-400 focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition duration-300"
       >
-      <select name="status" class="p-2 border rounded text-sm sm:text-base">
+      <select name="status" class="px-3 py-2 border border-[var(--border)] rounded-md text-sm focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition duration-300">
         <option value="">All Statuses</option>
         <option value="Pending" <%= status === 'Pending' ? 'selected' : '' %>>Pending</option>
         <option value="Shipped" <%= status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
@@ -39,52 +30,52 @@
         <option value="Delivered" <%= status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
         <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
       </select>
-      <select name="sort" class="p-2 border rounded text-sm sm:text-base">
+      <select name="sort" class="px-3 py-2 border border-[var(--border)] rounded-md text-sm focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition duration-300">
         <option value="orderDate" <%= sort === 'orderDate' ? 'selected' : '' %>>Order Date</option>
         <option value="totalAmount" <%= sort === 'totalAmount' ? 'selected' : '' %>>Total Amount</option>
       </select>
-      <select name="order" class="p-2 border rounded text-sm sm:text-base">
+      <select name="order" class="px-3 py-2 border border-[var(--border)] rounded-md text-sm focus:ring-2 focus:ring-[var(--brand)] focus:border-[var(--brand)] transition duration-300">
         <option value="desc" <%= order === 'desc' ? 'selected' : '' %>>Descending</option>
         <option value="asc" <%= order === 'asc' ? 'selected' : '' %>>Ascending</option>
       </select>
-      <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
-        <button type="submit" class="bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700 text-sm sm:text-base flex-1">Apply</button>
-        <a href="/admin/orders" class="bg-gray-500 text-white p-2 rounded hover:bg-gray-600 text-sm sm:text-base flex-1 text-center">Clear</a>
+      <div class="flex gap-3">
+        <button type="submit" class="px-3 py-2 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300 flex-1">Apply</button>
+        <a href="/admin/orders" class="px-3 py-2 bg-gray-500 text-[var(--text)] rounded-md hover:bg-gray-600 text-sm focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300 flex-1 text-center">Clear</a>
       </div>
     </form>
 
     <!-- Orders Table -->
-    <div class="bg-white shadow rounded-lg overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+    <div class="bg-[var(--surface)] rounded-md shadow-sm overflow-x-auto">
+      <table class="min-w-full divide-y divide-[var(--border)]">
+        <thead class="bg-[var(--bg)]">
           <tr>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">User</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-[var(--text)] uppercase tracking-wider">Order ID</th>
+            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-[var(--text)] uppercase tracking-wider">Date</th>
+            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-[var(--text)] uppercase tracking-wider hidden sm:table-cell">User</th>
+            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-[var(--text)] uppercase tracking-wider">Status</th>
+            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-[var(--text)] uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-[var(--surface)] divide-y divide-[var(--border)]">
           <% if (orders.length > 0) { %>
             <% orders.forEach(order => { %>
               <tr>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= order.orderId %></td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]"><%= order.orderId %></td>
+                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]">
                   <%= new Date(order.orderDate).toLocaleDateString() %>
                 </td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-[var(--text)] hidden sm:table-cell">
                   <%= order.userId.fullname %> (<%= order.userId.email %>)
                 </td>
-                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= order.status %></td>
+                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-[var(--text)]"><%= order.status %></td>
                 <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
-                  <a href="/admin/orders/view/<%= order.orderId %>" class="text-indigo-600 hover:text-indigo-900">View</a>
+                  <a href="/admin/orders/view/<%= order.orderId %>" class="px-2 py-1 bg-[var(--brand)] text-[var(--text)] rounded-md hover:bg-[var(--brand-600)] text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300">View</a>
                 </td>
               </tr>
             <% }) %>
           <% } else { %>
             <tr>
-              <td colspan="5" class="px-3 sm:px-6 py-4 text-center text-sm text-gray-500">No orders found</td>
+              <td colspan="5" class="px-3 sm:px-6 py-4 text-center text-sm text-[var(--text)]">No orders found</td>
             </tr>
           <% } %>
         </tbody>
@@ -94,13 +85,13 @@
     <!-- Pagination -->
     <% if (totalOrders > 0) { %>
       <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <p class="text-xs sm:text-sm text-gray-700">
+        <p class="text-xs text-gray-500">
           Showing <%= (currentPage - 1) * 10 + 1 %> to <%= Math.min(currentPage * 10, totalOrders) %> of <%= totalOrders %> orders
         </p>
         <div class="flex flex-wrap gap-1 justify-center">
           <% if (currentPage > 1) { %>
-            <a href="/admin/orders?page=1&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">First</a>
-            <a href="/admin/orders?page=<%= currentPage - 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">Prev</a>
+            <a href="/admin/orders?page=1&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300">First</a>
+            <a href="/admin/orders?page=<%= currentPage - 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300">Prev</a>
           <% } %>
 
           <% const maxVisiblePages = 5;
@@ -112,16 +103,14 @@
              }
              
              for (let i = startPage; i <= endPage; i++) { %>
-            <a href="/admin/orders?page=<%= i %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border rounded text-xs sm:text-sm <%= i === currentPage ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100' %>"><%= i %></a>
+            <a href="/admin/orders?page=<%= i %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] <%= i === currentPage ? 'bg-[var(--brand)] text-[var(--text)]' : 'bg-[var(--surface)] text-[var(--text)] hover:bg-gray-100' %> rounded-md text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300"><%= i %></a>
           <% } %>
 
           <% if (currentPage < totalPages) { %>
-            <a href="/admin/orders?page=<%= currentPage + 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">Next</a>
-            <a href="/admin/orders?page=<%= totalPages %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border rounded hover:bg-gray-100 text-xs sm:text-sm">Last</a>
+            <a href="/admin/orders?page=<%= currentPage + 1 %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300">Next</a>
+            <a href="/admin/orders?page=<%= totalPages %>&search=<%= searchQuery %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>" class="px-2 sm:px-3 py-1 border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] rounded-md hover:bg-gray-100 text-xs focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 transition duration-300">Last</a>
           <% } %>
         </div>
       </div>
     <% } %>
-  </div>
-</body>
-</html>
+</div>
