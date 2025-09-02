@@ -156,13 +156,7 @@
                       <td class="py-3 px-4 text-sm text-slate-600"><%= order.orderId %></td>
                       <td class="py-3 px-4 text-sm text-slate-600"><%= new Date(order.orderDate).toLocaleDateString() %></td>
                       <td class="py-3 px-4 text-sm text-slate-600">₹<%= 
-                        order.items && order.items.length > 0 
-                          ? order.items.reduce((total, item) => {
-                              const price = parseFloat(item.itemSalePrice) || 0;
-                              const qty = parseInt(item.quantity) || 0;
-                              return total + (price * qty);
-                            }, 0).toFixed(2)
-                          : '0.00'
+                        order.regularPriceTotal
                       %></td>
                       <td class="py-3 px-4 text-sm text-slate-600">
                         <span class="px-2 py-1 rounded-full text-xs <%= order.status === 'delivered' ? 'bg-teal-100 text-teal-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800' %>">

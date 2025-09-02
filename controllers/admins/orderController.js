@@ -349,7 +349,7 @@ const adminOrderController = {
         }
 
         await order.save();
-        return res.json({ message: message.STATUS_UPDATED`${status}`, orderStatus: order.status });
+        return res.json({ message: message.STATUS_UPDATED,orderStatus: order.status });
       } catch (err) {
         console.error('Error in updateOrderStatus:', err);
         return res.status(statusCode.INTERNAL_SERVER_ERROR).json({ message: 'Error updating order status' });

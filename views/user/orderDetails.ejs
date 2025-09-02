@@ -90,11 +90,10 @@
               const activeItems = order.items.filter(item => item.status !== 'cancelled');
             %>
             
-            <% if (activeItems.length > 0) { %>
+            
               <p class="text-xs sm:text-sm text-gray-700">Active Items Subtotal: ₹<%= 
-                regularPriceTotal
+                order.regularPriceTotal
               %></p>
-            <% } %>
             
             
             <% if (offerDiscount > 0 || (order.discount && order.discount > 0)){ %>

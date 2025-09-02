@@ -245,17 +245,6 @@ const orderController = {
             let walletResponse = {};
             if (itemRefundAmount > 0 && order.paymentMethod === "razorpay") {
                 try {
-                    const product = await Product.findById(productId);
-                    let variant;
-                    if(product){
-                        variant = product.variants.find((v)=>v.size?.toLowerCase() === targetItem.size?.toLowerCase());
-                    }
-
-                    if(variant){
-                        if(variant && variant.quantity < 5 && product.offer.discountPercentage === 20){
-                            itemRefundAmount = (targetItem.itemSalePrice || 0)* (targetItem.quantity || 0) * 0.4; 
-                        }
-                    }
                     const newBalance = await orderController.creditWallet(
                         req.user._id,
                         itemRefundAmount,
@@ -352,28 +341,31 @@ const orderController = {
                 }
             });
 
-            const activeItems = order.items.filter(
-                (item) => item.status !== "cancelled" && item.status !== "returned"
-            );
+        const activeItems = order.items;
 
-            const regularPriceTotal = activeItems.reduce((total, item) => {
-                const variant =
-                    item.productId && item.productId.variants
-                        ? item.productId.variants.find((v) => v.size === item.size)
-                        : null;
-                const regularPrice = variant ? variant.regularPrice : 0;
-                const qty = parseInt(item.quantity) || 0;
-                return total + regularPrice * qty;
-            }, 0);
+            let regularPriceTotal = 0;
+            let salePriceTotal = 0;
+            let offerDiscount = 0;
 
-            const salePriceTotal = activeItems.reduce((total, item) => {
-                const price = parseFloat(item.itemSalePrice) || 0;
-                const qty = parseInt(item.quantity) || 0;
-                return total + price * qty;
-            }, 0);
+            if (activeItems.length > 0) {
+                regularPriceTotal = activeItems.reduce((total, item) => {
+                    const variant =
+                        item.productId && item.productId.variants
+                            ? item.productId.variants.find((v) => v.size === item.size)
+                            : null;
+                    const regularPrice = variant ? variant.regularPrice : 0;
+                    const qty = parseInt(item.quantity) || 0;
+                    return total + regularPrice * qty;
+                }, 0);
 
-            const offerDiscount = regularPriceTotal - salePriceTotal;
+                salePriceTotal = activeItems.reduce((total, item) => {
+                    const price = parseFloat(item.itemSalePrice) || 0;
+                    const qty = parseInt(item.quantity) || 0;
+                    return total + price * qty;
+                }, 0);
 
+                offerDiscount = regularPriceTotal - salePriceTotal;
+            }
             let couponDiscount = 0;
             if (order.paymentMethod === "razorpay" && order.couponId) {
                 const totalDiscounted = activeItems.reduce(
@@ -393,7 +385,7 @@ const orderController = {
                 });
             }
 
-            const activeItemsTotal = order.totalAmount || salePriceTotal;
+            const activeItemsTotal = salePriceTotal;
 
             res.render("user/orderDetails", {
                 order,

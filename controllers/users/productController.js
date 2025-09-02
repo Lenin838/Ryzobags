@@ -1173,6 +1173,7 @@ const productController = {
         }
 
         let totalAmount = 0;
+        let regularPriceTotal = 0;
         const items = [];
 
         for (const item of cart.items) {
@@ -1228,6 +1229,8 @@ const productController = {
           const finalPrice = Math.round(basePrice - (basePrice * maxDiscount / 100));
           const itemTotal = finalPrice * item.quantity;
           totalAmount += itemTotal;
+
+          regularPriceTotal += basePrice * item.quantity;
 
           items.push({
             productId: product._id,
@@ -1327,6 +1330,7 @@ const productController = {
           totalAmount: calculatedTotal,
           amountPaid: payment === "cod" ? 0 : calculatedTotal,
           discount: calculatedCouponDiscount,
+          regularPriceTotal,
           couponId,
           paymentStatus: payment === "cod" ? "pending" : "pending",
           status: payment === "razorpay" ? "failed" : "pending",

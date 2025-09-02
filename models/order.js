@@ -37,6 +37,7 @@ const orderSchema = new mongoose.Schema({
   couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Coupon" },
   amountPaid: { type: Number },
   totalAmount: { type: Number, required: true },
+  regularPriceTotal: { type: Number, default: 0 },
   deliveredDate: { type: Date },
 
   razorpayPaymentId: { type: String }, 

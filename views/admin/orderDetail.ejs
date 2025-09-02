@@ -223,13 +223,7 @@
                         <span class="text-sm text-gray-500">Subtotal</span>
                         <span class="text-sm font-medium text-[var(--text)]">
                             ₹<%= 
-                                order.items && order.items.length > 0 
-                                ? order.items.reduce((total, item) => {
-                                    const price = parseFloat(item.itemSalePrice) || 0;
-                                    const qty = parseInt(item.quantity) || 0;
-                                    return total + (price * qty);
-                                }, 0).toFixed(2)
-                                : '0.00'
+                                order.regularPriceTotal
                             %>
                         </span>
                     </div>
